@@ -8,8 +8,8 @@ mod details;
 
 #[cfg(test)]
 mod tests {
-    use fuzz;
-    use utils;
+    use crate::fuzz;
+    use crate::utils;
 
     #[test]
     fn test_ratio() {
