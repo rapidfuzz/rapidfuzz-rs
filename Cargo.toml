@@ -1,0 +1,17 @@
+[package]
+description="rapid string matching library"
+name = "rapidfuzz"
+version = "0.2.0"
+authors = ["maxbachmann"]
+edition = "2018"
+readme = "Readme.md"
+license = "MIT"
+maintenance = { status = "actively-developed" }
+
+
+[lib]
+name = "rapidfuzz"
+
+
+[dependencies]
+difflib = "0.4.0"
