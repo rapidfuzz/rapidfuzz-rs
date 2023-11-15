@@ -1,12 +1,9 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use rand::{distributions::Alphanumeric, Rng};
 
-use rapidfuzz::distance::damerau_levenshtein::{
-    damerau_levenshtein_distance, CachedDamerauLevenshtein,
-};
-use rapidfuzz::distance::hamming::hamming_distance;
-use rapidfuzz::distance::levenshtein::{
-    levenshtein_distance, CachedLevenshtein, LevenshteinWeightTable,
+use rapidfuzz::distance::{
+    damerau_levenshtein_distance, hamming_distance, levenshtein_distance, CachedDamerauLevenshtein,
+    CachedLevenshtein, LevenshteinWeightTable,
 };
 
 use std::str::Bytes;

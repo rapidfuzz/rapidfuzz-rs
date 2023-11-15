@@ -5,21 +5,21 @@ use std::error::Error;
 use std::fmt::{self, Display, Formatter};
 
 #[derive(Debug, PartialEq)]
-pub enum RapidfuzzError {
+pub enum HammingError {
     DifferentLengthArgs,
 }
 
-impl Display for RapidfuzzError {
+impl Display for HammingError {
     fn fmt(&self, fmt: &mut Formatter) -> Result<(), fmt::Error> {
         let text = match self {
-            RapidfuzzError::DifferentLengthArgs => "Differing length arguments provided",
+            HammingError::DifferentLengthArgs => "Differing length arguments provided",
         };
 
         write!(fmt, "{}", text)
     }
 }
 
-impl Error for RapidfuzzError {}
+impl Error for HammingError {}
 
 struct Hamming {}
 
@@ -89,7 +89,7 @@ pub fn hamming_distance<Iter1, Iter2, Elem1, Elem2>(
     pad: bool,
     score_cutoff: Option<usize>,
     score_hint: Option<usize>,
-) -> Result<usize, RapidfuzzError>
+) -> Result<usize, HammingError>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: Clone,
@@ -104,7 +104,7 @@ where
     let len2 = s2_iter.clone().count();
 
     if !pad && len1 != len2 {
-        return Err(RapidfuzzError::DifferentLengthArgs);
+        return Err(HammingError::DifferentLengthArgs);
     }
 
     let score_cutoff = score_cutoff.unwrap_or(usize::MAX);
@@ -125,7 +125,7 @@ pub fn hamming_similarity<Iter1, Iter2, Elem1, Elem2>(
     pad: bool,
     score_cutoff: Option<usize>,
     score_hint: Option<usize>,
-) -> Result<usize, RapidfuzzError>
+) -> Result<usize, HammingError>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: Clone,
@@ -140,7 +140,7 @@ where
     let len2 = s2_iter.clone().count();
 
     if !pad && len1 != len2 {
-        return Err(RapidfuzzError::DifferentLengthArgs);
+        return Err(HammingError::DifferentLengthArgs);
     }
 
     let score_cutoff = score_cutoff.unwrap_or(0);
@@ -161,7 +161,7 @@ pub fn hamming_normalized_distance<Iter1, Iter2, Elem1, Elem2>(
     pad: bool,
     score_cutoff: Option<f64>,
     score_hint: Option<f64>,
-) -> Result<f64, RapidfuzzError>
+) -> Result<f64, HammingError>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: Clone,
@@ -176,7 +176,7 @@ where
     let len2 = s2_iter.clone().count();
 
     if !pad && len1 != len2 {
-        return Err(RapidfuzzError::DifferentLengthArgs);
+        return Err(HammingError::DifferentLengthArgs);
     }
 
     let score_cutoff = score_cutoff.unwrap_or(1.0);
@@ -197,7 +197,7 @@ pub fn hamming_normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
     pad: bool,
     score_cutoff: Option<f64>,
     score_hint: Option<f64>,
-) -> Result<f64, RapidfuzzError>
+) -> Result<f64, HammingError>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: Clone,
@@ -212,7 +212,7 @@ where
     let len2 = s2_iter.clone().count();
 
     if !pad && len1 != len2 {
-        return Err(RapidfuzzError::DifferentLengthArgs);
+        return Err(HammingError::DifferentLengthArgs);
     }
 
     let score_cutoff = score_cutoff.unwrap_or(0.0);
@@ -269,7 +269,7 @@ mod tests {
     #[test]
     fn hamming_unequal_length() {
         assert_eq!(
-            Err(RapidfuzzError::DifferentLengthArgs),
+            Err(HammingError::DifferentLengthArgs),
             hamming_distance("ham".chars(), "hamming".chars(), false, None, None)
         );
 
