@@ -5,7 +5,7 @@
 
 <p align="center">
   <a href="https://github.com/maxbachmann/rapidfuzz-rs/actions">
-    <img src="https://github.com/maxbachmann/rapidfuzz-rs/workflows/Build/badge.svg"
+    <img src="https://github.com/maxbachmann/rapidfuzz-rs/workflows/Rust/badge.svg"
          alt="Continous Integration">
   </a>
   <a href="https://gitter.im/rapidfuzz/community">
