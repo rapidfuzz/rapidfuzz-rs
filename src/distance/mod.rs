@@ -29,7 +29,7 @@ pub use lcs_seq::{
 
 pub use hamming::{
     hamming_distance, hamming_normalized_distance, hamming_normalized_similarity,
-    hamming_similarity, HammingError,
+    hamming_similarity, CachedHamming, HammingError,
 };
 
 pub use prefix::{
