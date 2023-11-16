@@ -46,9 +46,9 @@ impl Indel {
         <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
         <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
-        let s1 = s1.into_iter();
-        let s2 = s2.into_iter();
-        let maximum = Indel::maximum(s1.clone(), len1, s2.clone(), len2);
+        let s1_iter = s1.into_iter();
+        let s2_iter = s2.into_iter();
+        let maximum = Indel::maximum(s1_iter.clone(), len1, s2_iter.clone(), len2);
         let lcs_cutoff = if maximum / 2 >= score_cutoff {
             maximum / 2 - score_cutoff
         } else {
@@ -59,7 +59,7 @@ impl Indel {
         } else {
             0
         };
-        let lcs_sim = LcsSeq::_similarity(s1, len1, s2, len2, lcs_cutoff, lcs_hint);
+        let lcs_sim = LcsSeq::_similarity(s1_iter, len1, s2_iter, len2, lcs_cutoff, lcs_hint);
         let dist = maximum - 2 * lcs_sim;
         if dist <= score_cutoff {
             dist
@@ -224,8 +224,8 @@ where
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
         <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
-        let s2 = s2.into_iter();
-        let maximum = self.maximum(s2.clone(), len2);
+        let s2_iter = s2.into_iter();
+        let maximum = self.maximum(s2_iter.clone(), len2);
         let lcs_cutoff = if maximum / 2 >= score_cutoff {
             maximum / 2 - score_cutoff
         } else {
@@ -236,7 +236,7 @@ where
         } else {
             0
         };
-        let lcs_sim = self.scorer._similarity(s2, len2, lcs_cutoff, lcs_hint);
+        let lcs_sim = self.scorer._similarity(s2_iter, len2, lcs_cutoff, lcs_hint);
         let dist = maximum - 2 * lcs_sim;
         if dist <= score_cutoff {
             dist

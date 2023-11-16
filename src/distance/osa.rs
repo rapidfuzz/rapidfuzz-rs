@@ -199,9 +199,9 @@ impl Osa {
 
     pub(crate) fn _distance<Iter1, Iter2, Elem1, Elem2>(
         s1: Iter1,
-        len1: usize,
+        mut len1: usize,
         s2: Iter2,
-        len2: usize,
+        mut len2: usize,
         score_cutoff: usize,
         _score_hint: usize,
     ) -> usize
@@ -219,16 +219,16 @@ impl Osa {
             return Osa::_distance(s2, len2, s1, len1, score_cutoff, _score_hint);
         }
 
-        let s1_iter = s1.into_iter();
-        let s2_iter = s2.into_iter();
-        let suffix_len = find_common_suffix(s1_iter.clone(), s2_iter.clone());
-        let s1_iter = s1_iter.take(len1 - suffix_len);
-        let s2_iter = s2_iter.take(len2 - suffix_len);
-        let prefix_len = find_common_prefix(s1_iter.clone(), s2_iter.clone());
-        let s1_iter = s1_iter.skip(prefix_len);
-        let s2_iter = s2_iter.skip(prefix_len);
-        let len1 = len1 - prefix_len - suffix_len;
-        let len2 = len2 - prefix_len - suffix_len;
+        let s1_iter_orig = s1.into_iter();
+        let s2_iter_orig = s2.into_iter();
+        let suffix_len = find_common_suffix(s1_iter_orig.clone(), s2_iter_orig.clone());
+        let s1_iter_no_suffix = s1_iter_orig.take(len1 - suffix_len);
+        let s2_iter_no_suffix = s2_iter_orig.take(len2 - suffix_len);
+        let prefix_len = find_common_prefix(s1_iter_no_suffix.clone(), s2_iter_no_suffix.clone());
+        let s1_iter = s1_iter_no_suffix.skip(prefix_len);
+        let s2_iter = s2_iter_no_suffix.skip(prefix_len);
+        len1 -= prefix_len + suffix_len;
+        len2 -= prefix_len + suffix_len;
 
         if len1 == 0 {
             if len2 <= score_cutoff {
@@ -381,7 +381,7 @@ where
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
         <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
-        let dist = if self.s1.len() == 0 {
+        let dist = if self.s1.is_empty() {
             len2
         } else if len2 == 0 {
             self.s1.len()

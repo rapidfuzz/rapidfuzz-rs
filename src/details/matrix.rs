@@ -60,10 +60,9 @@ where
         }
     }
 
-    pub fn test_bit(&self, row: usize, col: usize, default: bool) -> bool {
+    pub fn test_bit(&self, row: usize, mut col: usize, default: bool) -> bool {
         let offset = self.offsets[row];
 
-        let mut col = col;
         if offset < 0 {
             col += (-offset) as usize;
         } else if col >= offset as usize {

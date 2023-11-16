@@ -1,4 +1,4 @@
-use crate::details::common::{Hash,HashableChar};
+use crate::details::common::{Hash, HashableChar};
 
 #[derive(Default, Clone)]
 struct GrowingHashmapMapElem<ValueType> {
@@ -57,7 +57,7 @@ where
     pub fn get(&self, key: u64) -> ValueType {
         match &self.map {
             None => Default::default(),
-            Some(map) => map[self.lookup(key)].value
+            Some(map) => map[self.lookup(key)].value,
         }
     }
 
@@ -67,7 +67,13 @@ where
         }
 
         let mut i = self.lookup(key);
-        if self.map.as_ref().unwrap()[i].value == Default::default() {
+        if self
+            .map
+            .as_ref()
+            .expect("map should have been created above")[i]
+            .value
+            == Default::default()
+        {
             self.fill += 1;
             // resize when 2/3 full
             if self.fill * 3 >= (self.mask + 1) * 2 {
@@ -78,7 +84,10 @@ where
             self.used += 1;
         }
 
-        let elem = &mut self.map.as_mut().unwrap()[i];
+        let elem = &mut self
+            .map
+            .as_mut()
+            .expect("map should have been created above")[i];
         elem.key = key;
         &mut elem.value
     }
@@ -94,7 +103,10 @@ where
         let hash = key;
         let mut i = (hash & self.mask as u64) as usize;
 
-        let map = self.map.as_ref().unwrap();
+        let map = self
+            .map
+            .as_ref()
+            .expect("callers have to ensure map is allocated");
 
         if map[i].value == Default::default() || map[i].key == key {
             return i;
@@ -124,7 +136,11 @@ where
         self.fill = self.used;
         self.mask = new_size - 1;
 
-        for elem in self.map.as_ref().unwrap() {
+        for elem in self
+            .map
+            .as_ref()
+            .expect("callers have to ensure map is allocated")
+        {
             if elem.value != Default::default() {
                 let j = self.lookup(elem.key);
                 let new_elem = &mut new_map[j];

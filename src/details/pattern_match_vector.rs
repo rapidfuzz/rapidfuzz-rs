@@ -214,7 +214,11 @@ impl BlockPatternMatchVector {
                     if self.map_signed.is_none() {
                         self.map_signed = Some(vec![Default::default(); self.block_count])
                     }
-                    let item = self.map_signed.as_mut().unwrap()[block].get_mut(value as u64);
+                    let item = self
+                        .map_signed
+                        .as_mut()
+                        .expect("map should have been created above")[block]
+                        .get_mut(value as u64);
                     *item |= mask;
                 } else if value <= 255 {
                     let item = self.extended_ascii.get_mut(value as usize, block);
@@ -223,7 +227,11 @@ impl BlockPatternMatchVector {
                     if self.map_unsigned.is_none() {
                         self.map_unsigned = Some(vec![Default::default(); self.block_count])
                     }
-                    let item = self.map_unsigned.as_mut().unwrap()[block].get_mut(value as u64);
+                    let item = self
+                        .map_unsigned
+                        .as_mut()
+                        .expect("map should have been created above")[block]
+                        .get_mut(value as u64);
                     *item |= mask;
                 }
             }
@@ -235,7 +243,11 @@ impl BlockPatternMatchVector {
                     if self.map_unsigned.is_none() {
                         self.map_unsigned = Some(vec![Default::default(); self.block_count])
                     }
-                    let item = self.map_unsigned.as_mut().unwrap()[block].get_mut(value);
+                    let item = self
+                        .map_unsigned
+                        .as_mut()
+                        .expect("map should have been created above")[block]
+                        .get_mut(value);
                     *item |= mask;
                 }
             }

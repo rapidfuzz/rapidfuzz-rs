@@ -124,15 +124,13 @@ where
         return Err(HammingError::DifferentLengthArgs);
     }
 
-    let score_cutoff = score_cutoff.unwrap_or(usize::MAX);
-    let score_hint = score_hint.unwrap_or(usize::MAX);
     Ok(Hamming::_distance(
         s1_iter,
         len1,
         s2_iter,
         len2,
-        score_cutoff,
-        score_hint,
+        score_cutoff.unwrap_or(usize::MAX),
+        score_hint.unwrap_or(usize::MAX),
     ))
 }
 
@@ -162,15 +160,13 @@ where
         return Err(HammingError::DifferentLengthArgs);
     }
 
-    let score_cutoff = score_cutoff.unwrap_or(0);
-    let score_hint = score_hint.unwrap_or(0);
     Ok(Hamming::_similarity(
         s1_iter,
         len1,
         s2_iter,
         len2,
-        score_cutoff,
-        score_hint,
+        score_cutoff.unwrap_or(0),
+        score_hint.unwrap_or(0),
     ))
 }
 
@@ -200,15 +196,13 @@ where
         return Err(HammingError::DifferentLengthArgs);
     }
 
-    let score_cutoff = score_cutoff.unwrap_or(1.0);
-    let score_hint = score_hint.unwrap_or(1.0);
     Ok(Hamming::_normalized_distance(
         s1_iter,
         len1,
         s2_iter,
         len2,
-        score_cutoff,
-        score_hint,
+        score_cutoff.unwrap_or(1.0),
+        score_hint.unwrap_or(1.0),
     ))
 }
 
@@ -238,15 +232,13 @@ where
         return Err(HammingError::DifferentLengthArgs);
     }
 
-    let score_cutoff = score_cutoff.unwrap_or(0.0);
-    let score_hint = score_hint.unwrap_or(0.0);
     Ok(Hamming::_normalized_similarity(
         s1_iter,
         len1,
         s2_iter,
         len2,
-        score_cutoff,
-        score_hint,
+        score_cutoff.unwrap_or(0.0),
+        score_hint.unwrap_or(0.0),
     ))
 }
 
@@ -348,11 +340,12 @@ where
             return Err(HammingError::DifferentLengthArgs);
         }
 
-        let score_cutoff = score_cutoff.unwrap_or(usize::MAX);
-        let score_hint = score_hint.unwrap_or(usize::MAX);
-        Ok(self
-            .scorer
-            ._distance(s2_iter, len2, score_cutoff, score_hint))
+        Ok(self.scorer._distance(
+            s2_iter,
+            len2,
+            score_cutoff.unwrap_or(usize::MAX),
+            score_hint.unwrap_or(usize::MAX),
+        ))
     }
 
     pub fn similarity<Iter2, Elem2>(
@@ -377,11 +370,12 @@ where
             return Err(HammingError::DifferentLengthArgs);
         }
 
-        let score_cutoff = score_cutoff.unwrap_or(0);
-        let score_hint = score_hint.unwrap_or(0);
-        Ok(self
-            .scorer
-            ._similarity(s2_iter, len2, score_cutoff, score_hint))
+        Ok(self.scorer._similarity(
+            s2_iter,
+            len2,
+            score_cutoff.unwrap_or(0),
+            score_hint.unwrap_or(0),
+        ))
     }
 
     pub fn normalized_distance<Iter2, Elem2>(
@@ -406,11 +400,12 @@ where
             return Err(HammingError::DifferentLengthArgs);
         }
 
-        let score_cutoff = score_cutoff.unwrap_or(1.0);
-        let score_hint = score_hint.unwrap_or(1.0);
-        Ok(self
-            .scorer
-            ._normalized_distance(s2_iter, len2, score_cutoff, score_hint))
+        Ok(self.scorer._normalized_distance(
+            s2_iter,
+            len2,
+            score_cutoff.unwrap_or(1.0),
+            score_hint.unwrap_or(1.0),
+        ))
     }
 
     pub fn normalized_similarity<Iter2, Elem2>(
@@ -435,11 +430,12 @@ where
             return Err(HammingError::DifferentLengthArgs);
         }
 
-        let score_cutoff = score_cutoff.unwrap_or(0.0);
-        let score_hint = score_hint.unwrap_or(0.0);
-        Ok(self
-            .scorer
-            ._normalized_similarity(s2_iter, len2, score_cutoff, score_hint))
+        Ok(self.scorer._normalized_similarity(
+            s2_iter,
+            len2,
+            score_cutoff.unwrap_or(0.0),
+            score_hint.unwrap_or(0.0),
+        ))
     }
 }
 

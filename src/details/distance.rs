@@ -34,11 +34,17 @@ macro_rules! build_normalized_metric_funcs
         {
             let s1_iter = s1.into_iter();
             let s2_iter = s2.into_iter();
-            let score_cutoff = score_cutoff.unwrap_or(1.0);
-            let score_hint = score_hint.unwrap_or(1.0);
             let len1 = s1_iter.clone().count();
             let len2 = s2_iter.clone().count();
-            $impl_type::_normalized_distance(s1_iter, len1, s2_iter, len2, $($v,)* score_cutoff, score_hint)
+            $impl_type::_normalized_distance(
+                s1_iter,
+                len1,
+                s2_iter,
+                len2,
+                $($v,)*
+                score_cutoff.unwrap_or(1.0),
+                score_hint.unwrap_or(1.0)
+            )
         }
 
         pub(crate) fn _normalized_distance<Iter1, Iter2, Elem1, Elem2>(
@@ -67,7 +73,15 @@ macro_rules! build_normalized_metric_funcs
             let cutoff_distance = (maximum as f64 * score_cutoff).ceil() as $res_type;
             let hint_distance = (maximum as f64 * score_hint).ceil() as $res_type;
 
-            let dist = $impl_type::_distance(s1_iter, len1, s2_iter, len2, $($v,)* cutoff_distance, hint_distance);
+            let dist = $impl_type::_distance(
+                s1_iter,
+                len1,
+                s2_iter,
+                len2,
+                $($v,)*
+                cutoff_distance,
+                hint_distance
+            );
             let norm_dist = if maximum != 0 as $res_type {
                 dist as f64 / maximum as f64
             } else {
@@ -100,11 +114,17 @@ macro_rules! build_normalized_metric_funcs
         {
             let s1_iter = s1.into_iter();
             let s2_iter = s2.into_iter();
-            let score_cutoff = score_cutoff.unwrap_or(0.0);
-            let score_hint = score_hint.unwrap_or(0.0);
             let len1 = s1_iter.clone().count();
             let len2 = s2_iter.clone().count();
-            $impl_type::_normalized_similarity(s1_iter, len1, s2_iter, len2, $($v,)* score_cutoff, score_hint)
+            $impl_type::_normalized_similarity(
+                s1_iter,
+                len1,
+                s2_iter,
+                len2,
+                $($v,)*
+                score_cutoff.unwrap_or(0.0),
+                score_hint.unwrap_or(0.0)
+            )
         }
 
         pub(crate) fn _normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
@@ -129,7 +149,15 @@ macro_rules! build_normalized_metric_funcs
             let cutoff_score = norm_sim_to_norm_dist(score_cutoff);
             let hint_score = norm_sim_to_norm_dist(score_hint);
 
-            let norm_dist = $impl_type::_normalized_distance(s1, len1, s2, len2, $($v,)* cutoff_score, hint_score);
+            let norm_dist = $impl_type::_normalized_distance(
+                s1,
+                len1,
+                s2,
+                len2,
+                $($v,)*
+                cutoff_score,
+                hint_score
+            );
             let norm_sim = 1.0 - norm_dist;
 
             if norm_sim >= score_cutoff {
@@ -166,11 +194,17 @@ macro_rules! build_distance_metric_funcs
         {
             let s1_iter = s1.into_iter();
             let s2_iter = s2.into_iter();
-            let score_cutoff = score_cutoff.unwrap_or($worst_distance);
-            let score_hint = score_hint.unwrap_or($worst_distance);
             let len1 = s1_iter.clone().count();
             let len2 = s2_iter.clone().count();
-            $impl_type::_distance(s1_iter, len1, s2_iter, len2, $($v,)* score_cutoff, score_hint)
+            $impl_type::_distance(
+                s1_iter,
+                len1,
+                s2_iter,
+                len2,
+                $($v,)*
+                score_cutoff.unwrap_or($worst_distance),
+                score_hint.unwrap_or($worst_distance)
+            )
         }
 
         #[allow(dead_code)]
@@ -193,11 +227,17 @@ macro_rules! build_distance_metric_funcs
         {
             let s1_iter = s1.into_iter();
             let s2_iter = s2.into_iter();
-            let score_cutoff = score_cutoff.unwrap_or($worst_similarity);
-            let score_hint = score_hint.unwrap_or($worst_similarity);
             let len1 = s1_iter.clone().count();
             let len2 = s2_iter.clone().count();
-            $impl_type::_similarity(s1_iter, len1, s2_iter, len2, $($v,)* score_cutoff, score_hint)
+            $impl_type::_similarity(
+                s1_iter,
+                len1,
+                s2_iter,
+                len2,
+                $($v,)*
+                score_cutoff.unwrap_or($worst_similarity),
+                score_hint.unwrap_or($worst_similarity)
+            )
         }
 
         pub(crate) fn _similarity<Iter1, Iter2, Elem1, Elem2>(
@@ -207,7 +247,7 @@ macro_rules! build_distance_metric_funcs
             len2: usize,
             $($v: $t,)*
             score_cutoff: $res_type,
-            score_hint: $res_type
+            mut score_hint: $res_type
         ) -> $res_type
         where
             Iter1: IntoIterator<Item = Elem1>,
@@ -226,7 +266,7 @@ macro_rules! build_distance_metric_funcs
                 return 0 as $res_type;
             }
 
-            let score_hint = score_hint.min(score_cutoff);
+            score_hint = score_hint.min(score_cutoff);
             let cutoff_distance = maximum - score_cutoff;
             let hint_distance = maximum - score_hint;
             let dist = $impl_type::_distance(s1_iter, len1, s2_iter, len2, $($v,)* cutoff_distance, hint_distance);
@@ -265,11 +305,17 @@ macro_rules! build_similarity_metric_funcs
         {
             let s1_iter = s1.into_iter();
             let s2_iter = s2.into_iter();
-            let score_cutoff = score_cutoff.unwrap_or($worst_distance);
-            let score_hint = score_hint.unwrap_or($worst_distance);
             let len1 = s1_iter.clone().count();
             let len2 = s2_iter.clone().count();
-            $impl_type::_distance(s1_iter, len1, s2_iter, len2, $($v,)* score_cutoff, score_hint)
+            $impl_type::_distance(
+                s1_iter,
+                len1,
+                s2_iter,
+                len2,
+                $($v,)*
+                score_cutoff.unwrap_or($worst_distance),
+                score_hint.unwrap_or($worst_distance)
+            )
         }
 
         #[allow(dead_code)]
@@ -292,11 +338,17 @@ macro_rules! build_similarity_metric_funcs
         {
             let s1_iter = s1.into_iter();
             let s2_iter = s2.into_iter();
-            let score_cutoff = score_cutoff.unwrap_or($worst_similarity);
-            let score_hint = score_hint.unwrap_or($worst_similarity);
             let len1 = s1_iter.clone().count();
             let len2 = s2_iter.clone().count();
-            $impl_type::_similarity(s1_iter, len1, s2_iter, len2, $($v,)* score_cutoff, score_hint)
+            $impl_type::_similarity(
+                s1_iter,
+                len1,
+                s2_iter,
+                len2,
+                $($v,)*
+                score_cutoff.unwrap_or($worst_similarity),
+                score_hint.unwrap_or($worst_similarity)
+            )
         }
 
         pub(crate) fn _distance<Iter1, Iter2, Elem1, Elem2>(
@@ -367,10 +419,13 @@ macro_rules! build_cached_normalized_metric_funcs {
             <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s2_iter = s2.into_iter();
-            let score_cutoff = score_cutoff.unwrap_or(1.0);
-            let score_hint = score_hint.unwrap_or(1.0);
             let len2 = s2_iter.clone().count();
-            self._normalized_distance(s2_iter, len2, score_cutoff, score_hint)
+            self._normalized_distance(
+                s2_iter,
+                len2,
+                score_cutoff.unwrap_or(1.0),
+                score_hint.unwrap_or(1.0),
+            )
         }
 
         pub(crate) fn _normalized_distance<Iter2, Elem2>(
@@ -421,10 +476,13 @@ macro_rules! build_cached_normalized_metric_funcs {
             <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s2_iter = s2.into_iter();
-            let score_cutoff = score_cutoff.unwrap_or(0.0);
-            let score_hint = score_hint.unwrap_or(0.0);
             let len2 = s2_iter.clone().count();
-            self._normalized_similarity(s2_iter, len2, score_cutoff, score_hint)
+            self._normalized_similarity(
+                s2_iter,
+                len2,
+                score_cutoff.unwrap_or(0.0),
+                score_hint.unwrap_or(0.0),
+            )
         }
 
         pub(crate) fn _normalized_similarity<Iter2, Elem2>(
@@ -480,10 +538,13 @@ macro_rules! build_cached_distance_metric_funcs {
             <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s2_iter = s2.into_iter();
-            let score_cutoff = score_cutoff.unwrap_or($worst_distance);
-            let score_hint = score_hint.unwrap_or($worst_distance);
             let len2 = s2_iter.clone().count();
-            self._distance(s2_iter, len2, score_cutoff, score_hint)
+            self._distance(
+                s2_iter,
+                len2,
+                score_cutoff.unwrap_or($worst_distance),
+                score_hint.unwrap_or($worst_distance),
+            )
         }
 
         #[allow(dead_code)]
@@ -501,10 +562,13 @@ macro_rules! build_cached_distance_metric_funcs {
             <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s2_iter = s2.into_iter();
-            let score_cutoff = score_cutoff.unwrap_or($worst_similarity);
-            let score_hint = score_hint.unwrap_or($worst_similarity);
             let len2 = s2_iter.clone().count();
-            self._similarity(s2_iter, len2, score_cutoff, score_hint)
+            self._similarity(
+                s2_iter,
+                len2,
+                score_cutoff.unwrap_or($worst_similarity),
+                score_hint.unwrap_or($worst_similarity),
+            )
         }
 
         pub(crate) fn _similarity<Iter2, Elem2>(
@@ -512,7 +576,7 @@ macro_rules! build_cached_distance_metric_funcs {
             s2: Iter2,
             len2: usize,
             score_cutoff: $res_type,
-            score_hint: $res_type,
+            mut score_hint: $res_type,
         ) -> $res_type
         where
             Iter2: IntoIterator<Item = Elem2>,
@@ -527,7 +591,7 @@ macro_rules! build_cached_distance_metric_funcs {
                 return 0 as $res_type;
             }
 
-            let score_hint = score_hint.min(score_cutoff);
+            score_hint = score_hint.min(score_cutoff);
             let cutoff_distance = maximum - score_cutoff;
             let hint_distance = maximum - score_hint;
             let dist = self._distance(s2_iter, len2, cutoff_distance, hint_distance);
@@ -565,10 +629,13 @@ macro_rules! build_cached_similarity_metric_funcs {
             <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s2_iter = s2.into_iter();
-            let score_cutoff = score_cutoff.unwrap_or($worst_distance);
-            let score_hint = score_hint.unwrap_or($worst_distance);
             let len2 = s2_iter.clone().count();
-            self._distance(s2_iter, len2, score_cutoff, score_hint)
+            self._distance(
+                s2_iter,
+                len2,
+                score_cutoff.unwrap_or($worst_distance),
+                score_hint.unwrap_or($worst_distance),
+            )
         }
 
         #[allow(dead_code)]
@@ -586,10 +653,13 @@ macro_rules! build_cached_similarity_metric_funcs {
             <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s2_iter = s2.into_iter();
-            let score_cutoff = score_cutoff.unwrap_or($worst_similarity);
-            let score_hint = score_hint.unwrap_or($worst_similarity);
             let len2 = s2_iter.clone().count();
-            self._similarity(s2_iter, len2, score_cutoff, score_hint)
+            self._similarity(
+                s2_iter,
+                len2,
+                score_cutoff.unwrap_or($worst_similarity),
+                score_hint.unwrap_or($worst_similarity),
+            )
         }
 
         pub(crate) fn _distance<Iter2, Elem2>(

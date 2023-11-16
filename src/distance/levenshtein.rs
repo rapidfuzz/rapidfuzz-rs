@@ -106,7 +106,9 @@ where
     let s1_iter = s1.into_iter();
     for ch2 in s2.into_iter() {
         let mut cache_iter = cache.iter_mut().peekable();
-        let mut cur_cache: &mut usize = cache_iter.next().unwrap();
+        let mut cur_cache: &mut usize = cache_iter
+            .next()
+            .expect("cache always has at least one element");
         let mut temp = *cur_cache;
         *cur_cache += weights.insert_cost;
 
@@ -116,15 +118,23 @@ where
                     *cur_cache + weights.delete_cost,
                     temp + weights.replace_cost,
                 );
-                temp = min(temp, **cache_iter.peek().unwrap() + weights.insert_cost);
+                temp = min(
+                    temp,
+                    **cache_iter
+                        .peek()
+                        .expect("cache has len1 + 1 elements, so this should always exist")
+                        + weights.insert_cost,
+                );
             }
 
-            cur_cache = cache_iter.next().unwrap();
+            cur_cache = cache_iter
+                .next()
+                .expect("cache has len1 + 1 elements, so this should always exist");
             mem::swap(cur_cache, &mut temp);
         }
     }
 
-    let dist = *cache.last().unwrap();
+    let dist = *cache.last().expect("cache always has at least one element");
     if dist <= score_cutoff {
         dist
     } else {
@@ -161,9 +171,9 @@ fn _levenshtein_min_distance(len1: usize, len2: usize, weights: &LevenshteinWeig
 
 fn generalized_levenshtein_distance<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
-    len1: usize,
+    mut len1: usize,
     s2: Iter2,
-    len2: usize,
+    mut len2: usize,
     weights: &LevenshteinWeightTable,
     score_cutoff: usize,
 ) -> usize
@@ -183,16 +193,16 @@ where
     }
 
     // common affix does not effect Levenshtein distance
-    let s1_iter = s1.into_iter();
-    let s2_iter = s2.into_iter();
-    let suffix_len = find_common_suffix(s1_iter.clone(), s2_iter.clone());
-    let s1_iter = s1_iter.take(len1 - suffix_len);
-    let s2_iter = s2_iter.take(len2 - suffix_len);
-    let prefix_len = find_common_prefix(s1_iter.clone(), s2_iter.clone());
-    let s1_iter = s1_iter.skip(prefix_len);
-    let s2_iter = s2_iter.skip(prefix_len);
-    let len1 = len1 - prefix_len - suffix_len;
-    let len2 = len2 - prefix_len - suffix_len;
+    let s1_iter_orig = s1.into_iter();
+    let s2_iter_orig = s2.into_iter();
+    let suffix_len = find_common_suffix(s1_iter_orig.clone(), s2_iter_orig.clone());
+    let s1_iter_no_suffix = s1_iter_orig.take(len1 - suffix_len);
+    let s2_iter_no_suffix = s2_iter_orig.take(len2 - suffix_len);
+    let prefix_len = find_common_prefix(s1_iter_no_suffix.clone(), s2_iter_no_suffix.clone());
+    let s1_iter = s1_iter_no_suffix.skip(prefix_len);
+    let s2_iter = s2_iter_no_suffix.skip(prefix_len);
+    len1 -= prefix_len + suffix_len;
+    len2 -= prefix_len + suffix_len;
 
     generalized_levenshtein_wagner_fischer(s1_iter, len1, s2_iter, len2, weights, score_cutoff)
 }
@@ -259,8 +269,8 @@ where
 
     let iter_s1_begin = s1.into_iter();
     let iter_s2_begin = s2.into_iter();
-    for &ops in possible_ops.iter() {
-        let mut ops = ops;
+    for &ops_ in possible_ops.iter() {
+        let mut ops = ops_;
         let mut iter_s1 = iter_s1_begin.clone();
         let mut iter_s2 = iter_s2_begin.clone();
         let mut cur_dist = 0;
@@ -700,7 +710,7 @@ fn levenshtein_hyrroe2003_block<
     len1: usize,
     s2: Iter2,
     len2: usize,
-    score_cutoff: usize,
+    mut score_cutoff: usize,
     stop_row: isize,
 ) -> LevenshteinResult<RECORD_MATRIX, RECORD_BIT_ROW>
 where
@@ -737,7 +747,7 @@ where
         res.bit_row[0].prev_score = 0;
     }
 
-    let mut score_cutoff = min(score_cutoff, max(len1, len2));
+    score_cutoff = min(score_cutoff, max(len1, len2));
     // first_block is the index of the first block in Ukkonen band.
     let mut first_block: usize = 0;
     // last_block is the index of the last block in Ukkonen band.
@@ -949,11 +959,11 @@ where
 fn uniform_levenshtein_distance_with_pm<Iter1, Iter2, Elem1, Elem2>(
     pm: &BlockPatternMatchVector,
     s1: Iter1,
-    len1: usize,
+    mut len1: usize,
     s2: Iter2,
-    len2: usize,
-    score_cutoff: usize,
-    score_hint: usize,
+    mut len2: usize,
+    mut score_cutoff: usize,
+    mut score_hint: usize,
 ) -> usize
 where
     Iter1: IntoIterator<Item = Elem1>,
@@ -966,8 +976,8 @@ where
     <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     // upper bound
-    let score_cutoff = min(score_cutoff, max(len1, len2));
-    let mut score_hint = max(score_hint, 31);
+    score_cutoff = min(score_cutoff, max(len1, len2));
+    score_hint = max(score_hint, 31);
 
     // when no differences are allowed a direct comparision is sufficient
     if score_cutoff == 0 {
@@ -1048,16 +1058,16 @@ where
     }
 
     // common affix does not effect Levenshtein distance
-    let s1_iter = s1.into_iter();
-    let s2_iter = s2.into_iter();
-    let suffix_len = find_common_suffix(s1_iter.clone(), s2_iter.clone());
-    let s1_iter = s1_iter.take(len1 - suffix_len);
-    let s2_iter = s2_iter.take(len2 - suffix_len);
-    let prefix_len = find_common_prefix(s1_iter.clone(), s2_iter.clone());
-    let s1_iter = s1_iter.skip(prefix_len);
-    let s2_iter = s2_iter.skip(prefix_len);
-    let len1 = len1 - prefix_len - suffix_len;
-    let len2 = len2 - prefix_len - suffix_len;
+    let s1_iter_orig = s1.into_iter();
+    let s2_iter_orig = s2.into_iter();
+    let suffix_len = find_common_suffix(s1_iter_orig.clone(), s2_iter_orig.clone());
+    let s1_iter_no_suffix = s1_iter_orig.take(len1 - suffix_len);
+    let s2_iter_no_suffix = s2_iter_orig.take(len2 - suffix_len);
+    let prefix_len = find_common_prefix(s1_iter_no_suffix.clone(), s2_iter_no_suffix.clone());
+    let s1_iter = s1_iter_no_suffix.skip(prefix_len);
+    let s2_iter = s2_iter_no_suffix.skip(prefix_len);
+    len1 -= prefix_len + suffix_len;
+    len2 -= prefix_len + suffix_len;
 
     if len1 == 0 || len2 == 0 {
         return len1 + len2;
@@ -1068,11 +1078,11 @@ where
 
 fn uniform_levenshtein_distance_without_pm<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
-    len1: usize,
+    mut len1: usize,
     s2: Iter2,
-    len2: usize,
-    score_cutoff: usize,
-    score_hint: usize,
+    mut len2: usize,
+    mut score_cutoff: usize,
+    mut score_hint: usize,
 ) -> usize
 where
     Iter1: IntoIterator<Item = Elem1>,
@@ -1095,8 +1105,8 @@ where
         );
     }
 
-    let score_cutoff = min(score_cutoff, max(len1, len2));
-    let mut score_hint = max(score_hint, 31);
+    score_cutoff = min(score_cutoff, max(len1, len2));
+    score_hint = max(score_hint, 31);
 
     // when no differences are allowed a direct comparision is sufficient
     if score_cutoff == 0 {
@@ -1108,17 +1118,17 @@ where
     }
 
     // common affix does not effect Levenshtein distance
-    let s1_iter = s1.into_iter();
-    let s2_iter = s2.into_iter();
+    let s1_iter_orig = s1.into_iter();
+    let s2_iter_orig = s2.into_iter();
     // todo is this really the best way to remove the common affix?
-    let suffix_len = find_common_suffix(s1_iter.clone(), s2_iter.clone());
-    let s1_iter = s1_iter.take(len1 - suffix_len);
-    let s2_iter = s2_iter.take(len2 - suffix_len);
-    let prefix_len = find_common_prefix(s1_iter.clone(), s2_iter.clone());
-    let s1_iter = s1_iter.skip(prefix_len);
-    let s2_iter = s2_iter.skip(prefix_len);
-    let len1 = len1 - prefix_len - suffix_len;
-    let len2 = len2 - prefix_len - suffix_len;
+    let suffix_len = find_common_suffix(s1_iter_orig.clone(), s2_iter_orig.clone());
+    let s1_iter_no_suffix = s1_iter_orig.take(len1 - suffix_len);
+    let s2_iter_no_suffix = s2_iter_orig.take(len2 - suffix_len);
+    let prefix_len = find_common_prefix(s1_iter_no_suffix.clone(), s2_iter_no_suffix.clone());
+    let s1_iter = s1_iter_no_suffix.skip(prefix_len);
+    let s2_iter = s2_iter_no_suffix.skip(prefix_len);
+    len1 -= prefix_len + suffix_len;
+    len2 -= prefix_len + suffix_len;
 
     if len1 == 0 || len2 == 0 {
         return len1 + len2;
@@ -1356,7 +1366,7 @@ impl Levenshtein {
         len1: usize,
         _s2: Iter2,
         len2: usize,
-        weights: Option<LevenshteinWeightTable>,
+        weights_: Option<LevenshteinWeightTable>,
     ) -> usize
     where
         Iter1: IntoIterator<Item = Elem1>,
@@ -1366,7 +1376,7 @@ impl Levenshtein {
         Elem1: PartialEq<Elem2>,
         Elem2: PartialEq<Elem1>,
     {
-        let weights = weights.unwrap_or(LevenshteinWeightTable {
+        let weights = weights_.unwrap_or(LevenshteinWeightTable {
             insert_cost: 1,
             delete_cost: 1,
             replace_cost: 1,
@@ -1379,7 +1389,7 @@ impl Levenshtein {
         len1: usize,
         s2: Iter2,
         len2: usize,
-        weights: Option<LevenshteinWeightTable>,
+        weights_: Option<LevenshteinWeightTable>,
         score_cutoff: usize,
         score_hint: usize,
     ) -> usize
@@ -1393,7 +1403,7 @@ impl Levenshtein {
         <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
         <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
-        let weights = weights.unwrap_or(LevenshteinWeightTable {
+        let weights = weights_.unwrap_or(LevenshteinWeightTable {
             insert_cost: 1,
             delete_cost: 1,
             replace_cost: 1,
@@ -1497,7 +1507,7 @@ where
 {
     build_cached_distance_metric_funcs!(CachedLevenshtein, usize, 0, usize::MAX);
 
-    pub fn new<Iter1>(s1: Iter1, weights: Option<LevenshteinWeightTable>) -> Self
+    pub fn new<Iter1>(s1: Iter1, weights_: Option<LevenshteinWeightTable>) -> Self
     where
         Iter1: IntoIterator<Item = Elem1>,
         Iter1::IntoIter: Clone,
@@ -1505,7 +1515,7 @@ where
         let s1_iter = s1.into_iter();
         let s1: Vec<Elem1> = s1_iter.clone().collect();
 
-        let weights = weights.unwrap_or(LevenshteinWeightTable {
+        let weights = weights_.unwrap_or(LevenshteinWeightTable {
             insert_cost: 1,
             delete_cost: 1,
             replace_cost: 1,
@@ -1871,8 +1881,29 @@ mod tests {
         assert_eq!(106514, OCR_EXAMPLE1.iter().count());
         assert_eq!(107244, OCR_EXAMPLE2.iter().count());
 
-        assert_eq!(5278, distance(OCR_EXAMPLE1.iter(), OCR_EXAMPLE2.iter(), None, None, None));
-        assert_eq!(2501, distance(OCR_EXAMPLE1.iter(), OCR_EXAMPLE2.iter(), None, Some(2500), None));
-        assert_eq!(5278, distance(OCR_EXAMPLE1.iter(), OCR_EXAMPLE2.iter(), None, None, Some(0)));
+        assert_eq!(
+            5278,
+            distance(OCR_EXAMPLE1.iter(), OCR_EXAMPLE2.iter(), None, None, None)
+        );
+        assert_eq!(
+            2501,
+            distance(
+                OCR_EXAMPLE1.iter(),
+                OCR_EXAMPLE2.iter(),
+                None,
+                Some(2500),
+                None
+            )
+        );
+        assert_eq!(
+            5278,
+            distance(
+                OCR_EXAMPLE1.iter(),
+                OCR_EXAMPLE2.iter(),
+                None,
+                None,
+                Some(0)
+            )
+        );
     }
 }
