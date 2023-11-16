@@ -1,4 +1,6 @@
-use crate::details::common::{norm_sim_to_norm_dist, HashableChar, UnrefIterator};
+use crate::details::common::{
+    find_common_prefix, find_common_suffix, norm_sim_to_norm_dist, HashableChar, UnrefIterator,
+};
 use crate::details::distance::{
     build_cached_normalized_metric_funcs, build_cached_similarity_metric_funcs,
     build_normalized_metric_funcs, build_similarity_metric_funcs,
@@ -430,6 +432,8 @@ where
     Iter2::IntoIter: Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     PmVec: BitVectorInterface,
 {
     if score_cutoff > len1 || score_cutoff > len2 {
@@ -451,13 +455,21 @@ where
         return longest_common_subsequence_with_pm(pm, s1, len1, s2, len2, score_cutoff);
     }
 
-    /* common affix does not effect Levenshtein distance */
-    // todo how to do this in rust
-    // remove_common_affix(s1, s2);
-    // todo update len
-    let mut lcs_sim = 0; // todo prefixlen = suffixlen
+    // remove common affix and count it as part of the LCS
+    let s1_iter = s1.into_iter();
+    let s2_iter = s2.into_iter();
+    let suffix_len = find_common_suffix(s1_iter.clone(), s2_iter.clone());
+    let s1_iter = s1_iter.take(len1 - suffix_len);
+    let s2_iter = s2_iter.take(len2 - suffix_len);
+    let prefix_len = find_common_prefix(s1_iter.clone(), s2_iter.clone());
+    let s1_iter = s1_iter.skip(prefix_len);
+    let s2_iter = s2_iter.skip(prefix_len);
+    let len1 = len1 - prefix_len - suffix_len;
+    let len2 = len2 - prefix_len - suffix_len;
+
+    let mut lcs_sim = prefix_len + suffix_len;
     if len1 != 0 && len2 != 0 {
-        lcs_sim += lcs_seq_mbleven2018(s1, len1, s2, len2, score_cutoff - lcs_sim)
+        lcs_sim += lcs_seq_mbleven2018(s1_iter, len1, s2_iter, len2, score_cutoff - lcs_sim)
     }
 
     if lcs_sim >= score_cutoff {
@@ -481,6 +493,8 @@ where
     Iter2::IntoIter: Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     // Swapping the strings so the second string is shorter
     if len1 < len2 {
@@ -501,17 +515,35 @@ where
         return 0;
     }
 
-    /* common affix does not effect Levenshtein distance */
-    // todo how to do this in rust
-    // remove_common_affix(s1, s2);
-    // todo update len
-    let mut lcs_sim = 0; // todo prefixlen = suffixlen
+    // remove common affix and count it as part of the LCS
+    let s1_iter = s1.into_iter();
+    let s2_iter = s2.into_iter();
+    let suffix_len = find_common_suffix(s1_iter.clone(), s2_iter.clone());
+    let s1_iter = s1_iter.take(len1 - suffix_len);
+    let s2_iter = s2_iter.take(len2 - suffix_len);
+    let prefix_len = find_common_prefix(s1_iter.clone(), s2_iter.clone());
+    let s1_iter = s1_iter.skip(prefix_len);
+    let s2_iter = s2_iter.skip(prefix_len);
+    let len1 = len1 - prefix_len - suffix_len;
+    let len2 = len2 - prefix_len - suffix_len;
+
+    let mut lcs_sim = prefix_len + suffix_len;
     if len1 != 0 && len2 != 0 {
-        if max_misses < 5 {
-            lcs_sim += lcs_seq_mbleven2018(s1, len1, s2, len2, score_cutoff - lcs_sim)
+        let adjusted_cutoff = if score_cutoff >= lcs_sim {
+            score_cutoff - lcs_sim
         } else {
-            lcs_sim +=
-                longest_common_subsequence_without_pm(s1, len1, s2, len2, score_cutoff - lcs_sim);
+            0
+        };
+        if max_misses < 5 {
+            lcs_sim += lcs_seq_mbleven2018(s1_iter, len1, s2_iter, len2, adjusted_cutoff)
+        } else {
+            lcs_sim += longest_common_subsequence_without_pm(
+                s1_iter,
+                len1,
+                s2_iter,
+                len2,
+                adjusted_cutoff,
+            );
         }
     }
 
@@ -559,6 +591,8 @@ impl LcsSeq {
         Iter2::IntoIter: Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+        <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
         lcs_seq_similarity_without_pm(s1, len1, s2, len2, score_cutoff)
     }
@@ -577,6 +611,8 @@ where
     Iter2::IntoIter: Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     LcsSeq::distance(s1, s2, score_cutoff, score_hint)
 }
@@ -594,6 +630,8 @@ where
     Iter2::IntoIter: Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     LcsSeq::similarity(s1, s2, score_cutoff, score_hint)
 }
@@ -611,6 +649,8 @@ where
     Iter2::IntoIter: Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     LcsSeq::normalized_distance(s1, s2, score_cutoff, score_hint)
 }
@@ -628,6 +668,8 @@ where
     Iter2::IntoIter: Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     LcsSeq::normalized_similarity(s1, s2, score_cutoff, score_hint)
 }
@@ -680,6 +722,7 @@ where
         Iter2::IntoIter: Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
         lcs_seq_similarity_with_pm(
             &self.pm,
@@ -719,6 +762,8 @@ mod tests {
         Iter2::IntoIter: Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+        <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();
@@ -762,6 +807,8 @@ mod tests {
         Iter2::IntoIter: Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+        <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();
@@ -805,6 +852,8 @@ mod tests {
         Iter2::IntoIter: Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+        <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();
@@ -849,6 +898,8 @@ mod tests {
         Iter2::IntoIter: Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+        <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();

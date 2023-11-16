@@ -62,3 +62,45 @@ where
         self.seq.next().copied()
     }
 }
+
+impl<'a, T> DoubleEndedIterator for UnrefIterator<'a, T>
+where
+    T: Copy,
+{
+    fn next_back(&mut self) -> Option<T> {
+        self.seq.next_back().copied()
+    }
+}
+
+pub(crate) fn find_common_prefix<Iter1, Iter2, Elem1, Elem2>(s1: Iter1, s2: Iter2) -> usize
+where
+    Iter1: IntoIterator<Item = Elem1>,
+    Iter1::IntoIter: Clone,
+    Iter2: IntoIterator<Item = Elem2>,
+    Iter2::IntoIter: Clone,
+    Elem1: PartialEq<Elem2>,
+    Elem2: PartialEq<Elem1>,
+{
+    s1.into_iter()
+        .zip(s2)
+        .take_while(|(a_char, b_char)| a_char == b_char)
+        .count()
+}
+
+pub(crate) fn find_common_suffix<Iter1, Iter2, Elem1, Elem2>(s1: Iter1, s2: Iter2) -> usize
+where
+    Iter1: IntoIterator<Item = Elem1>,
+    Iter1::IntoIter: Clone,
+    Iter2: IntoIterator<Item = Elem2>,
+    Iter2::IntoIter: Clone,
+    Elem1: PartialEq<Elem2>,
+    Elem2: PartialEq<Elem1>,
+    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
+{
+    s1.into_iter()
+        .rev()
+        .zip(s2.into_iter().rev())
+        .take_while(|(a_char, b_char)| a_char == b_char)
+        .count()
+}

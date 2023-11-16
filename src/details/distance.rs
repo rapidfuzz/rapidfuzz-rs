@@ -28,7 +28,9 @@ macro_rules! build_normalized_metric_funcs
             Iter2: IntoIterator<Item = Elem2>,
             Iter2::IntoIter: Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
-            Elem2: PartialEq<Elem1> + HashableChar + Copy
+            Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s1_iter = s1.into_iter();
             let s2_iter = s2.into_iter();
@@ -54,7 +56,9 @@ macro_rules! build_normalized_metric_funcs
             Iter2: IntoIterator<Item = Elem2>,
             Iter2::IntoIter: Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
-            Elem2: PartialEq<Elem1> + HashableChar + Copy
+            Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s1_iter = s1.into_iter();
             let s2_iter = s2.into_iter();
@@ -90,7 +94,9 @@ macro_rules! build_normalized_metric_funcs
             Iter2: IntoIterator<Item = Elem2>,
             Iter2::IntoIter: Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
-            Elem2: PartialEq<Elem1> + HashableChar + Copy
+            Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s1_iter = s1.into_iter();
             let s2_iter = s2.into_iter();
@@ -116,7 +122,9 @@ macro_rules! build_normalized_metric_funcs
             Iter2: IntoIterator<Item = Elem2>,
             Iter2::IntoIter: Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
-            Elem2: PartialEq<Elem1> + HashableChar + Copy
+            Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let cutoff_score = norm_sim_to_norm_dist(score_cutoff);
             let hint_score = norm_sim_to_norm_dist(score_hint);
@@ -152,7 +160,9 @@ macro_rules! build_distance_metric_funcs
             Iter2: IntoIterator<Item = Elem2>,
             Iter2::IntoIter: Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
-            Elem2: PartialEq<Elem1> + HashableChar + Copy
+            Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s1_iter = s1.into_iter();
             let s2_iter = s2.into_iter();
@@ -177,7 +187,9 @@ macro_rules! build_distance_metric_funcs
             Iter2: IntoIterator<Item = Elem2>,
             Iter2::IntoIter: Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
-            Elem2: PartialEq<Elem1> + HashableChar + Copy
+            Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s1_iter = s1.into_iter();
             let s2_iter = s2.into_iter();
@@ -203,7 +215,9 @@ macro_rules! build_distance_metric_funcs
             Iter2: IntoIterator<Item = Elem2>,
             Iter2::IntoIter: Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
-            Elem2: PartialEq<Elem1> + HashableChar + Copy
+            Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s1_iter = s1.into_iter();
             let s2_iter = s2.into_iter();
@@ -245,7 +259,9 @@ macro_rules! build_similarity_metric_funcs
             Iter2: IntoIterator<Item = Elem2>,
             Iter2::IntoIter: Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
-            Elem2: PartialEq<Elem1> + HashableChar + Copy
+            Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s1_iter = s1.into_iter();
             let s2_iter = s2.into_iter();
@@ -270,7 +286,9 @@ macro_rules! build_similarity_metric_funcs
             Iter2: IntoIterator<Item = Elem2>,
             Iter2::IntoIter: Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
-            Elem2: PartialEq<Elem1> + HashableChar + Copy
+            Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s1_iter = s1.into_iter();
             let s2_iter = s2.into_iter();
@@ -297,6 +315,8 @@ macro_rules! build_similarity_metric_funcs
             Iter2::IntoIter: Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s1_iter = s1.into_iter();
             let s2_iter = s2.into_iter();
@@ -344,6 +364,7 @@ macro_rules! build_cached_normalized_metric_funcs {
             Iter2::IntoIter: Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s2_iter = s2.into_iter();
             let score_cutoff = score_cutoff.unwrap_or(1.0);
@@ -364,6 +385,7 @@ macro_rules! build_cached_normalized_metric_funcs {
             Iter2::IntoIter: Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s2_iter = s2.into_iter();
             let maximum = self.maximum(s2_iter.clone(), len2);
@@ -396,6 +418,7 @@ macro_rules! build_cached_normalized_metric_funcs {
             Iter2::IntoIter: Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s2_iter = s2.into_iter();
             let score_cutoff = score_cutoff.unwrap_or(0.0);
@@ -416,6 +439,7 @@ macro_rules! build_cached_normalized_metric_funcs {
             Iter2::IntoIter: Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let cutoff_score = norm_sim_to_norm_dist(score_cutoff);
             let hint_score = norm_sim_to_norm_dist(score_hint);
@@ -453,6 +477,7 @@ macro_rules! build_cached_distance_metric_funcs {
             Iter2::IntoIter: Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s2_iter = s2.into_iter();
             let score_cutoff = score_cutoff.unwrap_or($worst_distance);
@@ -473,6 +498,7 @@ macro_rules! build_cached_distance_metric_funcs {
             Iter2::IntoIter: Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s2_iter = s2.into_iter();
             let score_cutoff = score_cutoff.unwrap_or($worst_similarity);
@@ -493,6 +519,7 @@ macro_rules! build_cached_distance_metric_funcs {
             Iter2::IntoIter: Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s2_iter = s2.into_iter();
             let maximum = self.maximum(s2_iter.clone(), len2);
@@ -535,6 +562,7 @@ macro_rules! build_cached_similarity_metric_funcs {
             Iter2::IntoIter: Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s2_iter = s2.into_iter();
             let score_cutoff = score_cutoff.unwrap_or($worst_distance);
@@ -555,6 +583,7 @@ macro_rules! build_cached_similarity_metric_funcs {
             Iter2::IntoIter: Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s2_iter = s2.into_iter();
             let score_cutoff = score_cutoff.unwrap_or($worst_similarity);
@@ -575,6 +604,7 @@ macro_rules! build_cached_similarity_metric_funcs {
             Iter2::IntoIter: Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s2_iter = s2.into_iter();
             let maximum = self.maximum(s2_iter.clone(), len2);

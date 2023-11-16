@@ -1,4 +1,6 @@
-use crate::details::common::{norm_sim_to_norm_dist, HashableChar, UnrefIterator};
+use crate::details::common::{
+    find_common_prefix, find_common_suffix, norm_sim_to_norm_dist, HashableChar, UnrefIterator,
+};
 use crate::details::distance::{
     build_cached_distance_metric_funcs, build_cached_normalized_metric_funcs,
     build_distance_metric_funcs, build_normalized_metric_funcs,
@@ -172,18 +174,27 @@ where
     Iter2::IntoIter: Clone,
     Elem1: PartialEq<Elem2>,
     Elem2: PartialEq<Elem1>,
+    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     let min_edits = _levenshtein_min_distance(len1, len2, weights);
     if min_edits > score_cutoff {
         return score_cutoff + 1;
     }
 
-    /* common affix does not effect Levenshtein distance */
-    // todo how to do this in rust
-    // remove_common_affix(s1, s2);
-    // todo update len
+    // common affix does not effect Levenshtein distance
+    let s1_iter = s1.into_iter();
+    let s2_iter = s2.into_iter();
+    let suffix_len = find_common_suffix(s1_iter.clone(), s2_iter.clone());
+    let s1_iter = s1_iter.take(len1 - suffix_len);
+    let s2_iter = s2_iter.take(len2 - suffix_len);
+    let prefix_len = find_common_prefix(s1_iter.clone(), s2_iter.clone());
+    let s1_iter = s1_iter.skip(prefix_len);
+    let s2_iter = s2_iter.skip(prefix_len);
+    let len1 = len1 - prefix_len - suffix_len;
+    let len2 = len2 - prefix_len - suffix_len;
 
-    generalized_levenshtein_wagner_fischer(s1, len1, s2, len2, weights, score_cutoff)
+    generalized_levenshtein_wagner_fischer(s1_iter, len1, s2_iter, len2, weights, score_cutoff)
 }
 
 /// An encoded mbleven model table.
@@ -951,6 +962,8 @@ where
     Iter2::IntoIter: Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     // upper bound
     let score_cutoff = min(score_cutoff, max(len1, len2));
@@ -1035,15 +1048,22 @@ where
     }
 
     // common affix does not effect Levenshtein distance
-    // todo
-    // remove_common_affix(s1, s2);
-    // todo update len
+    let s1_iter = s1.into_iter();
+    let s2_iter = s2.into_iter();
+    let suffix_len = find_common_suffix(s1_iter.clone(), s2_iter.clone());
+    let s1_iter = s1_iter.take(len1 - suffix_len);
+    let s2_iter = s2_iter.take(len2 - suffix_len);
+    let prefix_len = find_common_prefix(s1_iter.clone(), s2_iter.clone());
+    let s1_iter = s1_iter.skip(prefix_len);
+    let s2_iter = s2_iter.skip(prefix_len);
+    let len1 = len1 - prefix_len - suffix_len;
+    let len2 = len2 - prefix_len - suffix_len;
 
     if len1 == 0 || len2 == 0 {
         return len1 + len2;
     }
 
-    levenshtein_mbleven2018(s1, len1, s2, len2, score_cutoff)
+    levenshtein_mbleven2018(s1_iter, len1, s2_iter, len2, score_cutoff)
 }
 
 fn uniform_levenshtein_distance_without_pm<Iter1, Iter2, Elem1, Elem2>(
@@ -1061,6 +1081,8 @@ where
     Iter2::IntoIter: Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     if len1 < len2 {
         return uniform_levenshtein_distance_without_pm(
@@ -1085,17 +1107,25 @@ where
         return score_cutoff + 1;
     }
 
-    /* common affix does not effect Levenshtein distance */
-    // todo how to do this in rust
-    // remove_common_affix(s1, s2);
-    // todo update len
+    // common affix does not effect Levenshtein distance
+    let s1_iter = s1.into_iter();
+    let s2_iter = s2.into_iter();
+    // todo is this really the best way to remove the common affix?
+    let suffix_len = find_common_suffix(s1_iter.clone(), s2_iter.clone());
+    let s1_iter = s1_iter.take(len1 - suffix_len);
+    let s2_iter = s2_iter.take(len2 - suffix_len);
+    let prefix_len = find_common_prefix(s1_iter.clone(), s2_iter.clone());
+    let s1_iter = s1_iter.skip(prefix_len);
+    let s2_iter = s2_iter.skip(prefix_len);
+    let len1 = len1 - prefix_len - suffix_len;
+    let len2 = len2 - prefix_len - suffix_len;
 
     if len1 == 0 || len2 == 0 {
         return len1 + len2;
     }
 
     if score_cutoff < 4 {
-        return levenshtein_mbleven2018(s1, len1, s2, len2, score_cutoff);
+        return levenshtein_mbleven2018(s1_iter, len1, s2_iter, len2, score_cutoff);
     }
 
     // todo could safe up to 25% even without score_cutoff when ignoring irrelevant paths
@@ -1104,8 +1134,6 @@ where
 
     /* when the short strings has less then 65 elements Hyyrös' algorithm can be used */
     if len2 <= 64 {
-        let s2_iter = s2.into_iter();
-
         // rust fails to elide the copy when returning the array
         // from PatternMatchVector::new so manually inline it
         //let block = PatternMatchVector::new(s2_iter.clone());
@@ -1117,15 +1145,18 @@ where
         pm.insert(s2_iter.clone());
 
         let res: LevenshteinResult<0, 0> =
-            levenshtein_hyrroe2003(&pm, s2_iter, len2, s1, len1, score_cutoff);
+            levenshtein_hyrroe2003(&pm, s2_iter, len2, s1_iter, len1, score_cutoff);
         res.dist
     } else if full_band <= 64 {
-        let res: LevenshteinResult<0, 0> =
-            levenshtein_hyrroe2003_small_band_without_pm(s1, len1, s2, len2, score_cutoff);
+        let res: LevenshteinResult<0, 0> = levenshtein_hyrroe2003_small_band_without_pm(
+            s1_iter,
+            len1,
+            s2_iter,
+            len2,
+            score_cutoff,
+        );
         res.dist
     } else {
-        let s1_iter = s1.into_iter();
-        let s2_iter = s2.into_iter();
         let mut pm = BlockPatternMatchVector::new(len1);
         pm.insert(s1_iter.clone());
         while score_hint < score_cutoff {
@@ -1192,6 +1223,8 @@ where
     Iter2::IntoIter: Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     // for very short sequences the bitparallel algorithm is not worth it
     if len1 * len2 < 90 {
@@ -1263,6 +1296,8 @@ where
     Iter2::IntoIter: Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     if weights.insert_cost == weights.delete_cost {
         /* when insertions + deletions operations are free there can not be any edit distance */
@@ -1355,6 +1390,8 @@ impl Levenshtein {
         Iter2::IntoIter: Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+        <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
         let weights = weights.unwrap_or(LevenshteinWeightTable {
             insert_cost: 1,
@@ -1379,6 +1416,8 @@ where
     Iter2::IntoIter: Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     Levenshtein::distance(s1, s2, weights, score_cutoff, score_hint)
 }
@@ -1397,6 +1436,8 @@ where
     Iter2::IntoIter: Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     Levenshtein::similarity(s1, s2, weights, score_cutoff, score_hint)
 }
@@ -1415,6 +1456,8 @@ where
     Iter2::IntoIter: Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     Levenshtein::normalized_distance(s1, s2, weights, score_cutoff, score_hint)
 }
@@ -1433,6 +1476,8 @@ where
     Iter2::IntoIter: Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     Levenshtein::normalized_similarity(s1, s2, weights, score_cutoff, score_hint)
 }
@@ -1492,6 +1537,7 @@ where
         Iter2::IntoIter: Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
         _levenshtein_distance_with_pm(
             &self.pm,
@@ -1543,6 +1589,8 @@ mod tests {
         Iter2::IntoIter: Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+        <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();
@@ -1588,6 +1636,8 @@ mod tests {
         Iter2::IntoIter: Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+        <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();

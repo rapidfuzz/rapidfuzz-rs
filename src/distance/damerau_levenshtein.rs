@@ -1,4 +1,6 @@
-use crate::details::common::{norm_sim_to_norm_dist, HashableChar, UnrefIterator};
+use crate::details::common::{
+    find_common_prefix, find_common_suffix, norm_sim_to_norm_dist, HashableChar, UnrefIterator,
+};
 use crate::details::distance::{
     build_cached_distance_metric_funcs, build_cached_normalized_metric_funcs,
     build_distance_metric_funcs, build_normalized_metric_funcs,
@@ -118,15 +120,26 @@ where
     Iter2::IntoIter: Clone,
     Elem1: PartialEq<Elem2> + HashableChar,
     Elem2: PartialEq<Elem1> + HashableChar,
+    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     if score_cutoff < len1.abs_diff(len2) {
         return score_cutoff + 1;
     }
 
-    /* common affix does not effect Levenshtein distance */
-    // todo
-    //remove_common_affix(s1, s2);
-    damerau_damerau_levenshtein_distance_zhao(s1, len1, s2, len2, score_cutoff)
+    // common affix does not effect Levenshtein distance
+    let s1_iter = s1.into_iter();
+    let s2_iter = s2.into_iter();
+    let suffix_len = find_common_suffix(s1_iter.clone(), s2_iter.clone());
+    let s1_iter = s1_iter.take(len1 - suffix_len);
+    let s2_iter = s2_iter.take(len2 - suffix_len);
+    let prefix_len = find_common_prefix(s1_iter.clone(), s2_iter.clone());
+    let s1_iter = s1_iter.skip(prefix_len);
+    let s2_iter = s2_iter.skip(prefix_len);
+    let len1 = len1 - prefix_len - suffix_len;
+    let len2 = len2 - prefix_len - suffix_len;
+
+    damerau_damerau_levenshtein_distance_zhao(s1_iter, len1, s2_iter, len2, score_cutoff)
 }
 
 pub(crate) struct DamerauLevenshtein {}
@@ -166,6 +179,8 @@ impl DamerauLevenshtein {
         Iter2::IntoIter: Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+        <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
         damerau_damerau_levenshtein_distance_impl(s1, len1, s2, len2, score_cutoff)
     }
@@ -184,6 +199,8 @@ where
     Iter2::IntoIter: Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     DamerauLevenshtein::distance(s1, s2, score_cutoff, score_hint)
 }
@@ -201,6 +218,8 @@ where
     Iter2::IntoIter: Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     DamerauLevenshtein::similarity(s1, s2, score_cutoff, score_hint)
 }
@@ -218,6 +237,8 @@ where
     Iter2::IntoIter: Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     DamerauLevenshtein::normalized_distance(s1, s2, score_cutoff, score_hint)
 }
@@ -235,6 +256,8 @@ where
     Iter2::IntoIter: Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     DamerauLevenshtein::normalized_similarity(s1, s2, score_cutoff, score_hint)
 }
@@ -282,6 +305,7 @@ where
         Iter2::IntoIter: Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
         damerau_damerau_levenshtein_distance_impl(
             UnrefIterator {
@@ -328,6 +352,8 @@ mod tests {
         Iter2::IntoIter: Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+        <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();
@@ -371,6 +397,8 @@ mod tests {
         Iter2::IntoIter: Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+        <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();

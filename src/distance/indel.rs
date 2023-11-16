@@ -43,6 +43,8 @@ impl Indel {
         Iter2::IntoIter: Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+        <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
         let s1 = s1.into_iter();
         let s2 = s2.into_iter();
@@ -80,6 +82,8 @@ where
     Iter2::IntoIter: Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     Indel::distance(s1, s2, score_cutoff, score_hint)
 }
@@ -97,6 +101,8 @@ where
     Iter2::IntoIter: Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     Indel::similarity(s1, s2, score_cutoff, score_hint)
 }
@@ -114,6 +120,8 @@ where
     Iter2::IntoIter: Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     Indel::normalized_distance(s1, s2, score_cutoff, score_hint)
 }
@@ -131,6 +139,8 @@ where
     Iter2::IntoIter: Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     Indel::normalized_similarity(s1, s2, score_cutoff, score_hint)
 }
@@ -150,6 +160,8 @@ where
     Iter2::IntoIter: Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
+    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     let maximum = len1 + len2;
     let lcs_cutoff = if maximum / 2 >= score_cutoff {
@@ -210,6 +222,7 @@ where
         Iter2::IntoIter: Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
         let s2 = s2.into_iter();
         let maximum = self.maximum(s2.clone(), len2);
