@@ -1868,14 +1868,11 @@ mod tests {
 
     #[test]
     fn test_large_band() {
-        let example1 = OCR_EXAMPLE1.to_vec();
-        let example2 = OCR_EXAMPLE2.to_vec();
-
         assert_eq!(106514, OCR_EXAMPLE1.iter().count());
         assert_eq!(107244, OCR_EXAMPLE2.iter().count());
 
-        assert_eq!(5278, distance(&example1, &example2, None, None, None));
-        assert_eq!(2501, distance(&example1, &example2, None, Some(2500), None));
-        assert_eq!(5278, distance(&example1, &example2, None, None, Some(0)));
+        assert_eq!(5278, distance(OCR_EXAMPLE1.iter(), OCR_EXAMPLE2.iter(), None, None, None));
+        assert_eq!(2501, distance(OCR_EXAMPLE1.iter(), OCR_EXAMPLE2.iter(), None, Some(2500), None));
+        assert_eq!(5278, distance(OCR_EXAMPLE1.iter(), OCR_EXAMPLE2.iter(), None, None, Some(0)));
     }
 }
