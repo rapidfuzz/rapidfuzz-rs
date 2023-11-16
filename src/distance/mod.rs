@@ -3,6 +3,8 @@ pub(crate) mod hamming;
 pub(crate) mod indel;
 pub(crate) mod lcs_seq;
 pub(crate) mod levenshtein;
+pub(crate) mod postfix;
+pub(crate) mod prefix;
 
 pub use damerau_levenshtein::{
     damerau_levenshtein_distance, damerau_levenshtein_normalized_distance,
@@ -28,6 +30,16 @@ pub use lcs_seq::{
 pub use hamming::{
     hamming_distance, hamming_normalized_distance, hamming_normalized_similarity,
     hamming_similarity, HammingError,
+};
+
+pub use prefix::{
+    prefix_distance, prefix_normalized_distance, prefix_normalized_similarity, prefix_similarity,
+    CachedPrefix,
+};
+
+pub use postfix::{
+    postfix_distance, postfix_normalized_distance, postfix_normalized_similarity,
+    postfix_similarity, CachedPostfix,
 };
 
 #[cfg(test)]
