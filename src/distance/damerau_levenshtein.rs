@@ -186,7 +186,7 @@ impl DamerauLevenshtein {
     }
 }
 
-pub fn damerau_levenshtein_distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn distance<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: Option<usize>,
@@ -205,7 +205,7 @@ where
     DamerauLevenshtein::distance(s1, s2, score_cutoff, score_hint)
 }
 
-pub fn damerau_levenshtein_similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn similarity<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: Option<usize>,
@@ -224,7 +224,7 @@ where
     DamerauLevenshtein::similarity(s1, s2, score_cutoff, score_hint)
 }
 
-pub fn damerau_levenshtein_normalized_distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: Option<f64>,
@@ -243,7 +243,7 @@ where
     DamerauLevenshtein::normalized_distance(s1, s2, score_cutoff, score_hint)
 }
 
-pub fn damerau_levenshtein_normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: Option<f64>,
@@ -357,8 +357,8 @@ mod tests {
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();
-        let res1 = damerau_levenshtein_distance(s1.clone(), s2.clone(), score_cutoff, score_hint);
-        let res2 = damerau_levenshtein_distance(s2.clone(), s1.clone(), score_cutoff, score_hint);
+        let res1 = distance(s1.clone(), s2.clone(), score_cutoff, score_hint);
+        let res2 = distance(s2.clone(), s1.clone(), score_cutoff, score_hint);
 
         let scorer1 = CachedDamerauLevenshtein::new(s1.clone());
         let res3 = scorer1.distance(s2.clone(), score_cutoff, score_hint);
@@ -402,18 +402,8 @@ mod tests {
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();
-        let res1 = damerau_levenshtein_normalized_similarity(
-            s1.clone(),
-            s2.clone(),
-            score_cutoff,
-            score_hint,
-        );
-        let res2 = damerau_levenshtein_normalized_similarity(
-            s2.clone(),
-            s1.clone(),
-            score_cutoff,
-            score_hint,
-        );
+        let res1 = normalized_similarity(s1.clone(), s2.clone(), score_cutoff, score_hint);
+        let res2 = normalized_similarity(s2.clone(), s1.clone(), score_cutoff, score_hint);
         let scorer1 = CachedDamerauLevenshtein::new(s1.clone());
         let res3 = scorer1.normalized_similarity(s2.clone(), score_cutoff, score_hint);
         let scorer2 = CachedDamerauLevenshtein::new(s2.clone());

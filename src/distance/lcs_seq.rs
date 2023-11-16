@@ -598,7 +598,7 @@ impl LcsSeq {
     }
 }
 
-pub fn lcs_seq_distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn distance<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: Option<usize>,
@@ -617,7 +617,7 @@ where
     LcsSeq::distance(s1, s2, score_cutoff, score_hint)
 }
 
-pub fn lcs_seq_similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn similarity<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: Option<usize>,
@@ -636,7 +636,7 @@ where
     LcsSeq::similarity(s1, s2, score_cutoff, score_hint)
 }
 
-pub fn lcs_seq_normalized_distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: Option<f64>,
@@ -655,7 +655,7 @@ where
     LcsSeq::normalized_distance(s1, s2, score_cutoff, score_hint)
 }
 
-pub fn lcs_seq_normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: Option<f64>,
@@ -767,8 +767,8 @@ mod tests {
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();
-        let res1 = lcs_seq_distance(s1.clone(), s2.clone(), score_cutoff, score_hint);
-        let res2 = lcs_seq_distance(s2.clone(), s1.clone(), score_cutoff, score_hint);
+        let res1 = distance(s1.clone(), s2.clone(), score_cutoff, score_hint);
+        let res2 = distance(s2.clone(), s1.clone(), score_cutoff, score_hint);
 
         let scorer1 = CachedLcsSeq::new(s1.clone());
         let res3 = scorer1.distance(s2.clone(), score_cutoff, score_hint);
@@ -812,8 +812,8 @@ mod tests {
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();
-        let res1 = lcs_seq_similarity(s1.clone(), s2.clone(), score_cutoff, score_hint);
-        let res2 = lcs_seq_similarity(s2.clone(), s1.clone(), score_cutoff, score_hint);
+        let res1 = similarity(s1.clone(), s2.clone(), score_cutoff, score_hint);
+        let res2 = similarity(s2.clone(), s1.clone(), score_cutoff, score_hint);
 
         let scorer1 = CachedLcsSeq::new(s1.clone());
         let res3 = scorer1.similarity(s2.clone(), score_cutoff, score_hint);
@@ -857,8 +857,8 @@ mod tests {
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();
-        let res1 = lcs_seq_normalized_distance(s1.clone(), s2.clone(), score_cutoff, score_hint);
-        let res2 = lcs_seq_normalized_distance(s2.clone(), s1.clone(), score_cutoff, score_hint);
+        let res1 = normalized_distance(s1.clone(), s2.clone(), score_cutoff, score_hint);
+        let res2 = normalized_distance(s2.clone(), s1.clone(), score_cutoff, score_hint);
         let scorer1 = CachedLcsSeq::new(s1.clone());
         let res3 = scorer1.normalized_distance(s2.clone(), score_cutoff, score_hint);
         let scorer2 = CachedLcsSeq::new(s2.clone());
@@ -903,8 +903,8 @@ mod tests {
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();
-        let res1 = lcs_seq_normalized_similarity(s1.clone(), s2.clone(), score_cutoff, score_hint);
-        let res2 = lcs_seq_normalized_similarity(s2.clone(), s1.clone(), score_cutoff, score_hint);
+        let res1 = normalized_similarity(s1.clone(), s2.clone(), score_cutoff, score_hint);
+        let res2 = normalized_similarity(s2.clone(), s1.clone(), score_cutoff, score_hint);
         let scorer1 = CachedLcsSeq::new(s1.clone());
         let res3 = scorer1.normalized_similarity(s2.clone(), score_cutoff, score_hint);
         let scorer2 = CachedLcsSeq::new(s2.clone());

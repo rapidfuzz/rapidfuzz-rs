@@ -98,7 +98,7 @@ impl Hamming {
     }
 }
 
-pub fn hamming_distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn distance<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     pad: bool,
@@ -136,7 +136,7 @@ where
     ))
 }
 
-pub fn hamming_similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn similarity<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     pad: bool,
@@ -174,7 +174,7 @@ where
     ))
 }
 
-pub fn hamming_normalized_distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     pad: bool,
@@ -212,7 +212,7 @@ where
     ))
 }
 
-pub fn hamming_normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     pad: bool,
@@ -450,7 +450,7 @@ mod tests {
     fn assert_hamming_dist(dist: usize, str1: &str, str2: &str) {
         assert_eq!(
             Ok(dist),
-            hamming_distance(str1.chars(), str2.chars(), false, None, None)
+            distance(str1.chars(), str2.chars(), false, None, None)
         );
     }
 
@@ -466,10 +466,7 @@ mod tests {
 
     #[test]
     fn hamming_numbers() {
-        assert_eq!(
-            Ok(1),
-            hamming_distance([1, 2, 4], [1, 2, 3], false, None, None)
-        );
+        assert_eq!(Ok(1), distance([1, 2, 4], [1, 2, 3], false, None, None));
     }
 
     #[test]
@@ -486,12 +483,12 @@ mod tests {
     fn hamming_unequal_length() {
         assert_eq!(
             Err(HammingError::DifferentLengthArgs),
-            hamming_distance("ham".chars(), "hamming".chars(), false, None, None)
+            distance("ham".chars(), "hamming".chars(), false, None, None)
         );
 
         assert_eq!(
             Ok(4),
-            hamming_distance("ham".chars(), "hamming".chars(), true, None, None)
+            distance("ham".chars(), "hamming".chars(), true, None, None)
         );
     }
 

@@ -1,13 +1,16 @@
 [package]
-description="rapid string matching library"
+description="rapid fuzzy string matching library"
 name = "rapidfuzz"
 version = "0.2.0"
-authors = ["maxbachmann"]
+authors = ["maxbachmann <oss@maxbachmann.de>"]
 edition = "2018"
 readme = "Readme.md"
 license = "MIT"
-maintenance = { status = "actively-developed" }
-
+homepage = "https://github.com/maxbachmann/rapidfuzz-rs"
+repository = "https://github.com/maxbachmann/rapidfuzz-rs"
+documentation = "https://docs.rs/rapidfuzz/"
+keywords = ["string", "similarity", "Hamming", "Levenshtein", "Jaro"]
+exclude = [".*"]
 
 [lib]
 name = "rapidfuzz"

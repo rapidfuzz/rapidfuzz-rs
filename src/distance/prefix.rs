@@ -54,7 +54,7 @@ impl Prefix {
     }
 }
 
-pub fn prefix_distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn distance<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: Option<usize>,
@@ -73,7 +73,7 @@ where
     Prefix::distance(s1, s2, score_cutoff, score_hint)
 }
 
-pub fn prefix_similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn similarity<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: Option<usize>,
@@ -92,7 +92,7 @@ where
     Prefix::similarity(s1, s2, score_cutoff, score_hint)
 }
 
-pub fn prefix_normalized_distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: Option<f64>,
@@ -111,7 +111,7 @@ where
     Prefix::normalized_distance(s1, s2, score_cutoff, score_hint)
 }
 
-pub fn prefix_normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: Option<f64>,

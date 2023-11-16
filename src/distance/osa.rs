@@ -255,7 +255,7 @@ impl Osa {
     }
 }
 
-pub fn osa_distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn distance<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: Option<usize>,
@@ -274,7 +274,7 @@ where
     Osa::distance(s1, s2, score_cutoff, score_hint)
 }
 
-pub fn osa_similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn similarity<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: Option<usize>,
@@ -293,7 +293,7 @@ where
     Osa::similarity(s1, s2, score_cutoff, score_hint)
 }
 
-pub fn osa_normalized_distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: Option<f64>,
@@ -312,7 +312,7 @@ where
     Osa::normalized_distance(s1, s2, score_cutoff, score_hint)
 }
 
-pub fn osa_normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: Option<f64>,
@@ -439,8 +439,8 @@ mod tests {
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();
-        let res1 = osa_distance(s1.clone(), s2.clone(), score_cutoff, score_hint);
-        let res2 = osa_distance(s2.clone(), s1.clone(), score_cutoff, score_hint);
+        let res1 = distance(s1.clone(), s2.clone(), score_cutoff, score_hint);
+        let res2 = distance(s2.clone(), s1.clone(), score_cutoff, score_hint);
 
         let scorer1 = CachedOsa::new(s1.clone());
         let res3 = scorer1.distance(s2.clone(), score_cutoff, score_hint);

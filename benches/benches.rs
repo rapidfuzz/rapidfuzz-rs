@@ -34,7 +34,7 @@ fn benchmark(c: &mut Criterion) {
 
         group.bench_with_input(BenchmarkId::new("rapidfuzz", i), &(&s1, &s2), |b, val| {
             b.iter(|| {
-                black_box(distance::osa_distance(
+                black_box(distance::osa::distance(
                     val.0.chars(),
                     val.1.chars(),
                     None,
@@ -43,7 +43,7 @@ fn benchmark(c: &mut Criterion) {
             })
         });
 
-        let cached = distance::CachedLevenshtein::new(s1.chars(), None);
+        let cached = distance::osa::CachedOsa::new(s1.chars());
         group.bench_with_input(
             BenchmarkId::new("cached_rapidfuzz", i),
             &(&cached, &s2),
@@ -71,7 +71,7 @@ fn benchmark(c: &mut Criterion) {
 
         group.bench_with_input(BenchmarkId::new("rapidfuzz", i), &(&s1, &s2), |b, val| {
             b.iter(|| {
-                black_box(distance::levenshtein_distance(
+                black_box(distance::levenshtein::distance(
                     val.0.bytes(),
                     val.1.bytes(),
                     None,
@@ -89,7 +89,7 @@ fn benchmark(c: &mut Criterion) {
             })
         });
 
-        let cached = distance::CachedLevenshtein::new(s1.bytes(), None);
+        let cached = distance::levenshtein::CachedLevenshtein::new(s1.bytes(), None);
         group.bench_with_input(
             BenchmarkId::new("cached_rapidfuzz", i),
             &(&cached, &s2),
@@ -111,7 +111,7 @@ fn benchmark(c: &mut Criterion) {
 
         group.bench_with_input(BenchmarkId::new("rapidfuzz", i), &(&s1, &s2), |b, val| {
             b.iter(|| {
-                black_box(distance::damerau_levenshtein_distance(
+                black_box(distance::damerau_levenshtein::distance(
                     val.0.bytes(),
                     val.1.bytes(),
                     None,

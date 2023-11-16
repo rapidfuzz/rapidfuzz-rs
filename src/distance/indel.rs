@@ -69,7 +69,7 @@ impl Indel {
     }
 }
 
-pub fn indel_distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn distance<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: Option<usize>,
@@ -88,7 +88,7 @@ where
     Indel::distance(s1, s2, score_cutoff, score_hint)
 }
 
-pub fn indel_similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn similarity<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: Option<usize>,
@@ -107,7 +107,7 @@ where
     Indel::similarity(s1, s2, score_cutoff, score_hint)
 }
 
-pub fn indel_normalized_distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: Option<f64>,
@@ -126,7 +126,7 @@ where
     Indel::normalized_distance(s1, s2, score_cutoff, score_hint)
 }
 
-pub fn indel_normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: Option<f64>,

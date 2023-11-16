@@ -1402,7 +1402,7 @@ impl Levenshtein {
     }
 }
 
-pub fn levenshtein_distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn distance<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     weights: Option<LevenshteinWeightTable>,
@@ -1422,7 +1422,7 @@ where
     Levenshtein::distance(s1, s2, weights, score_cutoff, score_hint)
 }
 
-pub fn levenshtein_similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn similarity<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     weights: Option<LevenshteinWeightTable>,
@@ -1442,7 +1442,7 @@ where
     Levenshtein::similarity(s1, s2, weights, score_cutoff, score_hint)
 }
 
-pub fn levenshtein_normalized_distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     weights: Option<LevenshteinWeightTable>,
@@ -1462,7 +1462,7 @@ where
     Levenshtein::normalized_distance(s1, s2, weights, score_cutoff, score_hint)
 }
 
-pub fn levenshtein_normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     weights: Option<LevenshteinWeightTable>,
@@ -1594,8 +1594,8 @@ mod tests {
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();
-        let res1 = levenshtein_distance(s1.clone(), s2.clone(), weights, score_cutoff, score_hint);
-        let res2 = levenshtein_distance(s2.clone(), s1.clone(), weights, score_cutoff, score_hint);
+        let res1 = distance(s1.clone(), s2.clone(), weights, score_cutoff, score_hint);
+        let res2 = distance(s2.clone(), s1.clone(), weights, score_cutoff, score_hint);
 
         let scorer1 = CachedLevenshtein::new(s1.clone(), weights);
         let res3 = scorer1.distance(s2.clone(), score_cutoff, score_hint);
@@ -1641,20 +1641,8 @@ mod tests {
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();
-        let res1 = levenshtein_normalized_similarity(
-            s1.clone(),
-            s2.clone(),
-            weights,
-            score_cutoff,
-            score_hint,
-        );
-        let res2 = levenshtein_normalized_similarity(
-            s2.clone(),
-            s1.clone(),
-            weights,
-            score_cutoff,
-            score_hint,
-        );
+        let res1 = normalized_similarity(s1.clone(), s2.clone(), weights, score_cutoff, score_hint);
+        let res2 = normalized_similarity(s2.clone(), s1.clone(), weights, score_cutoff, score_hint);
         let scorer1 = CachedLevenshtein::new(s1.clone(), weights);
         let res3 = scorer1.normalized_similarity(s2.clone(), score_cutoff, score_hint);
         let scorer2 = CachedLevenshtein::new(s2.clone(), weights);
@@ -1886,17 +1874,8 @@ mod tests {
         assert_eq!(106514, OCR_EXAMPLE1.iter().count());
         assert_eq!(107244, OCR_EXAMPLE2.iter().count());
 
-        assert_eq!(
-            5278,
-            levenshtein_distance(&example1, &example2, None, None, None)
-        );
-        assert_eq!(
-            2501,
-            levenshtein_distance(&example1, &example2, None, Some(2500), None)
-        );
-        assert_eq!(
-            5278,
-            levenshtein_distance(&example1, &example2, None, None, Some(0))
-        );
+        assert_eq!(5278, distance(&example1, &example2, None, None, None));
+        assert_eq!(2501, distance(&example1, &example2, None, Some(2500), None));
+        assert_eq!(5278, distance(&example1, &example2, None, None, Some(0)));
     }
 }

@@ -56,7 +56,7 @@ impl Postfix {
     }
 }
 
-pub fn postfix_distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn distance<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: Option<usize>,
@@ -75,7 +75,7 @@ where
     Postfix::distance(s1, s2, score_cutoff, score_hint)
 }
 
-pub fn postfix_similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn similarity<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: Option<usize>,
@@ -94,7 +94,7 @@ where
     Postfix::similarity(s1, s2, score_cutoff, score_hint)
 }
 
-pub fn postfix_normalized_distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: Option<f64>,
@@ -113,7 +113,7 @@ where
     Postfix::normalized_distance(s1, s2, score_cutoff, score_hint)
 }
 
-pub fn postfix_normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: Option<f64>,

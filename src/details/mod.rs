@@ -1,6 +1,6 @@
-pub mod common;
-pub mod distance;
-pub mod intrinsics;
-pub mod pattern_match_vector;
-pub mod growing_hashmap;
-pub mod matrix;
+pub(crate) mod common;
+pub(crate) mod distance;
+pub(crate) mod growing_hashmap;
+pub(crate) mod intrinsics;
+pub(crate) mod matrix;
+pub(crate) mod pattern_match_vector;
