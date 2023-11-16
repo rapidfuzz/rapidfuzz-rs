@@ -3,6 +3,7 @@ pub(crate) mod hamming;
 pub(crate) mod indel;
 pub(crate) mod lcs_seq;
 pub(crate) mod levenshtein;
+pub(crate) mod osa;
 pub(crate) mod postfix;
 pub(crate) mod prefix;
 
@@ -40,6 +41,10 @@ pub use prefix::{
 pub use postfix::{
     postfix_distance, postfix_normalized_distance, postfix_normalized_similarity,
     postfix_similarity, CachedPostfix,
+};
+
+pub use osa::{
+    osa_distance, osa_normalized_distance, osa_normalized_similarity, osa_similarity, CachedOsa,
 };
 
 #[cfg(test)]

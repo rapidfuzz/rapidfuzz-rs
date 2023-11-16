@@ -47,7 +47,7 @@ impl Postfix {
         <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
         <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
-        let dist = find_common_suffix(s1.into_iter(), s2.into_iter());
+        let dist = find_common_suffix(s1, s2);
         if dist >= score_cutoff {
             dist
         } else {
@@ -181,7 +181,7 @@ where
             UnrefIterator {
                 seq: self.s1.iter(),
             },
-            s2.into_iter(),
+            s2,
         );
         if dist >= score_cutoff {
             dist

@@ -1,13 +1,10 @@
 use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use rand::{distributions::Alphanumeric, Rng};
 
-use rapidfuzz::distance::{
-    damerau_levenshtein_distance, hamming_distance, levenshtein_distance, CachedDamerauLevenshtein,
-    CachedLevenshtein, LevenshteinWeightTable,
-};
+use rapidfuzz::distance;
 
 use std::str::Bytes;
-use strsim::{generic_damerau_levenshtein, generic_levenshtein};
+use strsim::{generic_damerau_levenshtein, generic_levenshtein, osa_distance};
 
 fn generate(len: usize) -> String {
     rand::thread_rng()
@@ -29,7 +26,7 @@ impl<'a, 'b> IntoIterator for &'a StringWrapper<'b> {
 }
 
 fn benchmark(c: &mut Criterion) {
-    let mut group = c.benchmark_group("Levenshtein");
+    let mut group = c.benchmark_group("OSA");
 
     for i in [4, 6, 8, 10, 12, 16, 32, 64, 128, 256].iter() {
         let s1 = generate(*i);
@@ -37,7 +34,44 @@ fn benchmark(c: &mut Criterion) {
 
         group.bench_with_input(BenchmarkId::new("rapidfuzz", i), &(&s1, &s2), |b, val| {
             b.iter(|| {
-                black_box(levenshtein_distance(
+                black_box(distance::osa_distance(
+                    val.0.chars(),
+                    val.1.chars(),
+                    None,
+                    None,
+                ));
+            })
+        });
+
+        let cached = distance::CachedLevenshtein::new(s1.chars(), None);
+        group.bench_with_input(
+            BenchmarkId::new("cached_rapidfuzz", i),
+            &(&cached, &s2),
+            |b, val| {
+                b.iter(|| {
+                    black_box(cached.distance(val.1.chars(), None, None));
+                })
+            },
+        );
+
+        group.bench_with_input(BenchmarkId::new("strsim", i), &(&s1, &s2), |b, val| {
+            b.iter(|| {
+                black_box(osa_distance(val.0, val.1));
+            })
+        });
+    }
+
+    group.finish();
+
+    group = c.benchmark_group("Levenshtein");
+
+    for i in [4, 6, 8, 10, 12, 16, 32, 64, 128, 256].iter() {
+        let s1 = generate(*i);
+        let s2 = generate(*i);
+
+        group.bench_with_input(BenchmarkId::new("rapidfuzz", i), &(&s1, &s2), |b, val| {
+            b.iter(|| {
+                black_box(distance::levenshtein_distance(
                     val.0.bytes(),
                     val.1.bytes(),
                     None,
@@ -55,7 +89,7 @@ fn benchmark(c: &mut Criterion) {
             })
         });
 
-        let cached = CachedLevenshtein::new(s1.bytes(), None);
+        let cached = distance::CachedLevenshtein::new(s1.bytes(), None);
         group.bench_with_input(
             BenchmarkId::new("cached_rapidfuzz", i),
             &(&cached, &s2),
@@ -77,7 +111,7 @@ fn benchmark(c: &mut Criterion) {
 
         group.bench_with_input(BenchmarkId::new("rapidfuzz", i), &(&s1, &s2), |b, val| {
             b.iter(|| {
-                black_box(damerau_levenshtein_distance(
+                black_box(distance::damerau_levenshtein_distance(
                     val.0.bytes(),
                     val.1.bytes(),
                     None,

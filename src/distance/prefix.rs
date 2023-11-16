@@ -45,7 +45,7 @@ impl Prefix {
         Elem1: PartialEq<Elem2> + HashableChar,
         Elem2: PartialEq<Elem1> + HashableChar,
     {
-        let dist = find_common_prefix(s1.into_iter(), s2.into_iter());
+        let dist = find_common_prefix(s1, s2);
         if dist >= score_cutoff {
             dist
         } else {
@@ -179,7 +179,7 @@ where
             UnrefIterator {
                 seq: self.s1.iter(),
             },
-            s2.into_iter(),
+            s2,
         );
         if dist >= score_cutoff {
             dist
