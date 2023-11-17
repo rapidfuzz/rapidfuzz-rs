@@ -62,7 +62,7 @@ macro_rules! build_normalized_metric_funcs
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
         {
-            let maximum = $impl_type::maximum(s1.clone(), len1, s2.clone(), len2, $($v,)*);
+            let maximum = $impl_type::maximum(len1, len2 $(,$v)*);
 
             let cutoff_distance = (maximum as f64 * score_cutoff).ceil() as $res_type;
             let hint_distance = (maximum as f64 * score_hint).ceil() as $res_type;
@@ -245,7 +245,7 @@ macro_rules! build_distance_metric_funcs
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
         {
-            let maximum = $impl_type::maximum(s1.clone(), len1, s2.clone(), len2, $($v,)*);
+            let maximum = $impl_type::maximum(len1, len2 $(,$v)*);
             if score_cutoff > maximum {
                 return 0 as $res_type;
             }
@@ -350,7 +350,7 @@ macro_rules! build_similarity_metric_funcs
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
         {
-            let maximum = $impl_type::maximum(s1.clone(), len1, s2.clone(), len2, $($v,)*);
+            let maximum = $impl_type::maximum(len1, len2 $(,$v)*);
 
             let cutoff_similarity = if maximum >= score_cutoff {
                 maximum - score_cutoff
@@ -418,7 +418,7 @@ macro_rules! build_cached_normalized_metric_funcs {
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
         {
-            let maximum = self.maximum(s2.clone(), len2);
+            let maximum = self.maximum(len2);
 
             let cutoff_distance = (maximum as f64 * score_cutoff).ceil() as $res_type;
             let hint_distance = (maximum as f64 * score_hint).ceil() as $res_type;
@@ -556,7 +556,7 @@ macro_rules! build_cached_distance_metric_funcs {
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
         {
-            let maximum = self.maximum(s2.clone(), len2);
+            let maximum = self.maximum(len2);
             if score_cutoff > maximum {
                 return 0 as $res_type;
             }
@@ -644,7 +644,7 @@ macro_rules! build_cached_similarity_metric_funcs {
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
         {
-            let maximum = self.maximum(s2.clone(), len2);
+            let maximum = self.maximum(len2);
 
             let cutoff_similarity = if maximum >= score_cutoff {
                 maximum - score_cutoff

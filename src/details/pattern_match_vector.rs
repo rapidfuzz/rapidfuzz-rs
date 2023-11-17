@@ -83,8 +83,7 @@ impl PatternMatchVector {
     // on return
     /*pub fn new<Iter1, CharT>(s1: Iter1) -> PatternMatchVector
     where
-        Iter1: IntoIterator<Item = CharT>,
-        Iter1::IntoIter: Clone,
+        Iter1: Iterator<Item = CharT>,
         CharT: HashableChar,
     {
         let mut vec = PatternMatchVector {
@@ -98,12 +97,11 @@ impl PatternMatchVector {
 
     pub fn insert<Iter1, CharT>(&mut self, s1: Iter1)
     where
-        Iter1: IntoIterator<Item = CharT>,
-        Iter1::IntoIter: Clone,
+        Iter1: Iterator<Item = CharT>,
         CharT: HashableChar,
     {
         let mut mask: u64 = 1;
-        for ch in s1.into_iter() {
+        for ch in s1 {
             self.insert_mask(ch, mask);
             mask <<= 1;
         }
@@ -190,12 +188,11 @@ impl BlockPatternMatchVector {
 
     pub fn insert<Iter1, CharT>(&mut self, s1: Iter1)
     where
-        Iter1: IntoIterator<Item = CharT>,
-        Iter1::IntoIter: Clone,
+        Iter1: Iterator<Item = CharT>,
         CharT: HashableChar,
     {
         let mut mask: u64 = 1;
-        for (i, ch) in s1.into_iter().enumerate() {
+        for (i, ch) in s1.enumerate() {
             let block = i / 64;
             self.insert_mask(block, ch, mask);
             mask = mask.rotate_left(1);

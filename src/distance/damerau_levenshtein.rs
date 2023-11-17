@@ -134,20 +134,7 @@ pub(crate) struct DamerauLevenshtein {}
 impl DamerauLevenshtein {
     build_distance_metric_funcs!(DamerauLevenshtein, usize, 0, usize::MAX);
 
-    fn maximum<Iter1, Iter2, Elem1, Elem2>(
-        _s1: Iter1,
-        len1: usize,
-        _s2: Iter2,
-        len2: usize,
-    ) -> usize
-    where
-        Iter1: IntoIterator<Item = Elem1>,
-        Iter1::IntoIter: Clone,
-        Iter2: IntoIterator<Item = Elem2>,
-        Iter2::IntoIter: Clone,
-        Elem1: PartialEq<Elem2> + HashableChar,
-        Elem2: PartialEq<Elem1> + HashableChar,
-    {
+    fn maximum(len1: usize, len2: usize) -> usize {
         max(len1, len2)
     }
 
@@ -268,11 +255,7 @@ where
         CachedDamerauLevenshtein { s1 }
     }
 
-    fn maximum<Iter2, Elem2>(&self, _s2: Iter2, len2: usize) -> usize
-    where
-        Iter2: IntoIterator<Item = Elem2>,
-        Iter2::IntoIter: Clone,
-    {
+    fn maximum(&self, len2: usize) -> usize {
         max(self.s1.len(), len2)
     }
 

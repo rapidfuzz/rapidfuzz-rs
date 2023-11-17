@@ -580,20 +580,7 @@ pub(crate) struct Jaro {}
 impl Jaro {
     build_similarity_metric_funcs!(Jaro, f64, 0.0, 1.0);
 
-    fn maximum<Iter1, Iter2, Elem1, Elem2>(
-        _s1: Iter1,
-        _len1: usize,
-        _s2: Iter2,
-        _len2: usize,
-    ) -> f64
-    where
-        Iter1: IntoIterator<Item = Elem1>,
-        Iter1::IntoIter: Clone,
-        Iter2: IntoIterator<Item = Elem2>,
-        Iter2::IntoIter: Clone,
-        Elem1: PartialEq<Elem2>,
-        Elem2: PartialEq<Elem1>,
-    {
+    fn maximum(_len1: usize, _len2: usize) -> f64 {
         1.0
     }
 
@@ -719,11 +706,7 @@ where
         CachedJaro { s1, pm }
     }
 
-    fn maximum<Iter2, Elem2>(&self, _s2: Iter2, _len2: usize) -> f64
-    where
-        Iter2: IntoIterator<Item = Elem2>,
-        Iter2::IntoIter: Clone,
-    {
+    fn maximum(&self, _len2: usize) -> f64 {
         1.0
     }
 

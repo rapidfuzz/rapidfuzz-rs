@@ -1305,21 +1305,7 @@ struct Levenshtein {}
 impl Levenshtein {
     build_distance_metric_funcs!(Levenshtein, usize, 0, usize::MAX, weights: Option<LevenshteinWeightTable>);
 
-    fn maximum<Iter1, Iter2, Elem1, Elem2>(
-        _s1: Iter1,
-        len1: usize,
-        _s2: Iter2,
-        len2: usize,
-        weights_: Option<LevenshteinWeightTable>,
-    ) -> usize
-    where
-        Iter1: IntoIterator<Item = Elem1>,
-        Iter1::IntoIter: Clone,
-        Iter2: IntoIterator<Item = Elem2>,
-        Iter2::IntoIter: Clone,
-        Elem1: PartialEq<Elem2>,
-        Elem2: PartialEq<Elem1>,
-    {
+    fn maximum(len1: usize, len2: usize, weights_: Option<LevenshteinWeightTable>) -> usize {
         let weights = weights_.unwrap_or(LevenshteinWeightTable {
             insert_cost: 1,
             delete_cost: 1,
@@ -1467,11 +1453,7 @@ where
         CachedLevenshtein { s1, pm, weights }
     }
 
-    fn maximum<Iter2, Elem2>(&self, _s2: Iter2, len2: usize) -> usize
-    where
-        Iter2: IntoIterator<Item = Elem2>,
-        Iter2::IntoIter: Clone,
-    {
+    fn maximum(&self, len2: usize) -> usize {
         _levenshtein_maximum(self.s1.len(), len2, &self.weights)
     }
 
