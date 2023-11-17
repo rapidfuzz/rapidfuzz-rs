@@ -606,16 +606,12 @@ impl Jaro {
         _score_hint: f64,
     ) -> f64
     where
-        Iter1: IntoIterator<Item = Elem1>,
-        Iter1::IntoIter: Clone,
-        Iter2: IntoIterator<Item = Elem2>,
-        Iter2::IntoIter: Clone,
+        Iter1: Iterator<Item = Elem1> + Clone + DoubleEndedIterator,
+        Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
-        <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-        <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
-        jaro_similarity_without_pm(s1.into_iter(), len1, s2.into_iter(), len2, score_cutoff)
+        jaro_similarity_without_pm(s1.into_iter(), len1, s2, len2, score_cutoff)
     }
 }
 
@@ -739,11 +735,9 @@ where
         _score_hint: f64,
     ) -> f64
     where
-        Iter2: IntoIterator<Item = Elem2>,
-        Iter2::IntoIter: Clone,
+        Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
-        <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
         jaro_similarity_with_pm(
             &self.pm,
@@ -751,7 +745,7 @@ where
                 seq: self.s1.iter(),
             },
             self.s1.len(),
-            s2.into_iter(),
+            s2,
             len2,
             score_cutoff,
         )

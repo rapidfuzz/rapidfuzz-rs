@@ -38,10 +38,8 @@ impl Prefix {
         _score_hint: usize,
     ) -> usize
     where
-        Iter1: IntoIterator<Item = Elem1>,
-        Iter1::IntoIter: Clone,
-        Iter2: IntoIterator<Item = Elem2>,
-        Iter2::IntoIter: Clone,
+        Iter1: Iterator<Item = Elem1> + Clone,
+        Iter2: Iterator<Item = Elem2> + Clone,
         Elem1: PartialEq<Elem2> + HashableChar,
         Elem2: PartialEq<Elem1> + HashableChar,
     {
@@ -169,11 +167,9 @@ where
         _score_hint: usize,
     ) -> usize
     where
-        Iter2: IntoIterator<Item = Elem2>,
-        Iter2::IntoIter: Clone,
+        Iter2: Iterator<Item = Elem2> + Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
-        <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
         let dist = find_common_prefix(
             UnrefIterator {

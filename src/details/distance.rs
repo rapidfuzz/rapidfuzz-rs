@@ -57,26 +57,20 @@ macro_rules! build_normalized_metric_funcs
             score_hint: f64
         ) -> f64
         where
-            Iter1: IntoIterator<Item = Elem1>,
-            Iter1::IntoIter: Clone,
-            Iter2: IntoIterator<Item = Elem2>,
-            Iter2::IntoIter: Clone,
+            Iter1: Iterator<Item = Elem1> + Clone + DoubleEndedIterator,
+            Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
-            <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
-            let s1_iter = s1.into_iter();
-            let s2_iter = s2.into_iter();
-            let maximum = $impl_type::maximum(s1_iter.clone(), len1, s2_iter.clone(), len2, $($v,)*);
+            let maximum = $impl_type::maximum(s1.clone(), len1, s2.clone(), len2, $($v,)*);
 
             let cutoff_distance = (maximum as f64 * score_cutoff).ceil() as $res_type;
             let hint_distance = (maximum as f64 * score_hint).ceil() as $res_type;
 
             let dist = $impl_type::_distance(
-                s1_iter,
+                s1,
                 len1,
-                s2_iter,
+                s2,
                 len2,
                 $($v,)*
                 cutoff_distance,
@@ -137,14 +131,10 @@ macro_rules! build_normalized_metric_funcs
             score_hint: f64
         ) -> f64
         where
-            Iter1: IntoIterator<Item = Elem1>,
-            Iter1::IntoIter: Clone,
-            Iter2: IntoIterator<Item = Elem2>,
-            Iter2::IntoIter: Clone,
+            Iter1: Iterator<Item = Elem1> + Clone + DoubleEndedIterator,
+            Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
-            <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let cutoff_score = norm_sim_to_norm_dist(score_cutoff);
             let hint_score = norm_sim_to_norm_dist(score_hint);
@@ -250,18 +240,12 @@ macro_rules! build_distance_metric_funcs
             mut score_hint: $res_type
         ) -> $res_type
         where
-            Iter1: IntoIterator<Item = Elem1>,
-            Iter1::IntoIter: Clone,
-            Iter2: IntoIterator<Item = Elem2>,
-            Iter2::IntoIter: Clone,
+            Iter1: Iterator<Item = Elem1> + Clone + DoubleEndedIterator,
+            Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
-            <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
-            let s1_iter = s1.into_iter();
-            let s2_iter = s2.into_iter();
-            let maximum = $impl_type::maximum(s1_iter.clone(), len1, s2_iter.clone(), len2, $($v,)*);
+            let maximum = $impl_type::maximum(s1.clone(), len1, s2.clone(), len2, $($v,)*);
             if score_cutoff > maximum {
                 return 0 as $res_type;
             }
@@ -269,7 +253,7 @@ macro_rules! build_distance_metric_funcs
             score_hint = score_hint.min(score_cutoff);
             let cutoff_distance = maximum - score_cutoff;
             let hint_distance = maximum - score_hint;
-            let dist = $impl_type::_distance(s1_iter, len1, s2_iter, len2, $($v,)* cutoff_distance, hint_distance);
+            let dist = $impl_type::_distance(s1, len1, s2, len2, $($v,)* cutoff_distance, hint_distance);
             let sim = maximum - dist;
             if sim >= score_cutoff {
                 sim
@@ -361,18 +345,12 @@ macro_rules! build_similarity_metric_funcs
             score_hint: $res_type,
         ) -> $res_type
         where
-            Iter1: IntoIterator<Item = Elem1>,
-            Iter1::IntoIter: Clone,
-            Iter2: IntoIterator<Item = Elem2>,
-            Iter2::IntoIter: Clone,
+            Iter1: Iterator<Item = Elem1> + Clone + DoubleEndedIterator,
+            Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
-            <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
-            let s1_iter = s1.into_iter();
-            let s2_iter = s2.into_iter();
-            let maximum = $impl_type::maximum(s1_iter.clone(), len1, s2_iter.clone(), len2, $($v,)*);
+            let maximum = $impl_type::maximum(s1.clone(), len1, s2.clone(), len2, $($v,)*);
 
             let cutoff_similarity = if maximum >= score_cutoff {
                 maximum - score_cutoff
@@ -385,7 +363,7 @@ macro_rules! build_similarity_metric_funcs
                 $worst_similarity as $res_type
             };
 
-            let sim = $impl_type::_similarity(s1_iter, len1, s2_iter, len2, $($v,)* cutoff_similarity, hint_similarity);
+            let sim = $impl_type::_similarity(s1, len1, s2, len2, $($v,)* cutoff_similarity, hint_similarity);
             let dist = maximum - sim;
 
             if dist <= score_cutoff {
@@ -436,19 +414,16 @@ macro_rules! build_cached_normalized_metric_funcs {
             score_hint: f64,
         ) -> f64
         where
-            Iter2: IntoIterator<Item = Elem2>,
-            Iter2::IntoIter: Clone,
+            Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
-            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
-            let s2_iter = s2.into_iter();
-            let maximum = self.maximum(s2_iter.clone(), len2);
+            let maximum = self.maximum(s2.clone(), len2);
 
             let cutoff_distance = (maximum as f64 * score_cutoff).ceil() as $res_type;
             let hint_distance = (maximum as f64 * score_hint).ceil() as $res_type;
 
-            let dist = self._distance(s2_iter, len2, cutoff_distance, hint_distance);
+            let dist = self._distance(s2, len2, cutoff_distance, hint_distance);
             let norm_dist = if maximum != 0 as $res_type {
                 dist as f64 / maximum as f64
             } else {
@@ -493,11 +468,9 @@ macro_rules! build_cached_normalized_metric_funcs {
             score_hint: f64,
         ) -> f64
         where
-            Iter2: IntoIterator<Item = Elem2>,
-            Iter2::IntoIter: Clone,
+            Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
-            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let cutoff_score = norm_sim_to_norm_dist(score_cutoff);
             let hint_score = norm_sim_to_norm_dist(score_hint);
@@ -579,14 +552,11 @@ macro_rules! build_cached_distance_metric_funcs {
             mut score_hint: $res_type,
         ) -> $res_type
         where
-            Iter2: IntoIterator<Item = Elem2>,
-            Iter2::IntoIter: Clone,
+            Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
-            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
-            let s2_iter = s2.into_iter();
-            let maximum = self.maximum(s2_iter.clone(), len2);
+            let maximum = self.maximum(s2.clone(), len2);
             if score_cutoff > maximum {
                 return 0 as $res_type;
             }
@@ -594,7 +564,7 @@ macro_rules! build_cached_distance_metric_funcs {
             score_hint = score_hint.min(score_cutoff);
             let cutoff_distance = maximum - score_cutoff;
             let hint_distance = maximum - score_hint;
-            let dist = self._distance(s2_iter, len2, cutoff_distance, hint_distance);
+            let dist = self._distance(s2, len2, cutoff_distance, hint_distance);
             let sim = maximum - dist;
             if sim >= score_cutoff {
                 sim
@@ -670,14 +640,11 @@ macro_rules! build_cached_similarity_metric_funcs {
             score_hint: $res_type,
         ) -> $res_type
         where
-            Iter2: IntoIterator<Item = Elem2>,
-            Iter2::IntoIter: Clone,
+            Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
-            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
-            let s2_iter = s2.into_iter();
-            let maximum = self.maximum(s2_iter.clone(), len2);
+            let maximum = self.maximum(s2.clone(), len2);
 
             let cutoff_similarity = if maximum >= score_cutoff {
                 maximum - score_cutoff
@@ -690,7 +657,7 @@ macro_rules! build_cached_similarity_metric_funcs {
                 $worst_similarity as $res_type
             };
 
-            let sim = self._similarity(s2_iter, len2, cutoff_similarity, hint_similarity);
+            let sim = self._similarity(s2, len2, cutoff_similarity, hint_similarity);
             let dist = maximum - sim;
 
             if dist <= score_cutoff {

@@ -202,10 +202,8 @@ impl Osa {
         _score_hint: usize,
     ) -> usize
     where
-        Iter1: IntoIterator<Item = Elem1>,
-        Iter1::IntoIter: Clone,
-        Iter2: IntoIterator<Item = Elem2>,
-        Iter2::IntoIter: Clone,
+        Iter1: Iterator<Item = Elem1> + Clone + DoubleEndedIterator,
+        Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
         <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
@@ -215,11 +213,9 @@ impl Osa {
             return Osa::_distance(s2, len2, s1, len1, score_cutoff, _score_hint);
         }
 
-        let s1_iter_orig = s1.into_iter();
-        let s2_iter_orig = s2.into_iter();
-        let suffix_len = find_common_suffix(s1_iter_orig.clone(), s2_iter_orig.clone());
-        let s1_iter_no_suffix = s1_iter_orig.take(len1 - suffix_len);
-        let s2_iter_no_suffix = s2_iter_orig.take(len2 - suffix_len);
+        let suffix_len = find_common_suffix(s1.clone(), s2.clone());
+        let s1_iter_no_suffix = s1.take(len1 - suffix_len);
+        let s2_iter_no_suffix = s2.take(len2 - suffix_len);
         let prefix_len = find_common_prefix(s1_iter_no_suffix.clone(), s2_iter_no_suffix.clone());
         let s1_iter = s1_iter_no_suffix.skip(prefix_len);
         let s2_iter = s2_iter_no_suffix.skip(prefix_len);
@@ -371,11 +367,9 @@ where
         _score_hint: usize,
     ) -> usize
     where
-        Iter2: IntoIterator<Item = Elem2>,
-        Iter2::IntoIter: Clone,
+        Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
-        <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
         let dist = if self.s1.is_empty() {
             len2
@@ -388,7 +382,7 @@ where
                     seq: self.s1.iter(),
                 },
                 self.s1.len(),
-                s2.into_iter(),
+                s2,
                 len2,
                 score_cutoff,
             )
@@ -399,7 +393,7 @@ where
                     seq: self.s1.iter(),
                 },
                 self.s1.len(),
-                s2.into_iter(),
+                s2,
                 len2,
                 score_cutoff,
             )

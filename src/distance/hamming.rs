@@ -24,19 +24,20 @@ impl Display for HammingError {
 
 impl Error for HammingError {}
 
-fn hamming_impl<Iter1, Iter2, Elem1, Elem2>(s1: Iter1, s2: Iter2, score_cutoff: usize) -> usize
+fn hamming_impl<Iter1, Iter2, Elem1, Elem2>(
+    mut s1: Iter1,
+    mut s2: Iter2,
+    score_cutoff: usize,
+) -> usize
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1>,
+    Iter2: Iterator<Item = Elem2>,
     Elem1: PartialEq<Elem2> + HashableChar,
     Elem2: PartialEq<Elem1> + HashableChar,
 {
-    let (mut it_s1, mut it_s2) = (s1.into_iter(), s2.into_iter());
     let mut dist = 0;
     loop {
-        match (it_s1.next(), it_s2.next()) {
+        match (s1.next(), s2.next()) {
             (Some(ch1), Some(ch2)) => {
                 if ch1 != ch2 {
                     dist += 1
@@ -87,10 +88,8 @@ impl Hamming {
         _score_hint: usize,
     ) -> usize
     where
-        Iter1: IntoIterator<Item = Elem1>,
-        Iter1::IntoIter: Clone,
-        Iter2: IntoIterator<Item = Elem2>,
-        Iter2::IntoIter: Clone,
+        Iter1: Iterator<Item = Elem1>,
+        Iter2: Iterator<Item = Elem2>,
         Elem1: PartialEq<Elem2> + HashableChar,
         Elem2: PartialEq<Elem1> + HashableChar,
     {
@@ -281,11 +280,9 @@ where
         _score_hint: usize,
     ) -> usize
     where
-        Iter2: IntoIterator<Item = Elem2>,
-        Iter2::IntoIter: Clone,
+        Iter2: Iterator<Item = Elem2>,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
-        <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
         hamming_impl(
             UnrefIterator {
