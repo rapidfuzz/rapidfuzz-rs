@@ -96,15 +96,13 @@ fn flag_similar_characters_word<PmVec, Iter1, Iter2, Elem1, Elem2>(
     pm: &PmVec,
     _s1: Iter1,
     len1: usize,
-    s2: Iter2,
+    mut s2: Iter2,
     len2: usize,
     bound: usize,
 ) -> FlaggedCharsWord
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1>,
+    Iter2: Iterator<Item = Elem2>,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
     PmVec: BitVectorInterface,
@@ -120,9 +118,8 @@ where
 
     let mut bound_mask = bit_mask_lsb_u64(bound + 1);
 
-    let mut s2_iter = s2.into_iter();
     let mut j = 0;
-    for ch2 in (&mut s2_iter).take(bound) {
+    for ch2 in (&mut s2).take(bound) {
         let pm_j = pm.get(0, ch2) & bound_mask & !flagged.p_flag;
         flagged.p_flag |= blsi_u64(pm_j);
         flagged.t_flag |= ((pm_j != 0) as u64) << j;
@@ -131,7 +128,7 @@ where
         j += 1;
     }
 
-    for ch2 in s2_iter {
+    for ch2 in s2 {
         let pm_j = pm.get(0, ch2) & bound_mask & !flagged.p_flag;
         flagged.p_flag |= blsi_u64(pm_j);
         flagged.t_flag |= ((pm_j != 0) as u64) << j;
@@ -246,10 +243,8 @@ fn flag_similar_characters_block<Iter1, Iter2, Elem1, Elem2>(
     bound: usize,
 ) -> FlaggedCharsMultiword
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1>,
+    Iter2: Iterator<Item = Elem2>,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
 {
@@ -270,7 +265,7 @@ where
         first_mask: !0_u64,
     };
 
-    for (j, ch2) in s2.into_iter().enumerate() {
+    for (j, ch2) in s2.enumerate() {
         flag_similar_characters_step(pm, ch2, &mut flagged, j, &bound_mask);
 
         if j + bound + 1 < len1 {
@@ -301,20 +296,17 @@ fn count_transpositions_word<PmVec, Iter2, Elem2>(
     flagged: &FlaggedCharsWord,
 ) -> usize
 where
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter2: Iterator<Item = Elem2> + Clone,
     PmVec: BitVectorInterface,
     Elem2: HashableChar,
 {
-    let s2_iter = s2.into_iter();
-
     let mut p_flag = flagged.p_flag;
     let mut t_flag = flagged.t_flag;
     let mut transpositions = 0;
     while t_flag != 0 {
         let pattern_flag_mask = blsi_u64(p_flag);
 
-        let ch2 = s2_iter
+        let ch2 = s2
             .clone()
             .nth(t_flag.trailing_zeros() as usize)
             .expect("these can't be outside, since we set the flags based on available indexes");
@@ -329,14 +321,13 @@ where
 
 fn count_transpositions_block<Iter2, Elem2>(
     pm: &BlockPatternMatchVector,
-    s2: Iter2,
+    mut s2: Iter2,
     _len2: usize,
     flagged: &FlaggedCharsMultiword,
     mut flagged_chars: usize,
 ) -> usize
 where
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter2: Iterator<Item = Elem2> + Clone,
     Elem2: HashableChar,
 {
     let mut text_word: usize = 0;
@@ -344,14 +335,13 @@ where
     let mut t_flag = flagged.t_flag[text_word];
     let mut p_flag = flagged.p_flag[pattern_word];
 
-    let mut s2_iter = s2.into_iter();
     let mut transpositions = 0;
     while flagged_chars != 0 {
         while t_flag == 0 {
             text_word += 1;
-            // this was the easiest way I could find to actually skip 64 elements
+            // todo this was the easiest way I could find to actually skip 64 elements
             for _ in 0..64 {
-                s2_iter.next();
+                s2.next();
             }
             t_flag = flagged.t_flag[text_word];
         }
@@ -364,12 +354,9 @@ where
 
             let pattern_flag_mask = blsi_u64(p_flag);
 
-            let ch2 = s2_iter
-                .clone()
-                .nth(t_flag.trailing_zeros() as usize)
-                .expect(
-                    "these can't be outside, since we set the flags based on available indexes",
-                );
+            let ch2 = s2.clone().nth(t_flag.trailing_zeros() as usize).expect(
+                "these can't be outside, since we set the flags based on available indexes",
+            );
 
             transpositions += ((pm.get(pattern_word, ch2) & pattern_flag_mask) == 0) as usize;
 
@@ -390,10 +377,8 @@ pub(crate) fn jaro_similarity_without_pm<Iter1, Iter2, Elem1, Elem2>(
     score_cutoff: f64,
 ) -> f64
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1> + Clone,
+    Iter2: Iterator<Item = Elem2> + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
 {
@@ -414,7 +399,7 @@ where
     }
 
     if len1_orig == 1 && len2_orig == 1 {
-        return s1.into_iter().eq(s2) as u64 as f64;
+        return s1.eq(s2) as u64 as f64;
     }
 
     // since jaro uses a sliding window some parts of T/P might never be in
@@ -435,8 +420,8 @@ where
     };
     // todo this is a hack so the type of the iterator stays the same
     // preferably we could just remove them from the iterator without the type changing
-    let s1_iter_win = s1.into_iter().take(len1);
-    let s2_iter_win = s2.into_iter().take(len2);
+    let s1_iter_win = s1.take(len1);
+    let s2_iter_win = s2.take(len2);
 
     // common prefix never includes Transpositions
     let mut common_chars = find_common_prefix(s1_iter_win.clone(), s2_iter_win.clone());
@@ -504,10 +489,8 @@ pub(crate) fn jaro_similarity_with_pm<Iter1, Iter2, Elem1, Elem2>(
     score_cutoff: f64,
 ) -> f64
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1> + Clone,
+    Iter2: Iterator<Item = Elem2> + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
 {
@@ -528,7 +511,7 @@ where
     }
 
     if len1_orig == 1 && len2_orig == 1 {
-        return s1.into_iter().eq(s2) as u64 as f64;
+        return s1.eq(s2) as u64 as f64;
     }
 
     // since jaro uses a sliding window some parts of T/P might never be in
@@ -549,8 +532,8 @@ where
     };
     // todo this is a hack so the type of the iterator stays the same
     // preferably we could just remove them from the iterator without the type changing
-    let s1_iter = s1.into_iter().take(len1);
-    let s2_iter = s2.into_iter().take(len2);
+    let s1_iter = s1.take(len1);
+    let s2_iter = s2.take(len2);
 
     // common prefix never includes Transpositions
     let mut common_chars = 0_usize;
@@ -632,7 +615,7 @@ impl Jaro {
         <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
         <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
-        jaro_similarity_without_pm(s1, len1, s2, len2, score_cutoff)
+        jaro_similarity_without_pm(s1.into_iter(), len1, s2.into_iter(), len2, score_cutoff)
     }
 }
 
@@ -768,7 +751,7 @@ where
                 seq: self.s1.iter(),
             },
             self.s1.len(),
-            s2,
+            s2.into_iter(),
             len2,
             score_cutoff,
         )

@@ -17,18 +17,14 @@ fn jaro_winkler_similarity_without_pm<Iter1, Iter2, Elem1, Elem2>(
     score_cutoff: f64,
 ) -> f64
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1> + Clone,
+    Iter2: Iterator<Item = Elem2> + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
 {
-    let s1_iter = s1.into_iter();
-    let s2_iter = s2.into_iter();
-    let prefix = s1_iter
+    let prefix = s1
         .clone()
-        .zip(s2_iter.clone())
+        .zip(s2.clone())
         .take(4)
         .take_while(|(ch1, ch2)| ch1 == ch2)
         .count();
@@ -43,7 +39,7 @@ where
         }
     }
 
-    let mut sim = jaro_similarity_without_pm(s1_iter, len1, s2_iter, len2, jaro_score_cutoff);
+    let mut sim = jaro_similarity_without_pm(s1, len1, s2, len2, jaro_score_cutoff);
     if sim > 0.7 {
         sim += prefix as f64 * prefix_weight / (1.0 - sim);
     }
@@ -65,18 +61,14 @@ fn jaro_winkler_similarity_with_pm<Iter1, Iter2, Elem1, Elem2>(
     score_cutoff: f64,
 ) -> f64
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1> + Clone,
+    Iter2: Iterator<Item = Elem2> + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
 {
-    let s1_iter = s1.into_iter();
-    let s2_iter = s2.into_iter();
-    let prefix = s1_iter
+    let prefix = s1
         .clone()
-        .zip(s2_iter.clone())
+        .zip(s2.clone())
         .take(4)
         .take_while(|(ch1, ch2)| ch1 == ch2)
         .count();
@@ -91,7 +83,7 @@ where
         }
     }
 
-    let mut sim = jaro_similarity_with_pm(pm, s1_iter, len1, s2_iter, len2, jaro_score_cutoff);
+    let mut sim = jaro_similarity_with_pm(pm, s1, len1, s2, len2, jaro_score_cutoff);
     if sim > 0.7 {
         sim += prefix as f64 * prefix_weight / (1.0 - sim);
     }
@@ -146,9 +138,9 @@ impl JaroWinkler {
         <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
         jaro_winkler_similarity_without_pm(
-            s1,
+            s1.into_iter(),
             len1,
-            s2,
+            s2.into_iter(),
             len2,
             score_cutoff,
             prefix_weight.unwrap_or(0.1),
@@ -297,7 +289,7 @@ where
                 seq: self.s1.iter(),
             },
             self.s1.len(),
-            s2,
+            s2.into_iter(),
             len2,
             self.prefix_weight,
             score_cutoff,

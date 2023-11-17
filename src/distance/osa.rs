@@ -25,10 +25,8 @@ fn osa_hyrroe2003<PmVec, Iter1, Iter2, Elem1, Elem2>(
     score_cutoff: usize,
 ) -> usize
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1>,
+    Iter2: Iterator<Item = Elem2>,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
     PmVec: BitVectorInterface,
@@ -104,10 +102,8 @@ fn osa_hyrroe2003_block<Iter1, Iter2, Elem1, Elem2>(
     score_cutoff: usize,
 ) -> usize
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1>,
+    Iter2: Iterator<Item = Elem2>,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
 {
@@ -392,7 +388,7 @@ where
                     seq: self.s1.iter(),
                 },
                 self.s1.len(),
-                s2,
+                s2.into_iter(),
                 len2,
                 score_cutoff,
             )
@@ -403,7 +399,7 @@ where
                     seq: self.s1.iter(),
                 },
                 self.s1.len(),
-                s2,
+                s2.into_iter(),
                 len2,
                 score_cutoff,
             )

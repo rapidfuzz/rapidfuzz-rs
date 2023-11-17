@@ -154,14 +154,10 @@ pub(crate) fn indel_distance_with_pm<Iter1, Iter2, Elem1, Elem2>(
     score_cutoff: usize,
 ) -> usize
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1> + Clone + DoubleEndedIterator,
+    Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
-    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     let maximum = len1 + len2;
     let lcs_cutoff = if maximum / 2 >= score_cutoff {

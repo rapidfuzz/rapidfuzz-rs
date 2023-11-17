@@ -34,10 +34,8 @@ fn damerau_damerau_levenshtein_distance_zhao<Iter1, Iter2, Elem1, Elem2>(
     score_cutoff: usize,
 ) -> usize
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1>,
+    Iter2: Iterator<Item = Elem2> + Clone,
     Elem1: PartialEq<Elem2> + HashableChar,
     Elem2: PartialEq<Elem1> + HashableChar,
 {
@@ -55,15 +53,14 @@ where
         .chain(0..(size - 1) as isize)
         .collect();
 
-    let s2_iter = s2.into_iter();
-    for (i, ch1) in s1.into_iter().enumerate().map(|(i, ch1)| (i + 1, ch1)) {
+    for (i, ch1) in s1.enumerate().map(|(i, ch1)| (i + 1, ch1)) {
         mem::swap(&mut r, &mut r1);
         let mut last_col_id: isize = -1;
         let mut last_i2l1 = r[1];
         r[1] = i as isize;
         let mut t = max_val;
 
-        for (j, ch2) in s2_iter.clone().enumerate().map(|(j, ch2)| (j + 1, ch2)) {
+        for (j, ch2) in s2.clone().enumerate().map(|(j, ch2)| (j + 1, ch2)) {
             let diag = r1[j] + (ch1 != ch2) as isize;
             let left = r[j] + 1;
             let up = r1[j + 1] + 1;
@@ -110,25 +107,19 @@ fn damerau_damerau_levenshtein_distance_impl<Iter1, Iter2, Elem1, Elem2>(
     score_cutoff: usize,
 ) -> usize
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1> + Clone + DoubleEndedIterator,
+    Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
     Elem1: PartialEq<Elem2> + HashableChar,
     Elem2: PartialEq<Elem1> + HashableChar,
-    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     if score_cutoff < len1.abs_diff(len2) {
         return score_cutoff + 1;
     }
 
     // common affix does not effect Levenshtein distance
-    let s1_iter_orig = s1.into_iter();
-    let s2_iter_orig = s2.into_iter();
-    let suffix_len = find_common_suffix(s1_iter_orig.clone(), s2_iter_orig.clone());
-    let s1_iter_no_suffix = s1_iter_orig.take(len1 - suffix_len);
-    let s2_iter_no_suffix = s2_iter_orig.take(len2 - suffix_len);
+    let suffix_len = find_common_suffix(s1.clone(), s2.clone());
+    let s1_iter_no_suffix = s1.take(len1 - suffix_len);
+    let s2_iter_no_suffix = s2.take(len2 - suffix_len);
     let prefix_len = find_common_prefix(s1_iter_no_suffix.clone(), s2_iter_no_suffix.clone());
     let s1_iter = s1_iter_no_suffix.skip(prefix_len);
     let s2_iter = s2_iter_no_suffix.skip(prefix_len);
@@ -178,7 +169,13 @@ impl DamerauLevenshtein {
         <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
         <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
-        damerau_damerau_levenshtein_distance_impl(s1, len1, s2, len2, score_cutoff)
+        damerau_damerau_levenshtein_distance_impl(
+            s1.into_iter(),
+            len1,
+            s2.into_iter(),
+            len2,
+            score_cutoff,
+        )
     }
 }
 
@@ -308,7 +305,7 @@ where
                 seq: self.s1.iter(),
             },
             self.s1.len(),
-            s2,
+            s2.into_iter(),
             len2,
             score_cutoff,
         )

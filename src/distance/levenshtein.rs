@@ -93,18 +93,15 @@ fn generalized_levenshtein_wagner_fischer<Iter1, Iter2, Elem1, Elem2>(
     score_cutoff: usize,
 ) -> usize
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1> + Clone,
+    Iter2: Iterator<Item = Elem2> + Clone,
     Elem1: PartialEq<Elem2>,
     Elem2: PartialEq<Elem1>,
 {
     let cache_size = len1 + 1;
     let mut cache: Vec<usize> = (0..cache_size).map(|x| x * weights.delete_cost).collect();
 
-    let s1_iter = s1.into_iter();
-    for ch2 in s2.into_iter() {
+    for ch2 in s2 {
         let mut cache_iter = cache.iter_mut().peekable();
         let mut cur_cache: &mut usize = cache_iter
             .next()
@@ -112,7 +109,7 @@ where
         let mut temp = *cur_cache;
         *cur_cache += weights.insert_cost;
 
-        for ch1 in s1_iter.clone() {
+        for ch1 in s1.clone() {
             if ch1 != ch2 {
                 temp = min(
                     *cur_cache + weights.delete_cost,
@@ -178,14 +175,10 @@ fn generalized_levenshtein_distance<Iter1, Iter2, Elem1, Elem2>(
     score_cutoff: usize,
 ) -> usize
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1> + Clone + DoubleEndedIterator,
+    Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
     Elem1: PartialEq<Elem2>,
     Elem2: PartialEq<Elem1>,
-    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     let min_edits = _levenshtein_min_distance(len1, len2, weights);
     if min_edits > score_cutoff {
@@ -193,11 +186,9 @@ where
     }
 
     // common affix does not effect Levenshtein distance
-    let s1_iter_orig = s1.into_iter();
-    let s2_iter_orig = s2.into_iter();
-    let suffix_len = find_common_suffix(s1_iter_orig.clone(), s2_iter_orig.clone());
-    let s1_iter_no_suffix = s1_iter_orig.take(len1 - suffix_len);
-    let s2_iter_no_suffix = s2_iter_orig.take(len2 - suffix_len);
+    let suffix_len = find_common_suffix(s1.clone(), s2.clone());
+    let s1_iter_no_suffix = s1.take(len1 - suffix_len);
+    let s2_iter_no_suffix = s2.take(len2 - suffix_len);
     let prefix_len = find_common_prefix(s1_iter_no_suffix.clone(), s2_iter_no_suffix.clone());
     let s1_iter = s1_iter_no_suffix.skip(prefix_len);
     let s2_iter = s2_iter_no_suffix.skip(prefix_len);
@@ -243,10 +234,8 @@ fn levenshtein_mbleven2018<Iter1, Iter2, Elem1, Elem2>(
     score_cutoff: usize,
 ) -> usize
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1> + Clone,
+    Iter2: Iterator<Item = Elem2> + Clone,
     Elem1: PartialEq<Elem2> + HashableChar,
     Elem2: PartialEq<Elem1> + HashableChar,
 {
@@ -267,12 +256,10 @@ where
     let possible_ops = &LEVENSHTEIN_MBLEVEN2018_MATRIX[ops_index];
     let mut dist = score_cutoff + 1;
 
-    let iter_s1_begin = s1.into_iter();
-    let iter_s2_begin = s2.into_iter();
     for &ops_ in possible_ops.iter() {
         let mut ops = ops_;
-        let mut iter_s1 = iter_s1_begin.clone();
-        let mut iter_s2 = iter_s2_begin.clone();
+        let mut iter_s1 = s1.clone();
+        let mut iter_s2 = s2.clone();
         let mut cur_dist = 0;
 
         let mut cur1 = iter_s1.next();
@@ -350,10 +337,8 @@ fn levenshtein_hyrroe2003<
     score_cutoff: usize,
 ) -> LevenshteinResult<RECORD_MATRIX, RECORD_BIT_ROW>
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1>,
+    Iter2: Iterator<Item = Elem2>,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
     PmVec: BitVectorInterface,
@@ -376,7 +361,7 @@ where
     // mask used when computing D[m,j] in the paper 10^(m-1)
     let mask: u64 = 1_u64 << (len1 - 1);
 
-    for (i, ch2) in s2.into_iter().enumerate() {
+    for (i, ch2) in s2.enumerate() {
         let pm_j = pm.get(0, ch2);
         let x = pm_j;
         let d0 = ((x & vp).wrapping_add(vp) ^ vp) | x | vn;
@@ -421,15 +406,13 @@ fn levenshtein_hyrroe2003_small_band_with_pm<PmVec, Iter1, Iter2, Elem1, Elem2>(
     pm: &PmVec,
     _s1: Iter1,
     len1: usize,
-    s2: Iter2,
+    mut s2: Iter2,
     len2: usize,
     score_cutoff: usize,
 ) -> usize
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1>,
+    Iter2: Iterator<Item = Elem2>,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
     PmVec: BitVectorInterface,
@@ -448,10 +431,8 @@ where
     let break_score =
         (score_cutoff as isize + len2 as isize - (len1 as isize - score_cutoff as isize)) as usize;
 
-    let mut s2_iter = s2.into_iter();
-
     if len1 > score_cutoff {
-        for ch2 in s2_iter.by_ref().take(len1 - score_cutoff) {
+        for ch2 in s2.by_ref().take(len1 - score_cutoff) {
             // Step 1: Computing D0
             let mut pm_j: u64;
             if start_pos < 0 {
@@ -489,7 +470,7 @@ where
         }
     }
 
-    for ch2 in s2_iter {
+    for ch2 in s2 {
         // Step 1: Computing D0
         let mut pm_j: u64;
         if start_pos < 0 {
@@ -542,17 +523,15 @@ fn levenshtein_hyrroe2003_small_band_without_pm<
     Elem1,
     Elem2,
 >(
-    s1: Iter1,
+    mut s1: Iter1,
     len1: usize,
-    s2: Iter2,
+    mut s2: Iter2,
     len2: usize,
     score_cutoff: usize,
 ) -> LevenshteinResult<RECORD_MATRIX, 0>
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1> + Clone,
+    Iter2: Iterator<Item = Elem2> + Clone,
     Elem1: PartialEq<Elem2> + HashableChar,
     Elem2: PartialEq<Elem1> + HashableChar,
     LevenshteinResult<RECORD_MATRIX, 0>: Default,
@@ -599,8 +578,7 @@ where
     };
 
     let mut i = 0 - score_cutoff as isize;
-    let mut s1_iter = s1.into_iter();
-    for ch1 in s1_iter.by_ref().take(score_cutoff) {
+    for ch1 in s1.by_ref().take(score_cutoff) {
         let item = pm.get_mut(ch1);
         item.1 = shr64(item.1, (i - item.0) as usize) | (1_u64 << 63);
         item.0 = i;
@@ -608,10 +586,7 @@ where
     }
 
     // Searching
-    let mut s2_iter = s2.into_iter();
-    // todo I assume in this case it would just take the first len1 - score_cutoff
-    // items out of both iterators but not skip the next element when iterating over the remainder
-    for (ch1, ch2) in (&mut s1_iter).zip(&mut s2_iter).take(len1 - score_cutoff) {
+    for (ch1, ch2) in (&mut s1).zip(&mut s2).take(len1 - score_cutoff) {
         // Step 1: Computing D0
         // update bitmasks online
         {
@@ -651,8 +626,8 @@ where
         i += 1;
     }
 
-    for ch2 in s2_iter {
-        if let Some(ch1) = s1_iter.next() {
+    for ch2 in s2 {
+        if let Some(ch1) = s1.next() {
             let item = pm.get_mut(ch1);
             item.1 = shr64(item.1, (i - item.0) as usize) | (1_u64 << 63);
             item.0 = i;
@@ -714,10 +689,8 @@ fn levenshtein_hyrroe2003_block<
     stop_row: isize,
 ) -> LevenshteinResult<RECORD_MATRIX, RECORD_BIT_ROW>
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1> + Clone,
+    Iter2: Iterator<Item = Elem2> + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
     LevenshteinResult<RECORD_MATRIX, RECORD_BIT_ROW>: Default,
@@ -760,7 +733,7 @@ where
     ) - 1;
 
     // Searching
-    for (row, ch2) in s2.into_iter().enumerate() {
+    for (row, ch2) in s2.enumerate() {
         let mut hp_carry: u64 = 1;
         let mut hn_carry: u64 = 0;
 
@@ -966,14 +939,10 @@ fn uniform_levenshtein_distance_with_pm<Iter1, Iter2, Elem1, Elem2>(
     mut score_hint: usize,
 ) -> usize
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1> + Clone + DoubleEndedIterator,
+    Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
-    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     // upper bound
     score_cutoff = min(score_cutoff, max(len1, len2));
@@ -1008,26 +977,24 @@ where
             return levenshtein_hyrroe2003_small_band_with_pm(pm, s1, len1, s2, len2, score_cutoff);
         }
 
-        let s1_iter = s1.into_iter();
-        let s2_iter = s2.into_iter();
         while score_hint < score_cutoff {
             full_band = min(len1, 2 * score_hint + 1);
 
             let score = if full_band <= 64 {
                 levenshtein_hyrroe2003_small_band_with_pm(
                     pm,
-                    s1_iter.clone(),
+                    s1.clone(),
                     len1,
-                    s2_iter.clone(),
+                    s2.clone(),
                     len2,
                     score_hint,
                 )
             } else {
                 let res: LevenshteinResult<0, 0> = levenshtein_hyrroe2003_block(
                     pm,
-                    s1_iter.clone(),
+                    s1.clone(),
                     len1,
-                    s2_iter.clone(),
+                    s2.clone(),
                     len2,
                     score_hint,
                     -1,
@@ -1045,24 +1012,15 @@ where
             score_hint *= 2;
         }
 
-        let res: LevenshteinResult<0, 0> = levenshtein_hyrroe2003_block(
-            pm,
-            s1_iter.clone(),
-            len1,
-            s2_iter.clone(),
-            len2,
-            score_cutoff,
-            -1,
-        );
+        let res: LevenshteinResult<0, 0> =
+            levenshtein_hyrroe2003_block(pm, s1.clone(), len1, s2.clone(), len2, score_cutoff, -1);
         return res.dist;
     }
 
     // common affix does not effect Levenshtein distance
-    let s1_iter_orig = s1.into_iter();
-    let s2_iter_orig = s2.into_iter();
-    let suffix_len = find_common_suffix(s1_iter_orig.clone(), s2_iter_orig.clone());
-    let s1_iter_no_suffix = s1_iter_orig.take(len1 - suffix_len);
-    let s2_iter_no_suffix = s2_iter_orig.take(len2 - suffix_len);
+    let suffix_len = find_common_suffix(s1.clone(), s2.clone());
+    let s1_iter_no_suffix = s1.take(len1 - suffix_len);
+    let s2_iter_no_suffix = s2.take(len2 - suffix_len);
     let prefix_len = find_common_prefix(s1_iter_no_suffix.clone(), s2_iter_no_suffix.clone());
     let s1_iter = s1_iter_no_suffix.skip(prefix_len);
     let s2_iter = s2_iter_no_suffix.skip(prefix_len);
@@ -1085,14 +1043,10 @@ fn uniform_levenshtein_distance_without_pm<Iter1, Iter2, Elem1, Elem2>(
     mut score_hint: usize,
 ) -> usize
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1> + Clone + DoubleEndedIterator,
+    Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
-    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     if len1 < len2 {
         return uniform_levenshtein_distance_without_pm(
@@ -1118,12 +1072,10 @@ where
     }
 
     // common affix does not effect Levenshtein distance
-    let s1_iter_orig = s1.into_iter();
-    let s2_iter_orig = s2.into_iter();
     // todo is this really the best way to remove the common affix?
-    let suffix_len = find_common_suffix(s1_iter_orig.clone(), s2_iter_orig.clone());
-    let s1_iter_no_suffix = s1_iter_orig.take(len1 - suffix_len);
-    let s2_iter_no_suffix = s2_iter_orig.take(len2 - suffix_len);
+    let suffix_len = find_common_suffix(s1.clone(), s2.clone());
+    let s1_iter_no_suffix = s1.take(len1 - suffix_len);
+    let s2_iter_no_suffix = s2.take(len2 - suffix_len);
     let prefix_len = find_common_prefix(s1_iter_no_suffix.clone(), s2_iter_no_suffix.clone());
     let s1_iter = s1_iter_no_suffix.skip(prefix_len);
     let s2_iter = s2_iter_no_suffix.skip(prefix_len);
@@ -1227,14 +1179,10 @@ fn _levenshtein_distance_without_pm<Iter1, Iter2, Elem1, Elem2>(
     score_hint: usize,
 ) -> usize
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1> + Clone + DoubleEndedIterator,
+    Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
-    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     // for very short sequences the bitparallel algorithm is not worth it
     if len1 * len2 < 90 {
@@ -1300,14 +1248,10 @@ fn _levenshtein_distance_with_pm<Iter1, Iter2, Elem1, Elem2>(
     score_hint: usize,
 ) -> usize
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1> + Clone + DoubleEndedIterator,
+    Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
-    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     if weights.insert_cost == weights.delete_cost {
         /* when insertions + deletions operations are free there can not be any edit distance */
@@ -1408,7 +1352,15 @@ impl Levenshtein {
             delete_cost: 1,
             replace_cost: 1,
         });
-        _levenshtein_distance_without_pm(s1, len1, s2, len2, &weights, score_cutoff, score_hint)
+        _levenshtein_distance_without_pm(
+            s1.into_iter(),
+            len1,
+            s2.into_iter(),
+            len2,
+            &weights,
+            score_cutoff,
+            score_hint,
+        )
     }
 }
 
@@ -1555,7 +1507,7 @@ where
                 seq: self.s1.iter(),
             },
             self.s1.len(),
-            s2,
+            s2.into_iter(),
             len2,
             &self.weights,
             score_cutoff,

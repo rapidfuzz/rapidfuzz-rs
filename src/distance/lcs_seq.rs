@@ -88,10 +88,8 @@ fn lcs_seq_mbleven2018<Iter1, Iter2, Elem1, Elem2>(
     score_cutoff: usize,
 ) -> usize
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1> + Clone,
+    Iter2: Iterator<Item = Elem2> + Clone,
     Elem1: PartialEq<Elem2> + HashableChar,
     Elem2: PartialEq<Elem1> + HashableChar,
 {
@@ -108,12 +106,10 @@ where
     let possible_ops = &LCS_SEQ_MBLEVEN2018_MATRIX[ops_index];
     let mut max_len = 0;
 
-    let iter_s1_begin = s1.into_iter();
-    let iter_s2_begin = s2.into_iter();
     for &ops_ in possible_ops.iter() {
         let mut ops = ops_;
-        let mut iter_s1 = iter_s1_begin.clone();
-        let mut iter_s2 = iter_s2_begin.clone();
+        let mut iter_s1 = s1.clone();
+        let mut iter_s2 = s2.clone();
         let mut cur_len = 0;
 
         let mut cur1 = iter_s1.next();
@@ -161,10 +157,8 @@ fn lcs_unroll<const N: usize, const RECORD_MATRIX: usize, PmVec, Iter1, Iter2, E
     score_cutoff: usize,
 ) -> LcsSeqResult<RECORD_MATRIX>
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1> + Clone,
+    Iter2: Iterator<Item = Elem2> + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
     PmVec: BitVectorInterface,
@@ -177,7 +171,7 @@ where
         res.record_matrix[0].s = ShiftedBitMatrix::<u64>::new(len2, N, !0_u64);
     }
 
-    for (i, ch2) in s2.into_iter().enumerate() {
+    for (i, ch2) in s2.enumerate() {
         let mut carry = false;
 
         let mut calc = |word: usize| {
@@ -234,10 +228,8 @@ fn lcs_blockwise<const RECORD_MATRIX: usize, PmVec, Iter1, Iter2, Elem1, Elem2>(
     score_cutoff: usize,
 ) -> LcsSeqResult<RECORD_MATRIX>
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1> + Clone,
+    Iter2: Iterator<Item = Elem2> + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
     PmVec: BitVectorInterface,
@@ -264,7 +256,7 @@ where
     let mut first_block = 0_usize;
     let mut last_block = min(words, ceil_div_usize(band_width_left + 1, word_size));
 
-    for (row, ch2) in s2.into_iter().enumerate() {
+    for (row, ch2) in s2.enumerate() {
         let mut carry = false;
 
         if RECORD_MATRIX == 1 {
@@ -315,10 +307,8 @@ fn longest_common_subsequence_with_pm<PmVec, Iter1, Iter2, Elem1, Elem2>(
     score_cutoff: usize,
 ) -> usize
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1> + Clone,
+    Iter2: Iterator<Item = Elem2> + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
     PmVec: BitVectorInterface,
@@ -384,18 +374,14 @@ fn longest_common_subsequence_without_pm<Iter1, Iter2, Elem1, Elem2>(
     score_cutoff: usize,
 ) -> usize
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1> + Clone,
+    Iter2: Iterator<Item = Elem2> + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
 {
     if len1 == 0 {
         0
     } else if len1 <= 64 {
-        let s1_iter = s1.into_iter();
-
         // rust fails to elide the copy when returning the array
         // from PatternMatchVector::new so manually inline it
         //let block = PatternMatchVector::new(s2_iter.clone());
@@ -404,16 +390,14 @@ where
             map_signed: BitvectorHashmap::default(),
             extended_ascii: [0; 256],
         };
-        pm.insert(s1_iter.clone());
-        longest_common_subsequence_with_pm(&pm, s1_iter, len1, s2, len2, score_cutoff)
+        pm.insert(s1.clone());
+        longest_common_subsequence_with_pm(&pm, s1, len1, s2, len2, score_cutoff)
     } else {
         // todo add score_hint support
-        let s1_iter = s1.into_iter();
-        let s2_iter = s2.into_iter();
         let mut pm = BlockPatternMatchVector::new(len1);
-        pm.insert(s1_iter.clone());
+        pm.insert(s1.clone());
 
-        longest_common_subsequence_with_pm(&pm, s1_iter, len1, s2_iter, len2, score_cutoff)
+        longest_common_subsequence_with_pm(&pm, s1, len1, s2, len2, score_cutoff)
     }
 }
 
@@ -426,14 +410,10 @@ pub(crate) fn lcs_seq_similarity_with_pm<PmVec, Iter1, Iter2, Elem1, Elem2>(
     score_cutoff: usize,
 ) -> usize
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1> + Clone + DoubleEndedIterator,
+    Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
-    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     PmVec: BitVectorInterface,
 {
     if score_cutoff > len1 || score_cutoff > len2 {
@@ -456,11 +436,9 @@ where
     }
 
     // remove common affix and count it as part of the LCS
-    let s1_iter_orig = s1.into_iter();
-    let s2_iter_orig = s2.into_iter();
-    let suffix_len = find_common_suffix(s1_iter_orig.clone(), s2_iter_orig.clone());
-    let s1_iter_no_suffix = s1_iter_orig.take(len1 - suffix_len);
-    let s2_iter_no_suffix = s2_iter_orig.take(len2 - suffix_len);
+    let suffix_len = find_common_suffix(s1.clone(), s2.clone());
+    let s1_iter_no_suffix = s1.take(len1 - suffix_len);
+    let s2_iter_no_suffix = s2.take(len2 - suffix_len);
     let prefix_len = find_common_prefix(s1_iter_no_suffix.clone(), s2_iter_no_suffix.clone());
     let s1_iter = s1_iter_no_suffix.skip(prefix_len);
     let s2_iter = s2_iter_no_suffix.skip(prefix_len);
@@ -487,14 +465,10 @@ fn lcs_seq_similarity_without_pm<Iter1, Iter2, Elem1, Elem2>(
     score_cutoff: usize,
 ) -> usize
 where
-    Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
-    Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter1: Iterator<Item = Elem1> + Clone + DoubleEndedIterator,
+    Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
-    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     // Swapping the strings so the second string is shorter
     if len1 < len2 {
@@ -516,11 +490,9 @@ where
     }
 
     // remove common affix and count it as part of the LCS
-    let s1_iter_orig = s1.into_iter();
-    let s2_iter_orig = s2.into_iter();
-    let suffix_len = find_common_suffix(s1_iter_orig.clone(), s2_iter_orig.clone());
-    let s1_iter_no_suffix = s1_iter_orig.take(len1 - suffix_len);
-    let s2_iter_no_suffix = s2_iter_orig.take(len2 - suffix_len);
+    let suffix_len = find_common_suffix(s1.clone(), s2.clone());
+    let s1_iter_no_suffix = s1.take(len1 - suffix_len);
+    let s2_iter_no_suffix = s2.take(len2 - suffix_len);
     let prefix_len = find_common_prefix(s1_iter_no_suffix.clone(), s2_iter_no_suffix.clone());
     let s1_iter = s1_iter_no_suffix.skip(prefix_len);
     let s2_iter = s2_iter_no_suffix.skip(prefix_len);
@@ -594,7 +566,7 @@ impl LcsSeq {
         <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
         <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
-        lcs_seq_similarity_without_pm(s1, len1, s2, len2, score_cutoff)
+        lcs_seq_similarity_without_pm(s1.into_iter(), len1, s2.into_iter(), len2, score_cutoff)
     }
 }
 
@@ -730,7 +702,7 @@ where
                 seq: self.s1.iter(),
             },
             self.s1.len(),
-            s2,
+            s2.into_iter(),
             len2,
             score_cutoff,
         )
