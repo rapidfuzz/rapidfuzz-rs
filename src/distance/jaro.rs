@@ -382,7 +382,7 @@ where
     transpositions
 }
 
-fn jaro_similarity_without_pm<Iter1, Iter2, Elem1, Elem2>(
+pub(crate) fn jaro_similarity_without_pm<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     mut len1: usize,
     s2: Iter2,
@@ -495,7 +495,7 @@ where
     }
 }
 
-fn jaro_similarity_with_pm<Iter1, Iter2, Elem1, Elem2>(
+pub(crate) fn jaro_similarity_with_pm<Iter1, Iter2, Elem1, Elem2>(
     pm: &BlockPatternMatchVector,
     s1: Iter1,
     mut len1: usize,
@@ -716,8 +716,8 @@ pub struct CachedJaro<Elem1>
 where
     Elem1: HashableChar + Clone,
 {
-    pub(crate) s1: Vec<Elem1>,
-    pub(crate) pm: BlockPatternMatchVector,
+    s1: Vec<Elem1>,
+    pm: BlockPatternMatchVector,
 }
 
 impl<Elem1> CachedJaro<Elem1>
@@ -748,7 +748,7 @@ where
         1.0
     }
 
-    pub(crate) fn _similarity<Iter2, Elem2>(
+    fn _similarity<Iter2, Elem2>(
         &self,
         s2: Iter2,
         len2: usize,
@@ -954,7 +954,7 @@ mod tests {
                     }
 
                     let sim = _test_similarity_ascii(name1, name2, Some(score_cutoff), None);
-                    let dist = _test_distance_ascii(name1, name2, Some(score_cutoff), None);
+                    let dist = _test_distance_ascii(name1, name2, Some(1.0 - score_cutoff), None);
                     assert_delta!(expected_sim, sim, 0.0001);
                     assert_delta!(1.0 - expected_sim, dist, 0.0001);
                 }
