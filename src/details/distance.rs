@@ -14,7 +14,7 @@ macro_rules! less_than_score_cutoff_similarity {
 macro_rules! build_normalized_metric_funcs
 {
     ($impl_type:tt, $res_type:ty, $worst_similarity:expr, $worst_distance:expr $(, $v:ident: $t:ty)*) => {
-
+        #[allow(dead_code)]
         pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2>(
             s1: Iter1,
             s2: Iter2,
@@ -94,7 +94,7 @@ macro_rules! build_normalized_metric_funcs
             }
         }
 
-
+        #[allow(dead_code)]
         pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
             s1: Iter1,
             s2: Iter2,
@@ -174,7 +174,7 @@ macro_rules! build_distance_metric_funcs
     ($impl_type:tt, $res_type:ty, $worst_similarity:expr, $worst_distance:expr $(, $v:ident: $t:ty)*) => {
         build_normalized_metric_funcs!($impl_type, $res_type, $worst_similarity, $worst_distance $(, $v: $t)*);
 
-
+        #[allow(dead_code)]
         pub fn distance<Iter1, Iter2, Elem1, Elem2>(
             s1: Iter1,
             s2: Iter2,
@@ -207,7 +207,7 @@ macro_rules! build_distance_metric_funcs
             )
         }
 
-
+        #[allow(dead_code)]
         pub fn similarity<Iter1, Iter2, Elem1, Elem2>(
             s1: Iter1,
             s2: Iter2,
@@ -285,7 +285,7 @@ macro_rules! build_similarity_metric_funcs
     ($impl_type:tt, $res_type:tt, $worst_similarity:expr, $worst_distance:expr $(, $v:ident: $t:ty)*) => {
         build_normalized_metric_funcs!($impl_type, $res_type, $worst_similarity, $worst_distance $(, $v: $t)*);
 
-
+        #[allow(dead_code)]
         pub fn distance<Iter1, Iter2, Elem1, Elem2>(
             s1: Iter1,
             s2: Iter2,
@@ -318,7 +318,7 @@ macro_rules! build_similarity_metric_funcs
             )
         }
 
-
+        #[allow(dead_code)]
         pub fn similarity<Iter1, Iter2, Elem1, Elem2>(
             s1: Iter1,
             s2: Iter2,
@@ -404,6 +404,7 @@ pub(crate) use less_than_score_cutoff_similarity;
 
 macro_rules! build_cached_normalized_metric_funcs {
     ($impl_type:tt, $res_type:ty, $worst_similarity:expr, $worst_distance:expr) => {
+        #[allow(dead_code)]
         pub fn normalized_distance<Iter2, Elem2>(
             &self,
             s2: Iter2,
@@ -460,6 +461,7 @@ macro_rules! build_cached_normalized_metric_funcs {
             }
         }
 
+        #[allow(dead_code)]
         pub fn normalized_similarity<Iter2, Elem2>(
             &self,
             s2: Iter2,
@@ -521,6 +523,7 @@ macro_rules! build_cached_distance_metric_funcs {
             $worst_distance
         );
 
+        #[allow(dead_code)]
         pub fn distance<Iter2, Elem2>(
             &self,
             s2: Iter2,
@@ -544,6 +547,7 @@ macro_rules! build_cached_distance_metric_funcs {
             )
         }
 
+        #[allow(dead_code)]
         pub fn similarity<Iter2, Elem2>(
             &self,
             s2: Iter2,
@@ -610,6 +614,7 @@ macro_rules! build_cached_similarity_metric_funcs {
             $worst_distance
         );
 
+        #[allow(dead_code)]
         pub fn distance<Iter2, Elem2>(
             &self,
             s2: Iter2,
@@ -633,6 +638,7 @@ macro_rules! build_cached_similarity_metric_funcs {
             )
         }
 
+        #[allow(dead_code)]
         pub fn similarity<Iter2, Elem2>(
             &self,
             s2: Iter2,

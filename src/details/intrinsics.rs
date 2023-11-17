@@ -12,6 +12,7 @@ pub(crate) fn shr64(a: u64, shift: usize) -> u64 {
 }
 
 /// shift left without undefined behavior for shifts > bit width
+#[allow(dead_code)]
 pub(crate) fn shl64(a: u64, shift: usize) -> u64 {
     if shift < 64 {
         a << shift

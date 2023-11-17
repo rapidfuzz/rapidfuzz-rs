@@ -42,14 +42,17 @@ impl<ValueType> GrowingHashmap<ValueType>
 where
     ValueType: Default + Clone + Eq + Copy,
 {
+    #[allow(dead_code)]
     pub fn size(&self) -> i32 {
         self.used
     }
 
+    #[allow(dead_code)]
     pub fn capacity(&self) -> i32 {
         self.mask + 1
     }
 
+    #[allow(dead_code)]
     pub fn empty(&self) -> bool {
         self.used == 0
     }

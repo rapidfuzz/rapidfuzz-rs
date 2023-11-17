@@ -21,9 +21,12 @@ where
         }
     }
 
+    #[allow(dead_code)]
     pub fn rows(&self) -> usize {
         self.rows
     }
+
+    #[allow(dead_code)]
     pub fn cols(&self) -> usize {
         self.cols
     }
@@ -60,6 +63,7 @@ where
         }
     }
 
+    #[allow(dead_code)]
     pub fn test_bit(&self, row: usize, mut col: usize, default: bool) -> bool {
         let offset = self.offsets[row];
 
@@ -80,6 +84,7 @@ where
         (*self.matrix.get(row, col_word) & col_mask) != T::from(0)
     }
 
+    #[allow(dead_code)]
     pub fn get(&self, row: usize, col: usize) -> &T {
         self.matrix.get(row, col)
     }
