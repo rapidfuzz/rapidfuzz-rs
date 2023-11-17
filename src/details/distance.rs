@@ -24,13 +24,11 @@ macro_rules! build_normalized_metric_funcs
         ) -> f64
         where
             Iter1: IntoIterator<Item = Elem1>,
-            Iter1::IntoIter: Clone,
+            Iter1::IntoIter: DoubleEndedIterator + Clone,
             Iter2: IntoIterator<Item = Elem2>,
-            Iter2::IntoIter: Clone,
+            Iter2::IntoIter: DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
-            <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s1_iter = s1.into_iter();
             let s2_iter = s2.into_iter();
@@ -57,8 +55,8 @@ macro_rules! build_normalized_metric_funcs
             score_hint: f64
         ) -> f64
         where
-            Iter1: Iterator<Item = Elem1> + Clone + DoubleEndedIterator,
-            Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
+            Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
+            Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
         {
@@ -98,13 +96,11 @@ macro_rules! build_normalized_metric_funcs
         ) -> f64
         where
             Iter1: IntoIterator<Item = Elem1>,
-            Iter1::IntoIter: Clone,
+            Iter1::IntoIter: DoubleEndedIterator + Clone,
             Iter2: IntoIterator<Item = Elem2>,
-            Iter2::IntoIter: Clone,
+            Iter2::IntoIter: DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
-            <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s1_iter = s1.into_iter();
             let s2_iter = s2.into_iter();
@@ -131,8 +127,8 @@ macro_rules! build_normalized_metric_funcs
             score_hint: f64
         ) -> f64
         where
-            Iter1: Iterator<Item = Elem1> + Clone + DoubleEndedIterator,
-            Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
+            Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
+            Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
         {
@@ -174,13 +170,11 @@ macro_rules! build_distance_metric_funcs
         ) -> $res_type
         where
             Iter1: IntoIterator<Item = Elem1>,
-            Iter1::IntoIter: Clone,
+            Iter1::IntoIter: DoubleEndedIterator + Clone,
             Iter2: IntoIterator<Item = Elem2>,
-            Iter2::IntoIter: Clone,
+            Iter2::IntoIter: DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
-            <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s1_iter = s1.into_iter();
             let s2_iter = s2.into_iter();
@@ -207,13 +201,11 @@ macro_rules! build_distance_metric_funcs
         ) -> $res_type
         where
             Iter1: IntoIterator<Item = Elem1>,
-            Iter1::IntoIter: Clone,
+            Iter1::IntoIter: DoubleEndedIterator + Clone,
             Iter2: IntoIterator<Item = Elem2>,
-            Iter2::IntoIter: Clone,
+            Iter2::IntoIter: DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
-            <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s1_iter = s1.into_iter();
             let s2_iter = s2.into_iter();
@@ -240,8 +232,8 @@ macro_rules! build_distance_metric_funcs
             mut score_hint: $res_type
         ) -> $res_type
         where
-            Iter1: Iterator<Item = Elem1> + Clone + DoubleEndedIterator,
-            Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
+            Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
+            Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
         {
@@ -279,13 +271,11 @@ macro_rules! build_similarity_metric_funcs
         ) -> $res_type
         where
             Iter1: IntoIterator<Item = Elem1>,
-            Iter1::IntoIter: Clone,
+            Iter1::IntoIter: DoubleEndedIterator + Clone,
             Iter2: IntoIterator<Item = Elem2>,
-            Iter2::IntoIter: Clone,
+            Iter2::IntoIter: DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
-            <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s1_iter = s1.into_iter();
             let s2_iter = s2.into_iter();
@@ -312,13 +302,11 @@ macro_rules! build_similarity_metric_funcs
         ) -> $res_type
         where
             Iter1: IntoIterator<Item = Elem1>,
-            Iter1::IntoIter: Clone,
+            Iter1::IntoIter: DoubleEndedIterator + Clone,
             Iter2: IntoIterator<Item = Elem2>,
-            Iter2::IntoIter: Clone,
+            Iter2::IntoIter: DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
-            <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s1_iter = s1.into_iter();
             let s2_iter = s2.into_iter();
@@ -345,8 +333,8 @@ macro_rules! build_similarity_metric_funcs
             score_hint: $res_type,
         ) -> $res_type
         where
-            Iter1: Iterator<Item = Elem1> + Clone + DoubleEndedIterator,
-            Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
+            Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
+            Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
         {
@@ -391,10 +379,9 @@ macro_rules! build_cached_normalized_metric_funcs {
         ) -> f64
         where
             Iter2: IntoIterator<Item = Elem2>,
-            Iter2::IntoIter: Clone,
+            Iter2::IntoIter: DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
-            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s2_iter = s2.into_iter();
             let len2 = s2_iter.clone().count();
@@ -414,7 +401,7 @@ macro_rules! build_cached_normalized_metric_funcs {
             score_hint: f64,
         ) -> f64
         where
-            Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
+            Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
         {
@@ -445,10 +432,9 @@ macro_rules! build_cached_normalized_metric_funcs {
         ) -> f64
         where
             Iter2: IntoIterator<Item = Elem2>,
-            Iter2::IntoIter: Clone,
+            Iter2::IntoIter: DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
-            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s2_iter = s2.into_iter();
             let len2 = s2_iter.clone().count();
@@ -468,7 +454,7 @@ macro_rules! build_cached_normalized_metric_funcs {
             score_hint: f64,
         ) -> f64
         where
-            Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
+            Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
         {
@@ -505,10 +491,9 @@ macro_rules! build_cached_distance_metric_funcs {
         ) -> $res_type
         where
             Iter2: IntoIterator<Item = Elem2>,
-            Iter2::IntoIter: Clone,
+            Iter2::IntoIter: DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
-            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s2_iter = s2.into_iter();
             let len2 = s2_iter.clone().count();
@@ -529,10 +514,9 @@ macro_rules! build_cached_distance_metric_funcs {
         ) -> $res_type
         where
             Iter2: IntoIterator<Item = Elem2>,
-            Iter2::IntoIter: Clone,
+            Iter2::IntoIter: DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
-            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s2_iter = s2.into_iter();
             let len2 = s2_iter.clone().count();
@@ -552,7 +536,7 @@ macro_rules! build_cached_distance_metric_funcs {
             mut score_hint: $res_type,
         ) -> $res_type
         where
-            Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
+            Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
         {
@@ -593,10 +577,9 @@ macro_rules! build_cached_similarity_metric_funcs {
         ) -> $res_type
         where
             Iter2: IntoIterator<Item = Elem2>,
-            Iter2::IntoIter: Clone,
+            Iter2::IntoIter: DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
-            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s2_iter = s2.into_iter();
             let len2 = s2_iter.clone().count();
@@ -617,10 +600,9 @@ macro_rules! build_cached_similarity_metric_funcs {
         ) -> $res_type
         where
             Iter2: IntoIterator<Item = Elem2>,
-            Iter2::IntoIter: Clone,
+            Iter2::IntoIter: DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
-            <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
         {
             let s2_iter = s2.into_iter();
             let len2 = s2_iter.clone().count();
@@ -640,7 +622,7 @@ macro_rules! build_cached_similarity_metric_funcs {
             score_hint: $res_type,
         ) -> $res_type
         where
-            Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
+            Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
         {

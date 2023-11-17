@@ -93,13 +93,11 @@ pub fn distance<Iter1, Iter2, Elem1, Elem2>(
 ) -> Result<usize, HammingError>
 where
     Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
+    Iter1::IntoIter: DoubleEndedIterator + Clone,
     Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
-    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
@@ -129,13 +127,11 @@ pub fn similarity<Iter1, Iter2, Elem1, Elem2>(
 ) -> Result<usize, HammingError>
 where
     Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
+    Iter1::IntoIter: DoubleEndedIterator + Clone,
     Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
-    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
@@ -165,13 +161,11 @@ pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2>(
 ) -> Result<f64, HammingError>
 where
     Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
+    Iter1::IntoIter: DoubleEndedIterator + Clone,
     Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
-    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
@@ -201,13 +195,11 @@ pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
 ) -> Result<f64, HammingError>
 where
     Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
+    Iter1::IntoIter: DoubleEndedIterator + Clone,
     Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
-    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
@@ -307,10 +299,9 @@ where
     ) -> Result<usize, HammingError>
     where
         Iter2: IntoIterator<Item = Elem2>,
-        Iter2::IntoIter: Clone,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
-        <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
         let s2_iter = s2.into_iter();
         let len1 = self.scorer.s1.len();
@@ -337,10 +328,9 @@ where
     ) -> Result<usize, HammingError>
     where
         Iter2: IntoIterator<Item = Elem2>,
-        Iter2::IntoIter: Clone,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
-        <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
         let s2_iter = s2.into_iter();
         let len1 = self.scorer.s1.len();
@@ -367,10 +357,9 @@ where
     ) -> Result<f64, HammingError>
     where
         Iter2: IntoIterator<Item = Elem2>,
-        Iter2::IntoIter: Clone,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
-        <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
         let s2_iter = s2.into_iter();
         let len1 = self.scorer.s1.len();
@@ -397,10 +386,9 @@ where
     ) -> Result<f64, HammingError>
     where
         Iter2: IntoIterator<Item = Elem2>,
-        Iter2::IntoIter: Clone,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
-        <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
         let s2_iter = s2.into_iter();
         let len1 = self.scorer.s1.len();

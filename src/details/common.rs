@@ -86,8 +86,8 @@ where
 
 pub(crate) fn find_common_suffix<Iter1, Iter2, Elem1, Elem2>(s1: Iter1, s2: Iter2) -> usize
 where
-    Iter1: Iterator<Item = Elem1> + Clone + DoubleEndedIterator,
-    Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
+    Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
+    Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2>,
     Elem2: PartialEq<Elem1>,
 {

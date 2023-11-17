@@ -189,12 +189,10 @@ impl Osa {
         _score_hint: usize,
     ) -> usize
     where
-        Iter1: Iterator<Item = Elem1> + Clone + DoubleEndedIterator,
-        Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
+        Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
+        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
-        <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-        <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
         if len1 < len2 {
             return Osa::_distance(s2, len2, s1, len1, score_cutoff, _score_hint);
@@ -242,13 +240,11 @@ pub fn distance<Iter1, Iter2, Elem1, Elem2>(
 ) -> usize
 where
     Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
+    Iter1::IntoIter: DoubleEndedIterator + Clone,
     Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
-    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     Osa::distance(s1, s2, score_cutoff, score_hint)
 }
@@ -261,13 +257,11 @@ pub fn similarity<Iter1, Iter2, Elem1, Elem2>(
 ) -> usize
 where
     Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
+    Iter1::IntoIter: DoubleEndedIterator + Clone,
     Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
-    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     Osa::similarity(s1, s2, score_cutoff, score_hint)
 }
@@ -280,13 +274,11 @@ pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2>(
 ) -> f64
 where
     Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
+    Iter1::IntoIter: DoubleEndedIterator + Clone,
     Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
-    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     Osa::normalized_distance(s1, s2, score_cutoff, score_hint)
 }
@@ -299,13 +291,11 @@ pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
 ) -> f64
 where
     Iter1: IntoIterator<Item = Elem1>,
-    Iter1::IntoIter: Clone,
+    Iter1::IntoIter: DoubleEndedIterator + Clone,
     Iter2: IntoIterator<Item = Elem2>,
-    Iter2::IntoIter: Clone,
+    Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
-    <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-    <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
 {
     Osa::normalized_similarity(s1, s2, score_cutoff, score_hint)
 }
@@ -350,7 +340,7 @@ where
         _score_hint: usize,
     ) -> usize
     where
-        Iter2: Iterator<Item = Elem2> + Clone + DoubleEndedIterator,
+        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
@@ -402,13 +392,11 @@ mod tests {
     ) -> usize
     where
         Iter1: IntoIterator<Item = Elem1>,
-        Iter1::IntoIter: Clone,
+        Iter1::IntoIter: DoubleEndedIterator + Clone,
         Iter2: IntoIterator<Item = Elem2>,
-        Iter2::IntoIter: Clone,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
-        <Iter1 as IntoIterator>::IntoIter: DoubleEndedIterator,
-        <Iter2 as IntoIterator>::IntoIter: DoubleEndedIterator,
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();
