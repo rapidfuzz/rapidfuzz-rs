@@ -26,3 +26,18 @@ pub(crate) fn carrying_add(lhs: u64, rhs: u64, carry: bool) -> (u64, bool) {
     let (c, d) = a.overflowing_add(carry as u64);
     (c, b | d)
 }
+
+pub(crate) fn bit_mask_lsb_u64(n: usize) -> u64 {
+    let mut mask = !0_u64;
+    if n < 64 {
+        mask = mask.wrapping_add(1_u64 << n);
+    }
+    mask
+}
+pub(crate) fn blsi_u64(v: u64) -> u64 {
+    v & v.wrapping_neg()
+}
+
+pub(crate) fn blsr_u64(v: u64) -> u64 {
+    v & v.wrapping_sub(1)
+}

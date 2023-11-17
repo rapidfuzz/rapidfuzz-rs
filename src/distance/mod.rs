@@ -1,6 +1,7 @@
 pub mod damerau_levenshtein;
 pub mod hamming;
 pub mod indel;
+pub mod jaro;
 pub mod lcs_seq;
 pub mod levenshtein;
 pub mod osa;
