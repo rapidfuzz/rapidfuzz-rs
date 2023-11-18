@@ -1338,12 +1338,12 @@ impl Levenshtein {
     }
 }
 
-pub fn distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
     weights: Option<LevenshteinWeightTable>,
-    score_cutoff: Option<usize>,
-    score_hint: Option<usize>,
+    score_cutoff: ScoreCutoff,
+    score_hint: ScoreHint,
 ) -> usize
 where
     Iter1: IntoIterator<Item = Elem1>,
@@ -1352,16 +1352,18 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    ScoreCutoff: Into<Option<usize>>,
+    ScoreHint: Into<Option<usize>>,
 {
     Levenshtein::distance(s1, s2, weights, score_cutoff, score_hint)
 }
 
-pub fn similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
     weights: Option<LevenshteinWeightTable>,
-    score_cutoff: Option<usize>,
-    score_hint: Option<usize>,
+    score_cutoff: ScoreCutoff,
+    score_hint: ScoreHint,
 ) -> usize
 where
     Iter1: IntoIterator<Item = Elem1>,
@@ -1370,16 +1372,18 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    ScoreCutoff: Into<Option<usize>>,
+    ScoreHint: Into<Option<usize>>,
 {
     Levenshtein::similarity(s1, s2, weights, score_cutoff, score_hint)
 }
 
-pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
     weights: Option<LevenshteinWeightTable>,
-    score_cutoff: Option<f64>,
-    score_hint: Option<f64>,
+    score_cutoff: ScoreCutoff,
+    score_hint: ScoreHint,
 ) -> f64
 where
     Iter1: IntoIterator<Item = Elem1>,
@@ -1388,16 +1392,18 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    ScoreCutoff: Into<Option<f64>>,
+    ScoreHint: Into<Option<f64>>,
 {
     Levenshtein::normalized_distance(s1, s2, weights, score_cutoff, score_hint)
 }
 
-pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
     weights: Option<LevenshteinWeightTable>,
-    score_cutoff: Option<f64>,
-    score_hint: Option<f64>,
+    score_cutoff: ScoreCutoff,
+    score_hint: ScoreHint,
 ) -> f64
 where
     Iter1: IntoIterator<Item = Elem1>,
@@ -1406,6 +1412,8 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    ScoreCutoff: Into<Option<f64>>,
+    ScoreHint: Into<Option<f64>>,
 {
     Levenshtein::normalized_similarity(s1, s2, weights, score_cutoff, score_hint)
 }
@@ -1497,12 +1505,12 @@ mod tests {
         };
     }
 
-    fn _test_distance<Iter1, Iter2, Elem1, Elem2>(
+    fn _test_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
         s1_: Iter1,
         s2_: Iter2,
         weights: Option<LevenshteinWeightTable>,
-        score_cutoff: Option<usize>,
-        score_hint: Option<usize>,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
     ) -> usize
     where
         Iter1: IntoIterator<Item = Elem1>,
@@ -1511,14 +1519,28 @@ mod tests {
         Iter2::IntoIter: DoubleEndedIterator + Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<usize>> + Clone,
+        ScoreHint: Into<Option<usize>> + Clone,
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();
-        let res1 = distance(s1.clone(), s2.clone(), weights, score_cutoff, score_hint);
-        let res2 = distance(s2.clone(), s1.clone(), weights, score_cutoff, score_hint);
+        let res1 = distance(
+            s1.clone(),
+            s2.clone(),
+            weights,
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
+        let res2 = distance(
+            s2.clone(),
+            s1.clone(),
+            weights,
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
 
         let scorer1 = CachedLevenshtein::new(s1.clone(), weights);
-        let res3 = scorer1.distance(s2.clone(), score_cutoff, score_hint);
+        let res3 = scorer1.distance(s2.clone(), score_cutoff.clone(), score_hint.clone());
         let scorer2 = CachedLevenshtein::new(s2.clone(), weights);
         let res4 = scorer2.distance(s1.clone(), score_cutoff, score_hint);
 
@@ -1528,26 +1550,36 @@ mod tests {
         res1
     }
 
-    fn _test_distance_ascii(
+    fn _test_distance_ascii<ScoreCutoff, ScoreHint>(
         s1: &str,
         s2: &str,
         weights: Option<LevenshteinWeightTable>,
-        score_cutoff: Option<usize>,
-        score_hint: Option<usize>,
-    ) -> usize {
-        let res1 = _test_distance(s1.chars(), s2.chars(), weights, score_cutoff, score_hint);
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> usize
+    where
+        ScoreCutoff: Into<Option<usize>> + Clone,
+        ScoreHint: Into<Option<usize>> + Clone,
+    {
+        let res1 = _test_distance(
+            s1.chars(),
+            s2.chars(),
+            weights,
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
         let res2 = _test_distance(s1.bytes(), s2.bytes(), weights, score_cutoff, score_hint);
 
         assert_eq!(res1, res2);
         res1
     }
 
-    fn _test_normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
+    fn _test_normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
         s1_: Iter1,
         s2_: Iter2,
         weights: Option<LevenshteinWeightTable>,
-        score_cutoff: Option<f64>,
-        score_hint: Option<f64>,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
     ) -> f64
     where
         Iter1: IntoIterator<Item = Elem1>,
@@ -1556,13 +1588,28 @@ mod tests {
         Iter2::IntoIter: DoubleEndedIterator + Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<f64>> + Clone,
+        ScoreHint: Into<Option<f64>> + Clone,
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();
-        let res1 = normalized_similarity(s1.clone(), s2.clone(), weights, score_cutoff, score_hint);
-        let res2 = normalized_similarity(s2.clone(), s1.clone(), weights, score_cutoff, score_hint);
+        let res1 = normalized_similarity(
+            s1.clone(),
+            s2.clone(),
+            weights,
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
+        let res2 = normalized_similarity(
+            s2.clone(),
+            s1.clone(),
+            weights,
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
         let scorer1 = CachedLevenshtein::new(s1.clone(), weights);
-        let res3 = scorer1.normalized_similarity(s2.clone(), score_cutoff, score_hint);
+        let res3 =
+            scorer1.normalized_similarity(s2.clone(), score_cutoff.clone(), score_hint.clone());
         let scorer2 = CachedLevenshtein::new(s2.clone(), weights);
         let res4 = scorer2.normalized_similarity(s1.clone(), score_cutoff, score_hint);
 
@@ -1572,15 +1619,24 @@ mod tests {
         res1
     }
 
-    fn _test_normalized_similarity_ascii(
+    fn _test_normalized_similarity_ascii<ScoreCutoff, ScoreHint>(
         s1: &str,
         s2: &str,
         weights: Option<LevenshteinWeightTable>,
-        score_cutoff: Option<f64>,
-        score_hint: Option<f64>,
-    ) -> f64 {
-        let res1 =
-            _test_normalized_similarity(s1.chars(), s2.chars(), weights, score_cutoff, score_hint);
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> f64
+    where
+        ScoreCutoff: Into<Option<f64>> + Clone,
+        ScoreHint: Into<Option<f64>> + Clone,
+    {
+        let res1 = _test_normalized_similarity(
+            s1.chars(),
+            s2.chars(),
+            weights,
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
         let res2 =
             _test_normalized_similarity(s1.bytes(), s2.bytes(), weights, score_cutoff, score_hint);
 
@@ -1698,11 +1754,11 @@ mod tests {
         let mut b = "North Korea";
 
         assert_eq!(2, _test_distance_ascii(a, b, None, None, None));
-        assert_eq!(2, _test_distance_ascii(a, b, None, Some(4), None));
-        assert_eq!(2, _test_distance_ascii(a, b, None, Some(3), None));
-        assert_eq!(2, _test_distance_ascii(a, b, None, Some(2), None));
-        assert_eq!(2, _test_distance_ascii(a, b, None, Some(1), None));
-        assert_eq!(1, _test_distance_ascii(a, b, None, Some(0), None));
+        assert_eq!(2, _test_distance_ascii(a, b, None, 4, None));
+        assert_eq!(2, _test_distance_ascii(a, b, None, 3, None));
+        assert_eq!(2, _test_distance_ascii(a, b, None, 2, None));
+        assert_eq!(2, _test_distance_ascii(a, b, None, 1, None));
+        assert_eq!(1, _test_distance_ascii(a, b, None, 0, None));
 
         let weights = LevenshteinWeightTable {
             insert_cost: 1,
@@ -1710,29 +1766,29 @@ mod tests {
             replace_cost: 2,
         };
         assert_eq!(4, _test_distance_ascii(a, b, Some(weights), None, None));
-        assert_eq!(4, _test_distance_ascii(a, b, Some(weights), Some(4), None));
-        assert_eq!(4, _test_distance_ascii(a, b, Some(weights), Some(3), None));
-        assert_eq!(3, _test_distance_ascii(a, b, Some(weights), Some(2), None));
-        assert_eq!(2, _test_distance_ascii(a, b, Some(weights), Some(1), None));
-        assert_eq!(1, _test_distance_ascii(a, b, Some(weights), Some(0), None));
+        assert_eq!(4, _test_distance_ascii(a, b, Some(weights), 4, None));
+        assert_eq!(4, _test_distance_ascii(a, b, Some(weights), 3, None));
+        assert_eq!(3, _test_distance_ascii(a, b, Some(weights), 2, None));
+        assert_eq!(2, _test_distance_ascii(a, b, Some(weights), 1, None));
+        assert_eq!(1, _test_distance_ascii(a, b, Some(weights), 0, None));
 
         a = "aabc";
         b = "cccd";
         assert_eq!(4, _test_distance_ascii(a, b, None, None, None));
-        assert_eq!(4, _test_distance_ascii(a, b, None, Some(4), None));
-        assert_eq!(4, _test_distance_ascii(a, b, None, Some(3), None));
-        assert_eq!(3, _test_distance_ascii(a, b, None, Some(2), None));
-        assert_eq!(2, _test_distance_ascii(a, b, None, Some(1), None));
-        assert_eq!(1, _test_distance_ascii(a, b, None, Some(0), None));
+        assert_eq!(4, _test_distance_ascii(a, b, None, 4, None));
+        assert_eq!(4, _test_distance_ascii(a, b, None, 3, None));
+        assert_eq!(3, _test_distance_ascii(a, b, None, 2, None));
+        assert_eq!(2, _test_distance_ascii(a, b, None, 1, None));
+        assert_eq!(1, _test_distance_ascii(a, b, None, 0, None));
 
         assert_eq!(6, _test_distance_ascii(a, b, Some(weights), None, None));
-        assert_eq!(6, _test_distance_ascii(a, b, Some(weights), Some(6), None));
-        assert_eq!(6, _test_distance_ascii(a, b, Some(weights), Some(5), None));
-        assert_eq!(5, _test_distance_ascii(a, b, Some(weights), Some(4), None));
-        assert_eq!(4, _test_distance_ascii(a, b, Some(weights), Some(3), None));
-        assert_eq!(3, _test_distance_ascii(a, b, Some(weights), Some(2), None));
-        assert_eq!(2, _test_distance_ascii(a, b, Some(weights), Some(1), None));
-        assert_eq!(1, _test_distance_ascii(a, b, Some(weights), Some(0), None));
+        assert_eq!(6, _test_distance_ascii(a, b, Some(weights), 6, None));
+        assert_eq!(6, _test_distance_ascii(a, b, Some(weights), 5, None));
+        assert_eq!(5, _test_distance_ascii(a, b, Some(weights), 4, None));
+        assert_eq!(4, _test_distance_ascii(a, b, Some(weights), 3, None));
+        assert_eq!(3, _test_distance_ascii(a, b, Some(weights), 2, None));
+        assert_eq!(2, _test_distance_ascii(a, b, Some(weights), 1, None));
+        assert_eq!(1, _test_distance_ascii(a, b, Some(weights), 0, None));
     }
 
     /// test banded implementation
@@ -1741,40 +1797,40 @@ mod tests {
         let mut s1 = "kkkkbbbbfkkkkkkibfkkkafakkfekgkkkkkkkkkkbdbbddddddddddafkkkekkkhkk";
         let mut s2 = "khddddddddkkkkdgkdikkccccckcckkkekkkkdddddddddddafkkhckkkkkdckkkcc";
         assert_eq!(36, _test_distance_ascii(s1, s2, None, None, None));
-        assert_eq!(32, _test_distance_ascii(s1, s2, None, Some(31), None));
+        assert_eq!(32, _test_distance_ascii(s1, s2, None, 31, None));
 
         s1 = "ccddcddddddddddddddddddddddddddddddddddddddddddddddddddddaaaaaaaaaaa";
         s2 = "aaaaaaaaaaaaaadddddddddbddddddddddddddddddddddddddddddddddbddddddddd";
         assert_eq!(26, _test_distance_ascii(s1, s2, None, None, None));
-        assert_eq!(26, _test_distance_ascii(s1, s2, None, Some(31), None));
+        assert_eq!(26, _test_distance_ascii(s1, s2, None, 31, None));
 
         s1 = "accccccccccaaaaaaaccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccc\
              ccccccccccccccccccccaaaaaaaaaaaaacccccccccccccccccccccc";
         s2 = "ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\
              ccccccccccccccccccccccccccccccccccccbcccb";
         assert_eq!(24, _test_distance_ascii(s1, s2, None, None, None));
-        assert_eq!(24, _test_distance_ascii(s1, s2, None, Some(25), None));
+        assert_eq!(24, _test_distance_ascii(s1, s2, None, 25, None));
 
         s1 = "miiiiiiiiiiliiiiiiibghiiaaaaaaaaaaaaaaacccfccccedddaaaaaaaaaaaaaaaaaaaaaaaaaaaa\
               aaaaaaaaaaaaa";
         s2 = "aaaaaaajaaaaaaaabghiiaaaaaaaaaaaaaaacccfccccedddaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\
               aajjdim";
         assert_eq!(27, _test_distance_ascii(s1, s2, None, None, None));
-        assert_eq!(27, _test_distance_ascii(s1, s2, None, Some(27), None));
+        assert_eq!(27, _test_distance_ascii(s1, s2, None, 27, None));
 
         s1 = "lllllfllllllllllllllllllllllllllllllllllllllllllllllllglllllilldcaaaaaaaaaaaaaa\
               aaaaadbbllllllllllhllllllllllllllllllllllllllgl";
         s2 = "aaaaaaaaaaaaaadbbllllllllllllllelllllllllllllllllllllllllllllllglllllilldcaaaaa\
               aaaaaaaaaaaaaadbbllllllllllllllellllllllllllllhlllllllllill";
         assert_eq!(23, _test_distance_ascii(s1, s2, None, None, None));
-        assert_eq!(23, _test_distance_ascii(s1, s2, None, Some(27), None));
-        assert_eq!(23, _test_distance_ascii(s1, s2, None, Some(28), None));
+        assert_eq!(23, _test_distance_ascii(s1, s2, None, 27, None));
+        assert_eq!(23, _test_distance_ascii(s1, s2, None, 28, None));
 
         s1 = "llccacaaaaaaaaaccccccccccccccccddffaccccaccecccggggclallhcccccljif";
         s2 = "bddcbllllllbcccccccccccccccccddffccccccccebcccggggclbllhcccccljifbddcccccc";
         assert_eq!(27, _test_distance_ascii(s1, s2, None, None, None));
-        assert_eq!(27, _test_distance_ascii(s1, s2, None, Some(27), None));
-        assert_eq!(27, _test_distance_ascii(s1, s2, None, Some(28), None));
+        assert_eq!(27, _test_distance_ascii(s1, s2, None, 27, None));
+        assert_eq!(27, _test_distance_ascii(s1, s2, None, 28, None));
     }
 
     #[test]
@@ -1795,23 +1851,11 @@ mod tests {
         );
         assert_eq!(
             2501,
-            distance(
-                OCR_EXAMPLE1.iter(),
-                OCR_EXAMPLE2.iter(),
-                None,
-                Some(2500),
-                None
-            )
+            distance(OCR_EXAMPLE1.iter(), OCR_EXAMPLE2.iter(), None, 2500, None)
         );
         assert_eq!(
             5278,
-            distance(
-                OCR_EXAMPLE1.iter(),
-                OCR_EXAMPLE2.iter(),
-                None,
-                None,
-                Some(0)
-            )
+            distance(OCR_EXAMPLE1.iter(), OCR_EXAMPLE2.iter(), None, None, 0)
         );
     }
 }

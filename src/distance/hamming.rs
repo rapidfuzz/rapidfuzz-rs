@@ -84,12 +84,12 @@ impl Hamming {
     }
 }
 
-pub fn distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
     pad: bool,
-    score_cutoff: Option<usize>,
-    score_hint: Option<usize>,
+    score_cutoff: ScoreCutoff,
+    score_hint: ScoreHint,
 ) -> Result<usize, HammingError>
 where
     Iter1: IntoIterator<Item = Elem1>,
@@ -98,6 +98,8 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    ScoreCutoff: Into<Option<usize>>,
+    ScoreHint: Into<Option<usize>>,
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
@@ -113,17 +115,17 @@ where
         len1,
         s2_iter,
         len2,
-        score_cutoff.unwrap_or(usize::MAX),
-        score_hint.unwrap_or(usize::MAX),
+        score_cutoff.into().unwrap_or(usize::MAX),
+        score_hint.into().unwrap_or(usize::MAX),
     ))
 }
 
-pub fn similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
     pad: bool,
-    score_cutoff: Option<usize>,
-    score_hint: Option<usize>,
+    score_cutoff: ScoreCutoff,
+    score_hint: ScoreHint,
 ) -> Result<usize, HammingError>
 where
     Iter1: IntoIterator<Item = Elem1>,
@@ -132,6 +134,8 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    ScoreCutoff: Into<Option<usize>>,
+    ScoreHint: Into<Option<usize>>,
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
@@ -147,17 +151,17 @@ where
         len1,
         s2_iter,
         len2,
-        score_cutoff.unwrap_or(0),
-        score_hint.unwrap_or(0),
+        score_cutoff.into().unwrap_or(0),
+        score_hint.into().unwrap_or(0),
     ))
 }
 
-pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
     pad: bool,
-    score_cutoff: Option<f64>,
-    score_hint: Option<f64>,
+    score_cutoff: ScoreCutoff,
+    score_hint: ScoreHint,
 ) -> Result<f64, HammingError>
 where
     Iter1: IntoIterator<Item = Elem1>,
@@ -166,6 +170,8 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    ScoreCutoff: Into<Option<f64>>,
+    ScoreHint: Into<Option<f64>>,
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
@@ -181,17 +187,17 @@ where
         len1,
         s2_iter,
         len2,
-        score_cutoff.unwrap_or(1.0),
-        score_hint.unwrap_or(1.0),
+        score_cutoff.into().unwrap_or(1.0),
+        score_hint.into().unwrap_or(1.0),
     ))
 }
 
-pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
     pad: bool,
-    score_cutoff: Option<f64>,
-    score_hint: Option<f64>,
+    score_cutoff: ScoreCutoff,
+    score_hint: ScoreHint,
 ) -> Result<f64, HammingError>
 where
     Iter1: IntoIterator<Item = Elem1>,
@@ -200,6 +206,8 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    ScoreCutoff: Into<Option<f64>>,
+    ScoreHint: Into<Option<f64>>,
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
@@ -215,8 +223,8 @@ where
         len1,
         s2_iter,
         len2,
-        score_cutoff.unwrap_or(0.0),
-        score_hint.unwrap_or(0.0),
+        score_cutoff.into().unwrap_or(0.0),
+        score_hint.into().unwrap_or(0.0),
     ))
 }
 
@@ -290,18 +298,20 @@ where
         }
     }
 
-    pub fn distance<Iter2, Elem2>(
+    pub fn distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
         pad: bool,
-        score_cutoff: Option<usize>,
-        score_hint: Option<usize>,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
     ) -> Result<usize, HammingError>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<usize>>,
+        ScoreHint: Into<Option<usize>>,
     {
         let s2_iter = s2.into_iter();
         let len1 = self.scorer.s1.len();
@@ -314,23 +324,25 @@ where
         Ok(self.scorer._distance(
             s2_iter,
             len2,
-            score_cutoff.unwrap_or(usize::MAX),
-            score_hint.unwrap_or(usize::MAX),
+            score_cutoff.into().unwrap_or(usize::MAX),
+            score_hint.into().unwrap_or(usize::MAX),
         ))
     }
 
-    pub fn similarity<Iter2, Elem2>(
+    pub fn similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
         pad: bool,
-        score_cutoff: Option<usize>,
-        score_hint: Option<usize>,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
     ) -> Result<usize, HammingError>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<usize>>,
+        ScoreHint: Into<Option<usize>>,
     {
         let s2_iter = s2.into_iter();
         let len1 = self.scorer.s1.len();
@@ -343,23 +355,25 @@ where
         Ok(self.scorer._similarity(
             s2_iter,
             len2,
-            score_cutoff.unwrap_or(0),
-            score_hint.unwrap_or(0),
+            score_cutoff.into().unwrap_or(0),
+            score_hint.into().unwrap_or(0),
         ))
     }
 
-    pub fn normalized_distance<Iter2, Elem2>(
+    pub fn normalized_distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
         pad: bool,
-        score_cutoff: Option<f64>,
-        score_hint: Option<f64>,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
     ) -> Result<f64, HammingError>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<f64>>,
+        ScoreHint: Into<Option<f64>>,
     {
         let s2_iter = s2.into_iter();
         let len1 = self.scorer.s1.len();
@@ -372,23 +386,25 @@ where
         Ok(self.scorer._normalized_distance(
             s2_iter,
             len2,
-            score_cutoff.unwrap_or(1.0),
-            score_hint.unwrap_or(1.0),
+            score_cutoff.into().unwrap_or(1.0),
+            score_hint.into().unwrap_or(1.0),
         ))
     }
 
-    pub fn normalized_similarity<Iter2, Elem2>(
+    pub fn normalized_similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
         pad: bool,
-        score_cutoff: Option<f64>,
-        score_hint: Option<f64>,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
     ) -> Result<f64, HammingError>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<f64>>,
+        ScoreHint: Into<Option<f64>>,
     {
         let s2_iter = s2.into_iter();
         let len1 = self.scorer.s1.len();
@@ -401,8 +417,8 @@ where
         Ok(self.scorer._normalized_similarity(
             s2_iter,
             len2,
-            score_cutoff.unwrap_or(0.0),
-            score_hint.unwrap_or(0.0),
+            score_cutoff.into().unwrap_or(0.0),
+            score_hint.into().unwrap_or(0.0),
         ))
     }
 }

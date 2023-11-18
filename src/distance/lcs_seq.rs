@@ -553,11 +553,11 @@ impl LcsSeq {
     }
 }
 
-pub fn distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    score_cutoff: Option<usize>,
-    score_hint: Option<usize>,
+    score_cutoff: ScoreCutoff,
+    score_hint: ScoreHint,
 ) -> usize
 where
     Iter1: IntoIterator<Item = Elem1>,
@@ -566,15 +566,17 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    ScoreCutoff: Into<Option<usize>>,
+    ScoreHint: Into<Option<usize>>,
 {
     LcsSeq::distance(s1, s2, score_cutoff, score_hint)
 }
 
-pub fn similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    score_cutoff: Option<usize>,
-    score_hint: Option<usize>,
+    score_cutoff: ScoreCutoff,
+    score_hint: ScoreHint,
 ) -> usize
 where
     Iter1: IntoIterator<Item = Elem1>,
@@ -583,15 +585,17 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    ScoreCutoff: Into<Option<usize>>,
+    ScoreHint: Into<Option<usize>>,
 {
     LcsSeq::similarity(s1, s2, score_cutoff, score_hint)
 }
 
-pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    score_cutoff: Option<f64>,
-    score_hint: Option<f64>,
+    score_cutoff: ScoreCutoff,
+    score_hint: ScoreHint,
 ) -> f64
 where
     Iter1: IntoIterator<Item = Elem1>,
@@ -600,15 +604,17 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    ScoreCutoff: Into<Option<f64>>,
+    ScoreHint: Into<Option<f64>>,
 {
     LcsSeq::normalized_distance(s1, s2, score_cutoff, score_hint)
 }
 
-pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    score_cutoff: Option<f64>,
-    score_hint: Option<f64>,
+    score_cutoff: ScoreCutoff,
+    score_hint: ScoreHint,
 ) -> f64
 where
     Iter1: IntoIterator<Item = Elem1>,
@@ -617,6 +623,8 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    ScoreCutoff: Into<Option<f64>>,
+    ScoreHint: Into<Option<f64>>,
 {
     LcsSeq::normalized_similarity(s1, s2, score_cutoff, score_hint)
 }
@@ -690,11 +698,11 @@ mod tests {
         };
     }
 
-    fn test_lcs_seq_distance<Iter1, Iter2, Elem1, Elem2>(
+    fn test_lcs_seq_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
         s1_: Iter1,
         s2_: Iter2,
-        score_cutoff: Option<usize>,
-        score_hint: Option<usize>,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
     ) -> usize
     where
         Iter1: IntoIterator<Item = Elem1>,
@@ -703,14 +711,26 @@ mod tests {
         Iter2::IntoIter: DoubleEndedIterator + Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<usize>> + Clone,
+        ScoreHint: Into<Option<usize>> + Clone,
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();
-        let res1 = distance(s1.clone(), s2.clone(), score_cutoff, score_hint);
-        let res2 = distance(s2.clone(), s1.clone(), score_cutoff, score_hint);
+        let res1 = distance(
+            s1.clone(),
+            s2.clone(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
+        let res2 = distance(
+            s2.clone(),
+            s1.clone(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
 
         let scorer1 = CachedLcsSeq::new(s1.clone());
-        let res3 = scorer1.distance(s2.clone(), score_cutoff, score_hint);
+        let res3 = scorer1.distance(s2.clone(), score_cutoff.clone(), score_hint.clone());
         let scorer2 = CachedLcsSeq::new(s2.clone());
         let res4 = scorer2.distance(s1.clone(), score_cutoff, score_hint);
 
@@ -720,24 +740,33 @@ mod tests {
         res1
     }
 
-    fn test_lcs_seq_distance_ascii(
+    fn test_lcs_seq_distance_ascii<ScoreCutoff, ScoreHint>(
         s1: &str,
         s2: &str,
-        score_cutoff: Option<usize>,
-        score_hint: Option<usize>,
-    ) -> usize {
-        let res1 = test_lcs_seq_distance(s1.chars(), s2.chars(), score_cutoff, score_hint);
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> usize
+    where
+        ScoreCutoff: Into<Option<usize>> + Clone,
+        ScoreHint: Into<Option<usize>> + Clone,
+    {
+        let res1 = test_lcs_seq_distance(
+            s1.chars(),
+            s2.chars(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
         let res2 = test_lcs_seq_distance(s1.bytes(), s2.bytes(), score_cutoff, score_hint);
 
         assert_eq!(res1, res2);
         res1
     }
 
-    fn test_lcs_seq_similarity<Iter1, Iter2, Elem1, Elem2>(
+    fn test_lcs_seq_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
         s1_: Iter1,
         s2_: Iter2,
-        score_cutoff: Option<usize>,
-        score_hint: Option<usize>,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
     ) -> usize
     where
         Iter1: IntoIterator<Item = Elem1>,
@@ -746,14 +775,26 @@ mod tests {
         Iter2::IntoIter: DoubleEndedIterator + Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<usize>> + Clone,
+        ScoreHint: Into<Option<usize>> + Clone,
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();
-        let res1 = similarity(s1.clone(), s2.clone(), score_cutoff, score_hint);
-        let res2 = similarity(s2.clone(), s1.clone(), score_cutoff, score_hint);
+        let res1 = similarity(
+            s1.clone(),
+            s2.clone(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
+        let res2 = similarity(
+            s2.clone(),
+            s1.clone(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
 
         let scorer1 = CachedLcsSeq::new(s1.clone());
-        let res3 = scorer1.similarity(s2.clone(), score_cutoff, score_hint);
+        let res3 = scorer1.similarity(s2.clone(), score_cutoff.clone(), score_hint.clone());
         let scorer2 = CachedLcsSeq::new(s2.clone());
         let res4 = scorer2.similarity(s1.clone(), score_cutoff, score_hint);
 
@@ -763,24 +804,33 @@ mod tests {
         res1
     }
 
-    fn test_lcs_seq_similarity_ascii(
+    fn test_lcs_seq_similarity_ascii<ScoreCutoff, ScoreHint>(
         s1: &str,
         s2: &str,
-        score_cutoff: Option<usize>,
-        score_hint: Option<usize>,
-    ) -> usize {
-        let res1 = test_lcs_seq_similarity(s1.chars(), s2.chars(), score_cutoff, score_hint);
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> usize
+    where
+        ScoreCutoff: Into<Option<usize>> + Clone,
+        ScoreHint: Into<Option<usize>> + Clone,
+    {
+        let res1 = test_lcs_seq_similarity(
+            s1.chars(),
+            s2.chars(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
         let res2 = test_lcs_seq_similarity(s1.bytes(), s2.bytes(), score_cutoff, score_hint);
 
         assert_eq!(res1, res2);
         res1
     }
 
-    fn test_lcs_seq_normalized_distance<Iter1, Iter2, Elem1, Elem2>(
+    fn test_lcs_seq_normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
         s1_: Iter1,
         s2_: Iter2,
-        score_cutoff: Option<f64>,
-        score_hint: Option<f64>,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
     ) -> f64
     where
         Iter1: IntoIterator<Item = Elem1>,
@@ -789,13 +839,26 @@ mod tests {
         Iter2::IntoIter: DoubleEndedIterator + Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<f64>> + Clone,
+        ScoreHint: Into<Option<f64>> + Clone,
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();
-        let res1 = normalized_distance(s1.clone(), s2.clone(), score_cutoff, score_hint);
-        let res2 = normalized_distance(s2.clone(), s1.clone(), score_cutoff, score_hint);
+        let res1 = normalized_distance(
+            s1.clone(),
+            s2.clone(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
+        let res2 = normalized_distance(
+            s2.clone(),
+            s1.clone(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
         let scorer1 = CachedLcsSeq::new(s1.clone());
-        let res3 = scorer1.normalized_distance(s2.clone(), score_cutoff, score_hint);
+        let res3 =
+            scorer1.normalized_distance(s2.clone(), score_cutoff.clone(), score_hint.clone());
         let scorer2 = CachedLcsSeq::new(s2.clone());
         let res4 = scorer2.normalized_distance(s1.clone(), score_cutoff, score_hint);
 
@@ -805,14 +868,22 @@ mod tests {
         res1
     }
 
-    fn test_lcs_seq_normalized_distance_ascii(
+    fn test_lcs_seq_normalized_distance_ascii<ScoreCutoff, ScoreHint>(
         s1: &str,
         s2: &str,
-        score_cutoff: Option<f64>,
-        score_hint: Option<f64>,
-    ) -> f64 {
-        let res1 =
-            test_lcs_seq_normalized_distance(s1.chars(), s2.chars(), score_cutoff, score_hint);
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> f64
+    where
+        ScoreCutoff: Into<Option<f64>> + Clone,
+        ScoreHint: Into<Option<f64>> + Clone,
+    {
+        let res1 = test_lcs_seq_normalized_distance(
+            s1.chars(),
+            s2.chars(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
         let res2 =
             test_lcs_seq_normalized_distance(s1.bytes(), s2.bytes(), score_cutoff, score_hint);
 
@@ -820,11 +891,11 @@ mod tests {
         res1
     }
 
-    fn test_lcs_seq_normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
+    fn test_lcs_seq_normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
         s1_: Iter1,
         s2_: Iter2,
-        score_cutoff: Option<f64>,
-        score_hint: Option<f64>,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
     ) -> f64
     where
         Iter1: IntoIterator<Item = Elem1>,
@@ -833,13 +904,26 @@ mod tests {
         Iter2::IntoIter: DoubleEndedIterator + Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<f64>> + Clone,
+        ScoreHint: Into<Option<f64>> + Clone,
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();
-        let res1 = normalized_similarity(s1.clone(), s2.clone(), score_cutoff, score_hint);
-        let res2 = normalized_similarity(s2.clone(), s1.clone(), score_cutoff, score_hint);
+        let res1 = normalized_similarity(
+            s1.clone(),
+            s2.clone(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
+        let res2 = normalized_similarity(
+            s2.clone(),
+            s1.clone(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
         let scorer1 = CachedLcsSeq::new(s1.clone());
-        let res3 = scorer1.normalized_similarity(s2.clone(), score_cutoff, score_hint);
+        let res3 =
+            scorer1.normalized_similarity(s2.clone(), score_cutoff.clone(), score_hint.clone());
         let scorer2 = CachedLcsSeq::new(s2.clone());
         let res4 = scorer2.normalized_similarity(s1.clone(), score_cutoff, score_hint);
 
@@ -849,14 +933,22 @@ mod tests {
         res1
     }
 
-    fn test_lcs_seq_normalized_similarity_ascii(
+    fn test_lcs_seq_normalized_similarity_ascii<ScoreCutoff, ScoreHint>(
         s1: &str,
         s2: &str,
-        score_cutoff: Option<f64>,
-        score_hint: Option<f64>,
-    ) -> f64 {
-        let res1 =
-            test_lcs_seq_normalized_similarity(s1.chars(), s2.chars(), score_cutoff, score_hint);
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> f64
+    where
+        ScoreCutoff: Into<Option<f64>> + Clone,
+        ScoreHint: Into<Option<f64>> + Clone,
+    {
+        let res1 = test_lcs_seq_normalized_similarity(
+            s1.chars(),
+            s2.chars(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
         let res2 =
             test_lcs_seq_normalized_similarity(s1.bytes(), s2.bytes(), score_cutoff, score_hint);
 
@@ -903,28 +995,28 @@ mod tests {
         let mut b = "North Korea";
 
         assert_eq!(9, test_lcs_seq_similarity_ascii(a, b, None, None));
-        assert_eq!(9, test_lcs_seq_similarity_ascii(a, b, Some(9), None));
-        assert_eq!(0, test_lcs_seq_similarity_ascii(a, b, Some(10), None));
+        assert_eq!(9, test_lcs_seq_similarity_ascii(a, b, 9, None));
+        assert_eq!(0, test_lcs_seq_similarity_ascii(a, b, 10, None));
 
         assert_eq!(2, test_lcs_seq_distance_ascii(a, b, None, None));
-        assert_eq!(2, test_lcs_seq_distance_ascii(a, b, Some(4), None));
-        assert_eq!(2, test_lcs_seq_distance_ascii(a, b, Some(3), None));
-        assert_eq!(2, test_lcs_seq_distance_ascii(a, b, Some(2), None));
-        assert_eq!(2, test_lcs_seq_distance_ascii(a, b, Some(1), None));
-        assert_eq!(1, test_lcs_seq_distance_ascii(a, b, Some(0), None));
+        assert_eq!(2, test_lcs_seq_distance_ascii(a, b, 4, None));
+        assert_eq!(2, test_lcs_seq_distance_ascii(a, b, 3, None));
+        assert_eq!(2, test_lcs_seq_distance_ascii(a, b, 2, None));
+        assert_eq!(2, test_lcs_seq_distance_ascii(a, b, 1, None));
+        assert_eq!(1, test_lcs_seq_distance_ascii(a, b, 0, None));
 
         a = "aabc";
         b = "cccd";
         assert_eq!(1, test_lcs_seq_similarity_ascii(a, b, None, None));
-        assert_eq!(1, test_lcs_seq_similarity_ascii(a, b, Some(1), None));
-        assert_eq!(0, test_lcs_seq_similarity_ascii(a, b, Some(2), None));
+        assert_eq!(1, test_lcs_seq_similarity_ascii(a, b, 1, None));
+        assert_eq!(0, test_lcs_seq_similarity_ascii(a, b, 2, None));
 
         assert_eq!(3, test_lcs_seq_distance_ascii(a, b, None, None));
-        assert_eq!(3, test_lcs_seq_distance_ascii(a, b, Some(4), None));
-        assert_eq!(3, test_lcs_seq_distance_ascii(a, b, Some(3), None));
-        assert_eq!(3, test_lcs_seq_distance_ascii(a, b, Some(2), None));
-        assert_eq!(2, test_lcs_seq_distance_ascii(a, b, Some(1), None));
-        assert_eq!(1, test_lcs_seq_distance_ascii(a, b, Some(0), None));
+        assert_eq!(3, test_lcs_seq_distance_ascii(a, b, 4, None));
+        assert_eq!(3, test_lcs_seq_distance_ascii(a, b, 3, None));
+        assert_eq!(3, test_lcs_seq_distance_ascii(a, b, 2, None));
+        assert_eq!(2, test_lcs_seq_distance_ascii(a, b, 1, None));
+        assert_eq!(1, test_lcs_seq_distance_ascii(a, b, 0, None));
     }
 
     #[test]

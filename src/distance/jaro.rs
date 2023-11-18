@@ -602,11 +602,11 @@ impl Jaro {
     }
 }
 
-pub fn distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    score_cutoff: Option<f64>,
-    score_hint: Option<f64>,
+    score_cutoff: ScoreCutoff,
+    score_hint: ScoreHint,
 ) -> f64
 where
     Iter1: IntoIterator<Item = Elem1>,
@@ -615,15 +615,17 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    ScoreCutoff: Into<Option<f64>>,
+    ScoreHint: Into<Option<f64>>,
 {
     Jaro::distance(s1, s2, score_cutoff, score_hint)
 }
 
-pub fn similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    score_cutoff: Option<f64>,
-    score_hint: Option<f64>,
+    score_cutoff: ScoreCutoff,
+    score_hint: ScoreHint,
 ) -> f64
 where
     Iter1: IntoIterator<Item = Elem1>,
@@ -632,15 +634,17 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    ScoreCutoff: Into<Option<f64>>,
+    ScoreHint: Into<Option<f64>>,
 {
     Jaro::similarity(s1, s2, score_cutoff, score_hint)
 }
 
-pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    score_cutoff: Option<f64>,
-    score_hint: Option<f64>,
+    score_cutoff: ScoreCutoff,
+    score_hint: ScoreHint,
 ) -> f64
 where
     Iter1: IntoIterator<Item = Elem1>,
@@ -649,15 +653,17 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    ScoreCutoff: Into<Option<f64>>,
+    ScoreHint: Into<Option<f64>>,
 {
     Jaro::normalized_distance(s1, s2, score_cutoff, score_hint)
 }
 
-pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    score_cutoff: Option<f64>,
-    score_hint: Option<f64>,
+    score_cutoff: ScoreCutoff,
+    score_hint: ScoreHint,
 ) -> f64
 where
     Iter1: IntoIterator<Item = Elem1>,
@@ -666,6 +672,8 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    ScoreCutoff: Into<Option<f64>>,
+    ScoreHint: Into<Option<f64>>,
 {
     Jaro::normalized_similarity(s1, s2, score_cutoff, score_hint)
 }
@@ -738,11 +746,11 @@ mod tests {
         };
     }
 
-    fn _test_distance<Iter1, Iter2, Elem1, Elem2>(
+    fn _test_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
         s1_: Iter1,
         s2_: Iter2,
-        score_cutoff: Option<f64>,
-        score_hint: Option<f64>,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
     ) -> f64
     where
         Iter1: IntoIterator<Item = Elem1>,
@@ -751,14 +759,26 @@ mod tests {
         Iter2::IntoIter: DoubleEndedIterator + Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<f64>> + Clone,
+        ScoreHint: Into<Option<f64>> + Clone,
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();
-        let res1 = distance(s1.clone(), s2.clone(), score_cutoff, score_hint);
-        let res2 = distance(s2.clone(), s1.clone(), score_cutoff, score_hint);
+        let res1 = distance(
+            s1.clone(),
+            s2.clone(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
+        let res2 = distance(
+            s2.clone(),
+            s1.clone(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
 
         let scorer1 = CachedJaro::new(s1.clone());
-        let res3 = scorer1.distance(s2.clone(), score_cutoff, score_hint);
+        let res3 = scorer1.distance(s2.clone(), score_cutoff.clone(), score_hint.clone());
         let scorer2 = CachedJaro::new(s2.clone());
         let res4 = scorer2.distance(s1.clone(), score_cutoff, score_hint);
 
@@ -768,24 +788,33 @@ mod tests {
         res1
     }
 
-    fn _test_distance_ascii(
+    fn _test_distance_ascii<ScoreCutoff, ScoreHint>(
         s1: &str,
         s2: &str,
-        score_cutoff: Option<f64>,
-        score_hint: Option<f64>,
-    ) -> f64 {
-        let res1 = _test_distance(s1.chars(), s2.chars(), score_cutoff, score_hint);
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> f64
+    where
+        ScoreCutoff: Into<Option<f64>> + Clone,
+        ScoreHint: Into<Option<f64>> + Clone,
+    {
+        let res1 = _test_distance(
+            s1.chars(),
+            s2.chars(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
         let res2 = _test_distance(s1.bytes(), s2.bytes(), score_cutoff, score_hint);
 
         assert_delta!(res1, res2, 0.0001);
         res1
     }
 
-    fn _test_similarity<Iter1, Iter2, Elem1, Elem2>(
+    fn _test_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
         s1_: Iter1,
         s2_: Iter2,
-        score_cutoff: Option<f64>,
-        score_hint: Option<f64>,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
     ) -> f64
     where
         Iter1: IntoIterator<Item = Elem1>,
@@ -794,14 +823,26 @@ mod tests {
         Iter2::IntoIter: DoubleEndedIterator + Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<f64>> + Clone,
+        ScoreHint: Into<Option<f64>> + Clone,
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();
-        let res1 = similarity(s1.clone(), s2.clone(), score_cutoff, score_hint);
-        let res2 = similarity(s2.clone(), s1.clone(), score_cutoff, score_hint);
+        let res1 = similarity(
+            s1.clone(),
+            s2.clone(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
+        let res2 = similarity(
+            s2.clone(),
+            s1.clone(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
 
         let scorer1 = CachedJaro::new(s1.clone());
-        let res3 = scorer1.similarity(s2.clone(), score_cutoff, score_hint);
+        let res3 = scorer1.similarity(s2.clone(), score_cutoff.clone(), score_hint.clone());
         let scorer2 = CachedJaro::new(s2.clone());
         let res4 = scorer2.similarity(s1.clone(), score_cutoff, score_hint);
 
@@ -811,13 +852,22 @@ mod tests {
         res1
     }
 
-    fn _test_similarity_ascii(
+    fn _test_similarity_ascii<ScoreCutoff, ScoreHint>(
         s1: &str,
         s2: &str,
-        score_cutoff: Option<f64>,
-        score_hint: Option<f64>,
-    ) -> f64 {
-        let res1 = _test_similarity(s1.chars(), s2.chars(), score_cutoff, score_hint);
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> f64
+    where
+        ScoreCutoff: Into<Option<f64>> + Clone,
+        ScoreHint: Into<Option<f64>> + Clone,
+    {
+        let res1 = _test_similarity(
+            s1.chars(),
+            s2.chars(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
         let res2 = _test_similarity(s1.bytes(), s2.bytes(), score_cutoff, score_hint);
 
         assert_delta!(res1, res2, 0.0001);
@@ -901,8 +951,8 @@ mod tests {
                         expected_sim = 0.0;
                     }
 
-                    let sim = _test_similarity_ascii(name1, name2, Some(score_cutoff), None);
-                    let dist = _test_distance_ascii(name1, name2, Some(1.0 - score_cutoff), None);
+                    let sim = _test_similarity_ascii(name1, name2, score_cutoff, None);
+                    let dist = _test_distance_ascii(name1, name2, 1.0 - score_cutoff, None);
                     assert_delta!(expected_sim, sim, 0.0001);
                     assert_delta!(1.0 - expected_sim, dist, 0.0001);
                 }

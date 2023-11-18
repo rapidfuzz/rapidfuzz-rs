@@ -50,11 +50,11 @@ impl Indel {
     }
 }
 
-pub fn distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    score_cutoff: Option<usize>,
-    score_hint: Option<usize>,
+    score_cutoff: ScoreCutoff,
+    score_hint: ScoreHint,
 ) -> usize
 where
     Iter1: IntoIterator<Item = Elem1>,
@@ -63,15 +63,17 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    ScoreCutoff: Into<Option<usize>>,
+    ScoreHint: Into<Option<usize>>,
 {
     Indel::distance(s1, s2, score_cutoff, score_hint)
 }
 
-pub fn similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    score_cutoff: Option<usize>,
-    score_hint: Option<usize>,
+    score_cutoff: ScoreCutoff,
+    score_hint: ScoreHint,
 ) -> usize
 where
     Iter1: IntoIterator<Item = Elem1>,
@@ -80,15 +82,17 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    ScoreCutoff: Into<Option<usize>>,
+    ScoreHint: Into<Option<usize>>,
 {
     Indel::similarity(s1, s2, score_cutoff, score_hint)
 }
 
-pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    score_cutoff: Option<f64>,
-    score_hint: Option<f64>,
+    score_cutoff: ScoreCutoff,
+    score_hint: ScoreHint,
 ) -> f64
 where
     Iter1: IntoIterator<Item = Elem1>,
@@ -97,15 +101,17 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    ScoreCutoff: Into<Option<f64>>,
+    ScoreHint: Into<Option<f64>>,
 {
     Indel::normalized_distance(s1, s2, score_cutoff, score_hint)
 }
 
-pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    score_cutoff: Option<f64>,
-    score_hint: Option<f64>,
+    score_cutoff: ScoreCutoff,
+    score_hint: ScoreHint,
 ) -> f64
 where
     Iter1: IntoIterator<Item = Elem1>,
@@ -114,6 +120,8 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    ScoreCutoff: Into<Option<f64>>,
+    ScoreHint: Into<Option<f64>>,
 {
     Indel::normalized_similarity(s1, s2, score_cutoff, score_hint)
 }

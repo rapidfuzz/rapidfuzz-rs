@@ -15,12 +15,12 @@ macro_rules! build_normalized_metric_funcs
 {
     ($impl_type:tt, $res_type:ty, $worst_similarity:expr, $worst_distance:expr $(, $v:ident: $t:ty)*) => {
         #[allow(dead_code)]
-        pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2>(
+        pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
             s1: Iter1,
             s2: Iter2,
             $($v: $t,)*
-            score_cutoff: Option<f64>,
-            score_hint: Option<f64>
+            score_cutoff: ScoreCutoff,
+            score_hint: ScoreHint
         ) -> f64
         where
             Iter1: IntoIterator<Item = Elem1>,
@@ -29,6 +29,8 @@ macro_rules! build_normalized_metric_funcs
             Iter2::IntoIter: DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            ScoreCutoff: Into<Option<f64>>,
+            ScoreHint: Into<Option<f64>>,
         {
             let s1_iter = s1.into_iter();
             let s2_iter = s2.into_iter();
@@ -40,8 +42,8 @@ macro_rules! build_normalized_metric_funcs
                 s2_iter,
                 len2,
                 $($v,)*
-                score_cutoff.unwrap_or(1.0),
-                score_hint.unwrap_or(1.0)
+                score_cutoff.into().unwrap_or(1.0),
+                score_hint.into().unwrap_or(1.0)
             )
         }
 
@@ -87,12 +89,12 @@ macro_rules! build_normalized_metric_funcs
         }
 
         #[allow(dead_code)]
-        pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
+        pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
             s1: Iter1,
             s2: Iter2,
             $($v: $t,)*
-            score_cutoff: Option<f64>,
-            score_hint: Option<f64>
+            score_cutoff: ScoreCutoff,
+            score_hint: ScoreHint
         ) -> f64
         where
             Iter1: IntoIterator<Item = Elem1>,
@@ -101,6 +103,8 @@ macro_rules! build_normalized_metric_funcs
             Iter2::IntoIter: DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            ScoreCutoff: Into<Option<f64>>,
+            ScoreHint: Into<Option<f64>>,
         {
             let s1_iter = s1.into_iter();
             let s2_iter = s2.into_iter();
@@ -112,8 +116,8 @@ macro_rules! build_normalized_metric_funcs
                 s2_iter,
                 len2,
                 $($v,)*
-                score_cutoff.unwrap_or(0.0),
-                score_hint.unwrap_or(0.0)
+                score_cutoff.into().unwrap_or(0.0),
+                score_hint.into().unwrap_or(0.0)
             )
         }
 
@@ -161,12 +165,12 @@ macro_rules! build_distance_metric_funcs
         build_normalized_metric_funcs!($impl_type, $res_type, $worst_similarity, $worst_distance $(, $v: $t)*);
 
         #[allow(dead_code)]
-        pub fn distance<Iter1, Iter2, Elem1, Elem2>(
+        pub fn distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
             s1: Iter1,
             s2: Iter2,
             $($v: $t,)*
-            score_cutoff: Option<$res_type>,
-            score_hint: Option<$res_type>
+            score_cutoff: ScoreCutoff,
+            score_hint: ScoreHint
         ) -> $res_type
         where
             Iter1: IntoIterator<Item = Elem1>,
@@ -175,6 +179,8 @@ macro_rules! build_distance_metric_funcs
             Iter2::IntoIter: DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            ScoreCutoff: Into<Option<$res_type>>,
+            ScoreHint: Into<Option<$res_type>>,
         {
             let s1_iter = s1.into_iter();
             let s2_iter = s2.into_iter();
@@ -186,18 +192,18 @@ macro_rules! build_distance_metric_funcs
                 s2_iter,
                 len2,
                 $($v,)*
-                score_cutoff.unwrap_or($worst_distance),
-                score_hint.unwrap_or($worst_distance)
+                score_cutoff.into().unwrap_or($worst_distance),
+                score_hint.into().unwrap_or($worst_distance)
             )
         }
 
         #[allow(dead_code)]
-        pub fn similarity<Iter1, Iter2, Elem1, Elem2>(
+        pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
             s1: Iter1,
             s2: Iter2,
             $($v: $t,)*
-            score_cutoff: Option<$res_type>,
-            score_hint: Option<$res_type>
+            score_cutoff: ScoreCutoff,
+            score_hint: ScoreHint
         ) -> $res_type
         where
             Iter1: IntoIterator<Item = Elem1>,
@@ -206,6 +212,8 @@ macro_rules! build_distance_metric_funcs
             Iter2::IntoIter: DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            ScoreCutoff: Into<Option<$res_type>>,
+            ScoreHint: Into<Option<$res_type>>,
         {
             let s1_iter = s1.into_iter();
             let s2_iter = s2.into_iter();
@@ -217,8 +225,8 @@ macro_rules! build_distance_metric_funcs
                 s2_iter,
                 len2,
                 $($v,)*
-                score_cutoff.unwrap_or($worst_similarity),
-                score_hint.unwrap_or($worst_similarity)
+                score_cutoff.into().unwrap_or($worst_similarity),
+                score_hint.into().unwrap_or($worst_similarity)
             )
         }
 
@@ -262,12 +270,12 @@ macro_rules! build_similarity_metric_funcs
         build_normalized_metric_funcs!($impl_type, $res_type, $worst_similarity, $worst_distance $(, $v: $t)*);
 
         #[allow(dead_code)]
-        pub fn distance<Iter1, Iter2, Elem1, Elem2>(
+        pub fn distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
             s1: Iter1,
             s2: Iter2,
             $($v: $t,)*
-            score_cutoff: Option<$res_type>,
-            score_hint: Option<$res_type>
+            score_cutoff: ScoreCutoff,
+            score_hint: ScoreHint
         ) -> $res_type
         where
             Iter1: IntoIterator<Item = Elem1>,
@@ -276,6 +284,8 @@ macro_rules! build_similarity_metric_funcs
             Iter2::IntoIter: DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            ScoreCutoff: Into<Option<$res_type>>,
+            ScoreHint: Into<Option<$res_type>>,
         {
             let s1_iter = s1.into_iter();
             let s2_iter = s2.into_iter();
@@ -287,18 +297,18 @@ macro_rules! build_similarity_metric_funcs
                 s2_iter,
                 len2,
                 $($v,)*
-                score_cutoff.unwrap_or($worst_distance),
-                score_hint.unwrap_or($worst_distance)
+                score_cutoff.into().unwrap_or($worst_distance),
+                score_hint.into().unwrap_or($worst_distance)
             )
         }
 
         #[allow(dead_code)]
-        pub fn similarity<Iter1, Iter2, Elem1, Elem2>(
+        pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
             s1: Iter1,
             s2: Iter2,
             $($v: $t,)*
-            score_cutoff: Option<$res_type>,
-            score_hint: Option<$res_type>
+            score_cutoff: ScoreCutoff,
+            score_hint: ScoreHint
         ) -> $res_type
         where
             Iter1: IntoIterator<Item = Elem1>,
@@ -307,6 +317,8 @@ macro_rules! build_similarity_metric_funcs
             Iter2::IntoIter: DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            ScoreCutoff: Into<Option<$res_type>>,
+            ScoreHint: Into<Option<$res_type>>,
         {
             let s1_iter = s1.into_iter();
             let s2_iter = s2.into_iter();
@@ -318,8 +330,8 @@ macro_rules! build_similarity_metric_funcs
                 s2_iter,
                 len2,
                 $($v,)*
-                score_cutoff.unwrap_or($worst_similarity),
-                score_hint.unwrap_or($worst_similarity)
+                score_cutoff.into().unwrap_or($worst_similarity),
+                score_hint.into().unwrap_or($worst_similarity)
             )
         }
 
@@ -371,25 +383,27 @@ pub(crate) use less_than_score_cutoff_similarity;
 macro_rules! build_cached_normalized_metric_funcs {
     ($impl_type:tt, $res_type:ty, $worst_similarity:expr, $worst_distance:expr) => {
         #[allow(dead_code)]
-        pub fn normalized_distance<Iter2, Elem2>(
+        pub fn normalized_distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
             &self,
             s2: Iter2,
-            score_cutoff: Option<f64>,
-            score_hint: Option<f64>,
+            score_cutoff: ScoreCutoff,
+            score_hint: ScoreHint,
         ) -> f64
         where
             Iter2: IntoIterator<Item = Elem2>,
             Iter2::IntoIter: DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            ScoreCutoff: Into<Option<f64>>,
+            ScoreHint: Into<Option<f64>>,
         {
             let s2_iter = s2.into_iter();
             let len2 = s2_iter.clone().count();
             self._normalized_distance(
                 s2_iter,
                 len2,
-                score_cutoff.unwrap_or(1.0),
-                score_hint.unwrap_or(1.0),
+                score_cutoff.into().unwrap_or(1.0),
+                score_hint.into().unwrap_or(1.0),
             )
         }
 
@@ -424,25 +438,27 @@ macro_rules! build_cached_normalized_metric_funcs {
         }
 
         #[allow(dead_code)]
-        pub fn normalized_similarity<Iter2, Elem2>(
+        pub fn normalized_similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
             &self,
             s2: Iter2,
-            score_cutoff: Option<f64>,
-            score_hint: Option<f64>,
+            score_cutoff: ScoreCutoff,
+            score_hint: ScoreHint,
         ) -> f64
         where
             Iter2: IntoIterator<Item = Elem2>,
             Iter2::IntoIter: DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            ScoreCutoff: Into<Option<f64>>,
+            ScoreHint: Into<Option<f64>>,
         {
             let s2_iter = s2.into_iter();
             let len2 = s2_iter.clone().count();
             self._normalized_similarity(
                 s2_iter,
                 len2,
-                score_cutoff.unwrap_or(0.0),
-                score_hint.unwrap_or(0.0),
+                score_cutoff.into().unwrap_or(0.0),
+                score_hint.into().unwrap_or(0.0),
             )
         }
 
@@ -484,48 +500,52 @@ macro_rules! build_cached_distance_metric_funcs {
 
         /// calculate distance similar to [`distance`]
         #[allow(dead_code)]
-        pub fn distance<Iter2, Elem2>(
+        pub fn distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
             &self,
             s2: Iter2,
-            score_cutoff: Option<$res_type>,
-            score_hint: Option<$res_type>,
+            score_cutoff: ScoreCutoff,
+            score_hint: ScoreHint,
         ) -> $res_type
         where
             Iter2: IntoIterator<Item = Elem2>,
             Iter2::IntoIter: DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            ScoreCutoff: Into<Option<$res_type>>,
+            ScoreHint: Into<Option<$res_type>>,
         {
             let s2_iter = s2.into_iter();
             let len2 = s2_iter.clone().count();
             self._distance(
                 s2_iter,
                 len2,
-                score_cutoff.unwrap_or($worst_distance),
-                score_hint.unwrap_or($worst_distance),
+                score_cutoff.into().unwrap_or($worst_distance),
+                score_hint.into().unwrap_or($worst_distance),
             )
         }
 
         #[allow(dead_code)]
-        pub fn similarity<Iter2, Elem2>(
+        pub fn similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
             &self,
             s2: Iter2,
-            score_cutoff: Option<$res_type>,
-            score_hint: Option<$res_type>,
+            score_cutoff: ScoreCutoff,
+            score_hint: ScoreHint,
         ) -> $res_type
         where
             Iter2: IntoIterator<Item = Elem2>,
             Iter2::IntoIter: DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            ScoreCutoff: Into<Option<$res_type>>,
+            ScoreHint: Into<Option<$res_type>>,
         {
             let s2_iter = s2.into_iter();
             let len2 = s2_iter.clone().count();
             self._similarity(
                 s2_iter,
                 len2,
-                score_cutoff.unwrap_or($worst_similarity),
-                score_hint.unwrap_or($worst_similarity),
+                score_cutoff.into().unwrap_or($worst_similarity),
+                score_hint.into().unwrap_or($worst_similarity),
             )
         }
 
@@ -570,48 +590,52 @@ macro_rules! build_cached_similarity_metric_funcs {
         );
 
         #[allow(dead_code)]
-        pub fn distance<Iter2, Elem2>(
+        pub fn distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
             &self,
             s2: Iter2,
-            score_cutoff: Option<$res_type>,
-            score_hint: Option<$res_type>,
+            score_cutoff: ScoreCutoff,
+            score_hint: ScoreHint,
         ) -> $res_type
         where
             Iter2: IntoIterator<Item = Elem2>,
             Iter2::IntoIter: DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            ScoreCutoff: Into<Option<$res_type>>,
+            ScoreHint: Into<Option<$res_type>>,
         {
             let s2_iter = s2.into_iter();
             let len2 = s2_iter.clone().count();
             self._distance(
                 s2_iter,
                 len2,
-                score_cutoff.unwrap_or($worst_distance),
-                score_hint.unwrap_or($worst_distance),
+                score_cutoff.into().unwrap_or($worst_distance),
+                score_hint.into().unwrap_or($worst_distance),
             )
         }
 
         #[allow(dead_code)]
-        pub fn similarity<Iter2, Elem2>(
+        pub fn similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
             &self,
             s2: Iter2,
-            score_cutoff: Option<$res_type>,
-            score_hint: Option<$res_type>,
+            score_cutoff: ScoreCutoff,
+            score_hint: ScoreHint,
         ) -> $res_type
         where
             Iter2: IntoIterator<Item = Elem2>,
             Iter2::IntoIter: DoubleEndedIterator + Clone,
             Elem1: PartialEq<Elem2> + HashableChar + Copy,
             Elem2: PartialEq<Elem1> + HashableChar + Copy,
+            ScoreCutoff: Into<Option<$res_type>>,
+            ScoreHint: Into<Option<$res_type>>,
         {
             let s2_iter = s2.into_iter();
             let len2 = s2_iter.clone().count();
             self._similarity(
                 s2_iter,
                 len2,
-                score_cutoff.unwrap_or($worst_similarity),
-                score_hint.unwrap_or($worst_similarity),
+                score_cutoff.into().unwrap_or($worst_similarity),
+                score_hint.into().unwrap_or($worst_similarity),
             )
         }
 
