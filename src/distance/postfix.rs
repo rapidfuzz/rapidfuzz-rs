@@ -16,7 +16,7 @@ impl Postfix {
         len1.max(len2)
     }
 
-    fn _similarity<Iter1, Iter2, Elem1, Elem2>(
+    fn similarity<Iter1, Iter2, Elem1, Elem2>(
         s1: Iter1,
         _len1: usize,
         s2: Iter2,
@@ -39,11 +39,11 @@ impl Postfix {
     }
 }
 
-pub fn distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    score_cutoff: Option<usize>,
-    score_hint: Option<usize>,
+    score_cutoff: ScoreCutoff,
+    score_hint: ScoreHint,
 ) -> usize
 where
     Iter1: IntoIterator<Item = Elem1>,
@@ -52,15 +52,26 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    ScoreCutoff: Into<Option<usize>>,
+    ScoreHint: Into<Option<usize>>,
 {
-    Postfix::distance(s1, s2, score_cutoff, score_hint)
+    let s1_iter = s1.into_iter();
+    let s2_iter = s2.into_iter();
+    Postfix::distance(
+        s1_iter.clone(),
+        s1_iter.count(),
+        s2_iter.clone(),
+        s2_iter.count(),
+        score_cutoff.into().unwrap_or(usize::MAX),
+        score_hint.into().unwrap_or(usize::MAX),
+    )
 }
 
-pub fn similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    score_cutoff: Option<usize>,
-    score_hint: Option<usize>,
+    score_cutoff: ScoreCutoff,
+    score_hint: ScoreHint,
 ) -> usize
 where
     Iter1: IntoIterator<Item = Elem1>,
@@ -69,15 +80,26 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    ScoreCutoff: Into<Option<usize>>,
+    ScoreHint: Into<Option<usize>>,
 {
-    Postfix::similarity(s1, s2, score_cutoff, score_hint)
+    let s1_iter = s1.into_iter();
+    let s2_iter = s2.into_iter();
+    Postfix::similarity(
+        s1_iter.clone(),
+        s1_iter.count(),
+        s2_iter.clone(),
+        s2_iter.count(),
+        score_cutoff.into().unwrap_or(0),
+        score_hint.into().unwrap_or(0),
+    )
 }
 
-pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    score_cutoff: Option<f64>,
-    score_hint: Option<f64>,
+    score_cutoff: ScoreCutoff,
+    score_hint: ScoreHint,
 ) -> f64
 where
     Iter1: IntoIterator<Item = Elem1>,
@@ -86,15 +108,26 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    ScoreCutoff: Into<Option<f64>>,
+    ScoreHint: Into<Option<f64>>,
 {
-    Postfix::normalized_distance(s1, s2, score_cutoff, score_hint)
+    let s1_iter = s1.into_iter();
+    let s2_iter = s2.into_iter();
+    Postfix::normalized_distance(
+        s1_iter.clone(),
+        s1_iter.count(),
+        s2_iter.clone(),
+        s2_iter.count(),
+        score_cutoff.into().unwrap_or(1.0),
+        score_hint.into().unwrap_or(1.0),
+    )
 }
 
-pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
+pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    score_cutoff: Option<f64>,
-    score_hint: Option<f64>,
+    score_cutoff: ScoreCutoff,
+    score_hint: ScoreHint,
 ) -> f64
 where
     Iter1: IntoIterator<Item = Elem1>,
@@ -103,8 +136,19 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    ScoreCutoff: Into<Option<f64>>,
+    ScoreHint: Into<Option<f64>>,
 {
-    Postfix::normalized_similarity(s1, s2, score_cutoff, score_hint)
+    let s1_iter = s1.into_iter();
+    let s2_iter = s2.into_iter();
+    Postfix::normalized_similarity(
+        s1_iter.clone(),
+        s1_iter.count(),
+        s2_iter.clone(),
+        s2_iter.count(),
+        score_cutoff.into().unwrap_or(0.0),
+        score_hint.into().unwrap_or(0.0),
+    )
 }
 
 pub struct CachedPostfix<Elem1>

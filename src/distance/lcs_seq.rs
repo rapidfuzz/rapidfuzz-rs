@@ -535,7 +535,7 @@ impl LcsSeq {
         max(len1, len2)
     }
 
-    pub(crate) fn _similarity<Iter1, Iter2, Elem1, Elem2>(
+    pub(crate) fn similarity<Iter1, Iter2, Elem1, Elem2>(
         s1: Iter1,
         len1: usize,
         s2: Iter2,
@@ -569,7 +569,16 @@ where
     ScoreCutoff: Into<Option<usize>>,
     ScoreHint: Into<Option<usize>>,
 {
-    LcsSeq::distance(s1, s2, score_cutoff, score_hint)
+    let s1_iter = s1.into_iter();
+    let s2_iter = s2.into_iter();
+    LcsSeq::distance(
+        s1_iter.clone(),
+        s1_iter.count(),
+        s2_iter.clone(),
+        s2_iter.count(),
+        score_cutoff.into().unwrap_or(usize::MAX),
+        score_hint.into().unwrap_or(usize::MAX),
+    )
 }
 
 pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
@@ -588,7 +597,16 @@ where
     ScoreCutoff: Into<Option<usize>>,
     ScoreHint: Into<Option<usize>>,
 {
-    LcsSeq::similarity(s1, s2, score_cutoff, score_hint)
+    let s1_iter = s1.into_iter();
+    let s2_iter = s2.into_iter();
+    LcsSeq::similarity(
+        s1_iter.clone(),
+        s1_iter.count(),
+        s2_iter.clone(),
+        s2_iter.count(),
+        score_cutoff.into().unwrap_or(0),
+        score_hint.into().unwrap_or(0),
+    )
 }
 
 pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
@@ -607,7 +625,16 @@ where
     ScoreCutoff: Into<Option<f64>>,
     ScoreHint: Into<Option<f64>>,
 {
-    LcsSeq::normalized_distance(s1, s2, score_cutoff, score_hint)
+    let s1_iter = s1.into_iter();
+    let s2_iter = s2.into_iter();
+    LcsSeq::normalized_distance(
+        s1_iter.clone(),
+        s1_iter.count(),
+        s2_iter.clone(),
+        s2_iter.count(),
+        score_cutoff.into().unwrap_or(1.0),
+        score_hint.into().unwrap_or(1.0),
+    )
 }
 
 pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
@@ -626,7 +653,16 @@ where
     ScoreCutoff: Into<Option<f64>>,
     ScoreHint: Into<Option<f64>>,
 {
-    LcsSeq::normalized_similarity(s1, s2, score_cutoff, score_hint)
+    let s1_iter = s1.into_iter();
+    let s2_iter = s2.into_iter();
+    LcsSeq::normalized_similarity(
+        s1_iter.clone(),
+        s1_iter.count(),
+        s2_iter.clone(),
+        s2_iter.count(),
+        score_cutoff.into().unwrap_or(0.0),
+        score_hint.into().unwrap_or(0.0),
+    )
 }
 
 pub struct CachedLcsSeq<Elem1>

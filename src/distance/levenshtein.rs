@@ -22,6 +22,16 @@ pub struct LevenshteinWeightTable {
     pub replace_cost: usize,
 }
 
+impl Default for LevenshteinWeightTable {
+    fn default() -> Self {
+        LevenshteinWeightTable {
+            insert_cost: 1,
+            delete_cost: 1,
+            replace_cost: 1,
+        }
+    }
+}
+
 #[derive(Clone)]
 struct LevenshteinRow {
     vp: u64,
@@ -1223,7 +1233,7 @@ where
             // max can make use of the common divisor of the three weights
             let new_score_cutoff = ceil_div_usize(score_cutoff, weights.insert_cost);
             let new_score_hint = ceil_div_usize(score_hint, weights.insert_cost);
-            let mut dist = Indel::_distance(s1, len1, s2, len2, new_score_cutoff, new_score_hint);
+            let mut dist = Indel::distance(s1, len1, s2, len2, new_score_cutoff, new_score_hint);
             dist *= weights.insert_cost;
             if dist <= score_cutoff {
                 return dist;
@@ -1314,7 +1324,7 @@ impl Levenshtein {
         _levenshtein_maximum(len1, len2, &weights)
     }
 
-    fn _distance<Iter1, Iter2, Elem1, Elem2>(
+    fn distance<Iter1, Iter2, Elem1, Elem2>(
         s1: Iter1,
         len1: usize,
         s2: Iter2,
@@ -1355,7 +1365,17 @@ where
     ScoreCutoff: Into<Option<usize>>,
     ScoreHint: Into<Option<usize>>,
 {
-    Levenshtein::distance(s1, s2, weights, score_cutoff, score_hint)
+    let s1_iter = s1.into_iter();
+    let s2_iter = s2.into_iter();
+    Levenshtein::distance(
+        s1_iter.clone(),
+        s1_iter.count(),
+        s2_iter.clone(),
+        s2_iter.count(),
+        weights,
+        score_cutoff.into().unwrap_or(usize::MAX),
+        score_hint.into().unwrap_or(usize::MAX),
+    )
 }
 
 pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
@@ -1375,7 +1395,17 @@ where
     ScoreCutoff: Into<Option<usize>>,
     ScoreHint: Into<Option<usize>>,
 {
-    Levenshtein::similarity(s1, s2, weights, score_cutoff, score_hint)
+    let s1_iter = s1.into_iter();
+    let s2_iter = s2.into_iter();
+    Levenshtein::similarity(
+        s1_iter.clone(),
+        s1_iter.count(),
+        s2_iter.clone(),
+        s2_iter.count(),
+        weights,
+        score_cutoff.into().unwrap_or(0),
+        score_hint.into().unwrap_or(0),
+    )
 }
 
 pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
@@ -1395,7 +1425,17 @@ where
     ScoreCutoff: Into<Option<f64>>,
     ScoreHint: Into<Option<f64>>,
 {
-    Levenshtein::normalized_distance(s1, s2, weights, score_cutoff, score_hint)
+    let s1_iter = s1.into_iter();
+    let s2_iter = s2.into_iter();
+    Levenshtein::normalized_distance(
+        s1_iter.clone(),
+        s1_iter.count(),
+        s2_iter.clone(),
+        s2_iter.count(),
+        weights,
+        score_cutoff.into().unwrap_or(1.0),
+        score_hint.into().unwrap_or(1.0),
+    )
 }
 
 pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
@@ -1415,7 +1455,17 @@ where
     ScoreCutoff: Into<Option<f64>>,
     ScoreHint: Into<Option<f64>>,
 {
-    Levenshtein::normalized_similarity(s1, s2, weights, score_cutoff, score_hint)
+    let s1_iter = s1.into_iter();
+    let s2_iter = s2.into_iter();
+    Levenshtein::normalized_similarity(
+        s1_iter.clone(),
+        s1_iter.count(),
+        s2_iter.clone(),
+        s2_iter.count(),
+        weights,
+        score_cutoff.into().unwrap_or(0.0),
+        score_hint.into().unwrap_or(0.0),
+    )
 }
 
 pub struct CachedLevenshtein<Elem1>

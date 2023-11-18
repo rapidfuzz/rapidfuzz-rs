@@ -104,7 +104,7 @@ impl JaroWinkler {
         1.0
     }
 
-    pub(crate) fn _similarity<Iter1, Iter2, Elem1, Elem2>(
+    pub(crate) fn similarity<Iter1, Iter2, Elem1, Elem2>(
         s1: Iter1,
         len1: usize,
         s2: Iter2,
@@ -130,10 +130,10 @@ impl JaroWinkler {
     }
 }
 
-pub fn distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
+pub fn distance<Iter1, Iter2, Elem1, Elem2, PrefixWeight, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    prefix_weight: Option<f64>,
+    prefix_weight: PrefixWeight,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
 ) -> f64
@@ -144,16 +144,27 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    PrefixWeight: Into<Option<f64>>,
     ScoreCutoff: Into<Option<f64>>,
     ScoreHint: Into<Option<f64>>,
 {
-    JaroWinkler::distance(s1, s2, prefix_weight, score_cutoff, score_hint)
+    let s1_iter = s1.into_iter();
+    let s2_iter = s2.into_iter();
+    JaroWinkler::distance(
+        s1_iter.clone(),
+        s1_iter.count(),
+        s2_iter.clone(),
+        s2_iter.count(),
+        prefix_weight.into(), //.unwrap_or(0.1),
+        score_cutoff.into().unwrap_or(1.0),
+        score_hint.into().unwrap_or(1.0),
+    )
 }
 
-pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
+pub fn similarity<Iter1, Iter2, Elem1, Elem2, PrefixWeight, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    prefix_weight: Option<f64>,
+    prefix_weight: PrefixWeight,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
 ) -> f64
@@ -164,16 +175,27 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    PrefixWeight: Into<Option<f64>>,
     ScoreCutoff: Into<Option<f64>>,
     ScoreHint: Into<Option<f64>>,
 {
-    JaroWinkler::similarity(s1, s2, prefix_weight, score_cutoff, score_hint)
+    let s1_iter = s1.into_iter();
+    let s2_iter = s2.into_iter();
+    JaroWinkler::similarity(
+        s1_iter.clone(),
+        s1_iter.count(),
+        s2_iter.clone(),
+        s2_iter.count(),
+        prefix_weight.into(), //.unwrap_or(0.1),
+        score_cutoff.into().unwrap_or(0.0),
+        score_hint.into().unwrap_or(0.0),
+    )
 }
 
-pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
+pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, PrefixWeight, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    prefix_weight: Option<f64>,
+    prefix_weight: PrefixWeight,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
 ) -> f64
@@ -184,16 +206,27 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    PrefixWeight: Into<Option<f64>>,
     ScoreCutoff: Into<Option<f64>>,
     ScoreHint: Into<Option<f64>>,
 {
-    JaroWinkler::normalized_distance(s1, s2, prefix_weight, score_cutoff, score_hint)
+    let s1_iter = s1.into_iter();
+    let s2_iter = s2.into_iter();
+    JaroWinkler::normalized_distance(
+        s1_iter.clone(),
+        s1_iter.count(),
+        s2_iter.clone(),
+        s2_iter.count(),
+        prefix_weight.into(), //.unwrap_or(0.1),
+        score_cutoff.into().unwrap_or(1.0),
+        score_hint.into().unwrap_or(1.0),
+    )
 }
 
-pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
+pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, PrefixWeight, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    prefix_weight: Option<f64>,
+    prefix_weight: PrefixWeight,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
 ) -> f64
@@ -204,10 +237,21 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    PrefixWeight: Into<Option<f64>>,
     ScoreCutoff: Into<Option<f64>>,
     ScoreHint: Into<Option<f64>>,
 {
-    JaroWinkler::normalized_similarity(s1, s2, prefix_weight, score_cutoff, score_hint)
+    let s1_iter = s1.into_iter();
+    let s2_iter = s2.into_iter();
+    JaroWinkler::normalized_similarity(
+        s1_iter.clone(),
+        s1_iter.count(),
+        s2_iter.clone(),
+        s2_iter.count(),
+        prefix_weight.into(), //.unwrap_or(0.1),
+        score_cutoff.into().unwrap_or(0.0),
+        score_hint.into().unwrap_or(0.0),
+    )
 }
 
 pub struct CachedJaroWinkler<Elem1>

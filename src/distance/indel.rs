@@ -15,7 +15,7 @@ impl Indel {
         len1 + len2
     }
 
-    pub(crate) fn _distance<Iter1, Iter2, Elem1, Elem2>(
+    pub(crate) fn distance<Iter1, Iter2, Elem1, Elem2>(
         s1: Iter1,
         len1: usize,
         s2: Iter2,
@@ -40,7 +40,7 @@ impl Indel {
         } else {
             0
         };
-        let lcs_sim = LcsSeq::_similarity(s1, len1, s2, len2, lcs_cutoff, lcs_hint);
+        let lcs_sim = LcsSeq::similarity(s1, len1, s2, len2, lcs_cutoff, lcs_hint);
         let dist = maximum - 2 * lcs_sim;
         if dist <= score_cutoff {
             dist
@@ -66,7 +66,16 @@ where
     ScoreCutoff: Into<Option<usize>>,
     ScoreHint: Into<Option<usize>>,
 {
-    Indel::distance(s1, s2, score_cutoff, score_hint)
+    let s1_iter = s1.into_iter();
+    let s2_iter = s2.into_iter();
+    Indel::distance(
+        s1_iter.clone(),
+        s1_iter.count(),
+        s2_iter.clone(),
+        s2_iter.count(),
+        score_cutoff.into().unwrap_or(usize::MAX),
+        score_hint.into().unwrap_or(usize::MAX),
+    )
 }
 
 pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
@@ -85,7 +94,16 @@ where
     ScoreCutoff: Into<Option<usize>>,
     ScoreHint: Into<Option<usize>>,
 {
-    Indel::similarity(s1, s2, score_cutoff, score_hint)
+    let s1_iter = s1.into_iter();
+    let s2_iter = s2.into_iter();
+    Indel::similarity(
+        s1_iter.clone(),
+        s1_iter.count(),
+        s2_iter.clone(),
+        s2_iter.count(),
+        score_cutoff.into().unwrap_or(0),
+        score_hint.into().unwrap_or(0),
+    )
 }
 
 pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
@@ -104,7 +122,16 @@ where
     ScoreCutoff: Into<Option<f64>>,
     ScoreHint: Into<Option<f64>>,
 {
-    Indel::normalized_distance(s1, s2, score_cutoff, score_hint)
+    let s1_iter = s1.into_iter();
+    let s2_iter = s2.into_iter();
+    Indel::normalized_distance(
+        s1_iter.clone(),
+        s1_iter.count(),
+        s2_iter.clone(),
+        s2_iter.count(),
+        score_cutoff.into().unwrap_or(1.0),
+        score_hint.into().unwrap_or(1.0),
+    )
 }
 
 pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
@@ -123,7 +150,16 @@ where
     ScoreCutoff: Into<Option<f64>>,
     ScoreHint: Into<Option<f64>>,
 {
-    Indel::normalized_similarity(s1, s2, score_cutoff, score_hint)
+    let s1_iter = s1.into_iter();
+    let s2_iter = s2.into_iter();
+    Indel::normalized_similarity(
+        s1_iter.clone(),
+        s1_iter.count(),
+        s2_iter.clone(),
+        s2_iter.count(),
+        score_cutoff.into().unwrap_or(0.0),
+        score_hint.into().unwrap_or(0.0),
+    )
 }
 
 pub(crate) fn indel_distance_with_pm<Iter1, Iter2, Elem1, Elem2>(

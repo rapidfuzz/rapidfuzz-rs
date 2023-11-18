@@ -66,7 +66,7 @@ impl Hamming {
         len1.max(len2)
     }
 
-    fn _distance<Iter1, Iter2, Elem1, Elem2>(
+    fn distance<Iter1, Iter2, Elem1, Elem2>(
         s1: Iter1,
         _len1: usize,
         s2: Iter2,
@@ -110,7 +110,7 @@ where
         return Err(HammingError::DifferentLengthArgs);
     }
 
-    Ok(Hamming::_distance(
+    Ok(Hamming::distance(
         s1_iter,
         len1,
         s2_iter,
@@ -146,7 +146,7 @@ where
         return Err(HammingError::DifferentLengthArgs);
     }
 
-    Ok(Hamming::_similarity(
+    Ok(Hamming::similarity(
         s1_iter,
         len1,
         s2_iter,
@@ -182,7 +182,7 @@ where
         return Err(HammingError::DifferentLengthArgs);
     }
 
-    Ok(Hamming::_normalized_distance(
+    Ok(Hamming::normalized_distance(
         s1_iter,
         len1,
         s2_iter,
@@ -218,7 +218,7 @@ where
         return Err(HammingError::DifferentLengthArgs);
     }
 
-    Ok(Hamming::_normalized_similarity(
+    Ok(Hamming::normalized_similarity(
         s1_iter,
         len1,
         s2_iter,
