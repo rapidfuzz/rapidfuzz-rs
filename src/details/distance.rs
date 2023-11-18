@@ -482,6 +482,7 @@ macro_rules! build_cached_distance_metric_funcs {
             $worst_distance
         );
 
+        /// calculate distance similar to [`distance`]
         #[allow(dead_code)]
         pub fn distance<Iter2, Elem2>(
             &self,

@@ -31,6 +31,9 @@
 
 ---
 ## Description
+
+RapidFuzz is a general purpose string matching library. It provides blazingly fast implementations of various well known string metrics like the Levenshtein distance, the longest common subsequence or the Jaro-Winkler similarity.
+
 ## Installation
 
 ## Usage

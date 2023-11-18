@@ -1,3 +1,35 @@
+//! Damerau-Levenshtein distance
+//!
+//! Similar to [`Levenshtein`], the Damerau-Levenshtein distance is the minimum of operations
+//! needed to transfrom one string into the other. An Operation is defined as an insertion, deletion,
+//! substitution of a single character or transposition of two adjacent characters.
+//!
+//! Opposed to the [`Optimal String Alignment`] it allows editing a substring more than once.
+//! An example where this leads to different results are the strings `CA` and `ÀBC`
+//!
+//! ```
+//! use rapidfuzz::distance::damerau_levenshtein;
+//! use rapidfuzz::distance::osa;
+//!
+//! assert_eq!(2, damerau_levenshtein::distance("CA".chars(), "ABC".chars(), None, None));
+//! assert_eq!(3, osa::distance("CA".chars(), "ABC".chars(), None, None));
+//! ```
+//!
+//! It does respect triangle inequality, and is thus a metric distance.
+//!
+//! [`Levenshtein`]: ../levenshtein/index.html
+//! [`Optimal String Alignment`]: ../osa/index.html
+//!
+//! # Performance
+//!
+//! The implementation has a runtime complexity of `O(N*M)` and a memory usage of `O(N)`.
+//! It's based on the paper
+//! `Linear space string correction algorithm using the Damerau-Levenshtein distance`
+//! from Chunchun Zhao and Sartaj Sahni
+//!
+//! ![benchmark results](https://raw.githubusercontent.com/maxbachmann/rapidfuzz-rs/main/doc/bench/damerau_levenshtein.svg)
+//!
+
 use crate::details::common::{
     find_common_prefix, find_common_suffix, norm_sim_to_norm_dist, HashableChar, UnrefIterator,
 };
@@ -156,6 +188,17 @@ impl DamerauLevenshtein {
     }
 }
 
+/// Damerau-Levenshtein distance
+///
+/// Calculates the Damerau-Levenshtein distance.
+///
+/// # Examples
+///
+/// ```
+/// use rapidfuzz::distance::damerau_levenshtein;
+///
+/// assert_eq!(2, damerau_levenshtein::distance("CA".chars(), "ABC".chars(), None, None));
+/// ```
 pub fn distance<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
@@ -173,6 +216,10 @@ where
     DamerauLevenshtein::distance(s1, s2, score_cutoff, score_hint)
 }
 
+/// Damerau-Levenshtein similarity in the range [max, 0.0]
+///
+/// This is calculated as `max(len1, len2) - `[`distance`].
+///
 pub fn similarity<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
@@ -190,6 +237,10 @@ where
     DamerauLevenshtein::similarity(s1, s2, score_cutoff, score_hint)
 }
 
+/// Normalized Damerau-Levenshtein distance in the range [1.0, 0.0]
+///
+/// This is calculated as [`distance`]` / max(len1, len2)`.
+///
 pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
@@ -207,6 +258,10 @@ where
     DamerauLevenshtein::normalized_distance(s1, s2, score_cutoff, score_hint)
 }
 
+/// Normalized Damerau-Levenshtein similarity in the range [0.0, 1.0]
+///
+/// This is calculated as `1.0 - `[`normalized_distance`].
+///
 pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     s2: Iter2,
@@ -224,6 +279,16 @@ where
     DamerauLevenshtein::normalized_similarity(s1, s2, score_cutoff, score_hint)
 }
 
+/// Cached damerau levenshtein distance for `One x Many` comparisions
+///
+/// # Examples
+///
+/// ```
+/// use rapidfuzz::distance::damerau_levenshtein;
+///
+/// let scorer = damerau_levenshtein::CachedDamerauLevenshtein::new("CA".chars());
+/// assert_eq!(2, scorer.distance("ABC".chars(), None, None));
+/// ```
 pub struct CachedDamerauLevenshtein<Elem1>
 where
     Elem1: HashableChar + Clone,
@@ -237,6 +302,7 @@ where
 {
     build_cached_distance_metric_funcs!(CachedDamerauLevenshtein, usize, 0, usize::MAX);
 
+    /// create a new scorer
     pub fn new<Iter1>(s1: Iter1) -> Self
     where
         Iter1: IntoIterator<Item = Elem1>,
@@ -396,6 +462,7 @@ mod tests {
         assert_eq!(1, _test_distance_ascii(TEST, NO_SUFFIX2, None, None));
         assert_eq!(1, _test_distance_ascii(SWAPPED1, SWAPPED2, None, None));
         assert_eq!(4, _test_distance_ascii(TEST, REPLACE_ALL, None, None));
+        assert_eq!(2, _test_distance_ascii("CA", "ABC", None, None));
 
         assert_delta!(
             1.0,
