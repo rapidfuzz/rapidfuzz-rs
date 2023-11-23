@@ -1,6 +1,4 @@
-use crate::details::common::{
-    find_common_suffix, norm_sim_to_norm_dist, HashableChar, UnrefIterator,
-};
+use crate::details::common::{find_common_suffix, norm_sim_to_norm_dist, HashableChar};
 use crate::details::distance::{
     build_cached_normalized_metric_funcs, build_cached_similarity_metric_funcs,
     build_normalized_metric_funcs, build_similarity_metric_funcs,
@@ -190,12 +188,7 @@ where
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
-        let dist = find_common_suffix(
-            UnrefIterator {
-                seq: self.s1.iter(),
-            },
-            s2,
-        );
+        let dist = find_common_suffix(self.s1.iter().copied(), s2);
         if dist >= score_cutoff {
             dist
         } else {

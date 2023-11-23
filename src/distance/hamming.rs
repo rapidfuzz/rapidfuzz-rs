@@ -1,7 +1,7 @@
-use crate::details::common::{norm_sim_to_norm_dist, HashableChar, UnrefIterator};
+use crate::details::common::{norm_sim_to_norm_dist, HashableChar};
 use crate::details::distance::{
     build_cached_distance_metric_funcs, build_cached_normalized_metric_funcs,
-    build_distance_metric_funcs, build_normalized_metric_funcs,
+    build_distance_metric_funcs, build_normalized_metric_funcs, CachedDistanceMetricUsize,
 };
 
 use std::error::Error;
@@ -228,11 +228,8 @@ where
     ))
 }
 
-struct CachedHammingImpl<Elem1>
-where
-    Elem1: HashableChar + Clone,
-{
-    pub(crate) s1: Vec<Elem1>,
+struct CachedHammingImpl<Elem1> {
+    s1: Vec<Elem1>,
 }
 
 impl<Elem1> CachedHammingImpl<Elem1>
@@ -267,13 +264,7 @@ where
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
-        hamming_impl(
-            UnrefIterator {
-                seq: self.s1.iter(),
-            },
-            s2,
-            score_cutoff,
-        )
+        hamming_impl(self.s1.iter().copied(), s2, score_cutoff)
     }
 }
 

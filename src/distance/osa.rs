@@ -1,6 +1,4 @@
-use crate::details::common::{
-    find_common_prefix, find_common_suffix, norm_sim_to_norm_dist, HashableChar, UnrefIterator,
-};
+use crate::details::common::{norm_sim_to_norm_dist, remove_common_affix, HashableChar};
 use crate::details::distance::{
     build_cached_distance_metric_funcs, build_cached_normalized_metric_funcs,
     build_distance_metric_funcs, build_normalized_metric_funcs,
@@ -182,9 +180,9 @@ impl Osa {
 
     pub(crate) fn distance<Iter1, Iter2, Elem1, Elem2>(
         s1: Iter1,
-        mut len1: usize,
+        len1: usize,
         s2: Iter2,
-        mut len2: usize,
+        len2: usize,
         score_cutoff: usize,
         _score_hint: usize,
     ) -> usize
@@ -198,22 +196,15 @@ impl Osa {
             return Osa::distance(s2, len2, s1, len1, score_cutoff, _score_hint);
         }
 
-        let suffix_len = find_common_suffix(s1.clone(), s2.clone());
-        let s1_iter_no_suffix = s1.take(len1 - suffix_len);
-        let s2_iter_no_suffix = s2.take(len2 - suffix_len);
-        let prefix_len = find_common_prefix(s1_iter_no_suffix.clone(), s2_iter_no_suffix.clone());
-        let s1_iter = s1_iter_no_suffix.skip(prefix_len);
-        let s2_iter = s2_iter_no_suffix.skip(prefix_len);
-        len1 -= prefix_len + suffix_len;
-        len2 -= prefix_len + suffix_len;
+        let affix = remove_common_affix(s1, len1, s2, len2);
 
-        if len1 == 0 {
-            if len2 <= score_cutoff {
-                len2
+        if affix.len1 == 0 {
+            if affix.len2 <= score_cutoff {
+                affix.len2
             } else {
                 score_cutoff + 1
             }
-        } else if len1 <= 64 {
+        } else if affix.len1 <= 64 {
             // rust fails to elide the copy when returning the array
             // from PatternMatchVector::new so manually inline it
             //let block = PatternMatchVector::new(s2_iter.clone());
@@ -222,12 +213,26 @@ impl Osa {
                 map_signed: BitvectorHashmap::default(),
                 extended_ascii: [0; 256],
             };
-            pm.insert(s1_iter.clone());
-            osa_hyrroe2003(&pm, s1_iter, len1, s2_iter, len2, score_cutoff)
+            pm.insert(affix.s1.clone());
+            osa_hyrroe2003(
+                &pm,
+                affix.s1,
+                affix.len1,
+                affix.s2,
+                affix.len2,
+                score_cutoff,
+            )
         } else {
-            let mut pm = BlockPatternMatchVector::new(len1);
-            pm.insert(s1_iter.clone());
-            osa_hyrroe2003_block(&pm, s1_iter, len1, s2_iter, len2, score_cutoff)
+            let mut pm = BlockPatternMatchVector::new(affix.len1);
+            pm.insert(affix.s1.clone());
+            osa_hyrroe2003_block(
+                &pm,
+                affix.s1,
+                affix.len1,
+                affix.s2,
+                affix.len2,
+                score_cutoff,
+            )
         }
     }
 }
@@ -395,9 +400,7 @@ where
         } else if self.s1.len() <= 64 {
             osa_hyrroe2003(
                 &self.pm,
-                UnrefIterator {
-                    seq: self.s1.iter(),
-                },
+                self.s1.iter().copied(),
                 self.s1.len(),
                 s2,
                 len2,
@@ -406,9 +409,7 @@ where
         } else {
             osa_hyrroe2003_block(
                 &self.pm,
-                UnrefIterator {
-                    seq: self.s1.iter(),
-                },
+                self.s1.iter().copied(),
                 self.s1.len(),
                 s2,
                 len2,

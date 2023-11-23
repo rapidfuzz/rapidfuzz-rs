@@ -30,12 +30,10 @@
 //! ![benchmark results](https://raw.githubusercontent.com/maxbachmann/rapidfuzz-rs/main/doc/bench/damerau_levenshtein.svg)
 //!
 
-use crate::details::common::{
-    find_common_prefix, find_common_suffix, norm_sim_to_norm_dist, HashableChar, UnrefIterator,
-};
+use crate::details::common::{norm_sim_to_norm_dist, remove_common_affix, HashableChar};
 use crate::details::distance::{
-    build_cached_distance_metric_funcs, build_cached_normalized_metric_funcs,
-    build_distance_metric_funcs, build_normalized_metric_funcs,
+    build_distance_metric_funcs, build_normalized_metric_funcs, CachedDistanceMetricUsize,
+    CachedNormalizedDistanceMetricUsize,
 };
 use crate::details::growing_hashmap::HybridGrowingHashmap;
 use std::cmp::{max, min};
@@ -133,9 +131,9 @@ where
 
 fn damerau_damerau_levenshtein_distance_impl<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
-    mut len1: usize,
+    len1: usize,
     s2: Iter2,
-    mut len2: usize,
+    len2: usize,
     score_cutoff: usize,
 ) -> usize
 where
@@ -148,17 +146,14 @@ where
         return score_cutoff + 1;
     }
 
-    // common affix does not effect Levenshtein distance
-    let suffix_len = find_common_suffix(s1.clone(), s2.clone());
-    let s1_iter_no_suffix = s1.take(len1 - suffix_len);
-    let s2_iter_no_suffix = s2.take(len2 - suffix_len);
-    let prefix_len = find_common_prefix(s1_iter_no_suffix.clone(), s2_iter_no_suffix.clone());
-    let s1_iter = s1_iter_no_suffix.skip(prefix_len);
-    let s2_iter = s2_iter_no_suffix.skip(prefix_len);
-    len1 -= prefix_len + suffix_len;
-    len2 -= prefix_len + suffix_len;
-
-    damerau_damerau_levenshtein_distance_zhao(s1_iter, len1, s2_iter, len2, score_cutoff)
+    let affix = remove_common_affix(s1, len1, s2, len2);
+    damerau_damerau_levenshtein_distance_zhao(
+        affix.s1,
+        affix.len1,
+        affix.s2,
+        affix.len2,
+        score_cutoff,
+    )
 }
 
 pub(crate) struct DamerauLevenshtein {}
@@ -333,30 +328,14 @@ where
 /// let scorer = damerau_levenshtein::CachedDamerauLevenshtein::new("CA".chars());
 /// assert_eq!(2, scorer.distance("ABC".chars(), None, None));
 /// ```
-pub struct CachedDamerauLevenshtein<Elem1>
-where
-    Elem1: HashableChar + Clone,
-{
+pub struct CachedDamerauLevenshtein<Elem1> {
     s1: Vec<Elem1>,
 }
 
-impl<Elem1> CachedDamerauLevenshtein<Elem1>
+impl<Elem1> CachedDistanceMetricUsize<Elem1> for CachedDamerauLevenshtein<Elem1>
 where
     Elem1: HashableChar + Clone,
 {
-    build_cached_distance_metric_funcs!(CachedDamerauLevenshtein, usize, 0, usize::MAX);
-
-    /// create a new scorer
-    pub fn new<Iter1>(s1: Iter1) -> Self
-    where
-        Iter1: IntoIterator<Item = Elem1>,
-        Iter1::IntoIter: Clone,
-    {
-        let s1_iter = s1.into_iter();
-        let s1: Vec<Elem1> = s1_iter.clone().collect();
-        CachedDamerauLevenshtein { s1 }
-    }
-
     fn maximum(&self, len2: usize) -> usize {
         max(self.s1.len(), len2)
     }
@@ -374,13 +353,123 @@ where
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
         damerau_damerau_levenshtein_distance_impl(
-            UnrefIterator {
-                seq: self.s1.iter(),
-            },
+            self.s1.iter().copied(),
             self.s1.len(),
             s2,
             len2,
             score_cutoff,
+        )
+    }
+}
+
+impl<Elem1> CachedDamerauLevenshtein<Elem1>
+where
+    Elem1: HashableChar + Clone,
+{
+    pub fn new<Iter1>(s1: Iter1) -> Self
+    where
+        Iter1: IntoIterator<Item = Elem1>,
+        Iter1::IntoIter: Clone,
+    {
+        let s1_iter = s1.into_iter();
+        let s1: Vec<Elem1> = s1_iter.clone().collect();
+        CachedDamerauLevenshtein { s1 }
+    }
+
+    pub fn normalized_distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
+        &self,
+        s2: Iter2,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> f64
+    where
+        Iter2: IntoIterator<Item = Elem2>,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<f64>>,
+        ScoreHint: Into<Option<f64>>,
+    {
+        let s2_iter = s2.into_iter();
+        let len2 = s2_iter.clone().count();
+        self._normalized_distance(
+            s2_iter,
+            len2,
+            score_cutoff.into().unwrap_or(1.0),
+            score_hint.into().unwrap_or(1.0),
+        )
+    }
+
+    pub fn normalized_similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
+        &self,
+        s2: Iter2,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> f64
+    where
+        Iter2: IntoIterator<Item = Elem2>,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<f64>>,
+        ScoreHint: Into<Option<f64>>,
+    {
+        let s2_iter = s2.into_iter();
+        let len2 = s2_iter.clone().count();
+        self._normalized_similarity(
+            s2_iter,
+            len2,
+            score_cutoff.into().unwrap_or(0.0),
+            score_hint.into().unwrap_or(0.0),
+        )
+    }
+
+    /// test
+    pub fn distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
+        &self,
+        s2: Iter2,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> usize
+    where
+        Iter2: IntoIterator<Item = Elem2>,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<usize>>,
+        ScoreHint: Into<Option<usize>>,
+    {
+        let s2_iter = s2.into_iter();
+        let len2 = s2_iter.clone().count();
+        self._distance(
+            s2_iter,
+            len2,
+            score_cutoff.into().unwrap_or(usize::MAX),
+            score_hint.into().unwrap_or(usize::MAX),
+        )
+    }
+
+    pub fn similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
+        &self,
+        s2: Iter2,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> usize
+    where
+        Iter2: IntoIterator<Item = Elem2>,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<usize>>,
+        ScoreHint: Into<Option<usize>>,
+    {
+        let s2_iter = s2.into_iter();
+        let len2 = s2_iter.clone().count();
+        self._similarity(
+            s2_iter,
+            len2,
+            score_cutoff.into().unwrap_or(0),
+            score_hint.into().unwrap_or(0),
         )
     }
 }

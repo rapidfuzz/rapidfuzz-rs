@@ -1,6 +1,4 @@
-use crate::details::common::{
-    find_common_prefix, find_common_suffix, norm_sim_to_norm_dist, HashableChar, UnrefIterator,
-};
+use crate::details::common::{norm_sim_to_norm_dist, remove_common_affix, HashableChar};
 use crate::details::distance::{
     build_cached_normalized_metric_funcs, build_cached_similarity_metric_funcs,
     build_normalized_metric_funcs, build_similarity_metric_funcs,
@@ -404,9 +402,9 @@ where
 pub(crate) fn lcs_seq_similarity_with_pm<PmVec, Iter1, Iter2, Elem1, Elem2>(
     pm: &PmVec,
     s1: Iter1,
-    mut len1: usize,
+    len1: usize,
     s2: Iter2,
-    mut len2: usize,
+    len2: usize,
     score_cutoff: usize,
 ) -> usize
 where
@@ -436,18 +434,16 @@ where
     }
 
     // remove common affix and count it as part of the LCS
-    let suffix_len = find_common_suffix(s1.clone(), s2.clone());
-    let s1_iter_no_suffix = s1.take(len1 - suffix_len);
-    let s2_iter_no_suffix = s2.take(len2 - suffix_len);
-    let prefix_len = find_common_prefix(s1_iter_no_suffix.clone(), s2_iter_no_suffix.clone());
-    let s1_iter = s1_iter_no_suffix.skip(prefix_len);
-    let s2_iter = s2_iter_no_suffix.skip(prefix_len);
-    len1 -= prefix_len + suffix_len;
-    len2 -= prefix_len + suffix_len;
-
-    let mut lcs_sim = prefix_len + suffix_len;
+    let affix = remove_common_affix(s1, len1, s2, len2);
+    let mut lcs_sim = affix.prefix_len + affix.suffix_len;
     if len1 != 0 && len2 != 0 {
-        lcs_sim += lcs_seq_mbleven2018(s1_iter, len1, s2_iter, len2, score_cutoff - lcs_sim)
+        lcs_sim += lcs_seq_mbleven2018(
+            affix.s1,
+            affix.len1,
+            affix.s2,
+            affix.len2,
+            score_cutoff - lcs_sim,
+        )
     }
 
     if lcs_sim >= score_cutoff {
@@ -459,9 +455,9 @@ where
 
 fn lcs_seq_similarity_without_pm<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
-    mut len1: usize,
+    len1: usize,
     s2: Iter2,
-    mut len2: usize,
+    len2: usize,
     score_cutoff: usize,
 ) -> usize
 where
@@ -490,16 +486,9 @@ where
     }
 
     // remove common affix and count it as part of the LCS
-    let suffix_len = find_common_suffix(s1.clone(), s2.clone());
-    let s1_iter_no_suffix = s1.take(len1 - suffix_len);
-    let s2_iter_no_suffix = s2.take(len2 - suffix_len);
-    let prefix_len = find_common_prefix(s1_iter_no_suffix.clone(), s2_iter_no_suffix.clone());
-    let s1_iter = s1_iter_no_suffix.skip(prefix_len);
-    let s2_iter = s2_iter_no_suffix.skip(prefix_len);
-    len1 -= prefix_len + suffix_len;
-    len2 -= prefix_len + suffix_len;
+    let affix = remove_common_affix(s1, len1, s2, len2);
 
-    let mut lcs_sim = prefix_len + suffix_len;
+    let mut lcs_sim = affix.prefix_len + affix.suffix_len;
     if len1 != 0 && len2 != 0 {
         let adjusted_cutoff = if score_cutoff >= lcs_sim {
             score_cutoff - lcs_sim
@@ -507,13 +496,14 @@ where
             0
         };
         if max_misses < 5 {
-            lcs_sim += lcs_seq_mbleven2018(s1_iter, len1, s2_iter, len2, adjusted_cutoff)
+            lcs_sim +=
+                lcs_seq_mbleven2018(affix.s1, affix.len1, affix.s2, affix.len2, adjusted_cutoff)
         } else {
             lcs_sim += longest_common_subsequence_without_pm(
-                s1_iter,
-                len1,
-                s2_iter,
-                len2,
+                affix.s1,
+                affix.len1,
+                affix.s2,
+                affix.len2,
                 adjusted_cutoff,
             );
         }
@@ -711,9 +701,7 @@ where
     {
         lcs_seq_similarity_with_pm(
             &self.pm,
-            UnrefIterator {
-                seq: self.s1.iter(),
-            },
+            self.s1.iter().copied(),
             self.s1.len(),
             s2,
             len2,

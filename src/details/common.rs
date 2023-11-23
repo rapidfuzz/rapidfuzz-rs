@@ -1,3 +1,5 @@
+use std::iter::{Skip, Take};
+
 pub(crate) fn norm_sim_to_norm_dist(score_cutoff: f64) -> f64 {
     let imprecision = 0.00001;
     (1.0 - score_cutoff + imprecision).min(1.0)
@@ -42,36 +44,6 @@ impl_hashable_char!(u16, UNSIGNED, u64);
 impl_hashable_char!(u32, UNSIGNED, u64);
 impl_hashable_char!(u64, UNSIGNED, u64);
 
-/// wrapper around iterator which allows iterating over values instead of references
-/// todo is there really no way to achieve this without this hack?
-#[derive(Clone)]
-pub(crate) struct UnrefIterator<'a, T>
-where
-    T: Copy,
-{
-    pub seq: core::slice::Iter<'a, T>,
-}
-
-impl<'a, T> Iterator for UnrefIterator<'a, T>
-where
-    T: Copy,
-{
-    type Item = T;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.seq.next().copied()
-    }
-}
-
-impl<'a, T> DoubleEndedIterator for UnrefIterator<'a, T>
-where
-    T: Copy,
-{
-    fn next_back(&mut self) -> Option<T> {
-        self.seq.next_back().copied()
-    }
-}
-
 pub(crate) fn find_common_prefix<Iter1, Iter2, Elem1, Elem2>(s1: Iter1, s2: Iter2) -> usize
 where
     Iter1: Iterator<Item = Elem1> + Clone,
@@ -95,4 +67,50 @@ where
         .zip(s2.rev())
         .take_while(|(a_char, b_char)| a_char == b_char)
         .count()
+}
+
+pub(crate) struct RemovedAffix<Iter1, Iter2, Elem1, Elem2>
+where
+    Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
+    Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
+    Elem1: PartialEq<Elem2>,
+    Elem2: PartialEq<Elem1>,
+{
+    pub s1: Skip<Take<Iter1>>,
+    pub len1: usize,
+    pub s2: Skip<Take<Iter2>>,
+    pub len2: usize,
+    pub prefix_len: usize,
+    pub suffix_len: usize,
+}
+
+pub(crate) fn remove_common_affix<Iter1, Iter2, Elem1, Elem2>(
+    s1: Iter1,
+    mut len1: usize,
+    s2: Iter2,
+    mut len2: usize,
+) -> RemovedAffix<Iter1, Iter2, Elem1, Elem2>
+where
+    Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
+    Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
+    Elem1: PartialEq<Elem2> + HashableChar,
+    Elem2: PartialEq<Elem1> + HashableChar,
+{
+    let suffix_len = find_common_suffix(s1.clone(), s2.clone());
+    let s1_iter_no_suffix = s1.take(len1 - suffix_len);
+    let s2_iter_no_suffix = s2.take(len2 - suffix_len);
+    let prefix_len = find_common_prefix(s1_iter_no_suffix.clone(), s2_iter_no_suffix.clone());
+    let s1_iter = s1_iter_no_suffix.skip(prefix_len);
+    let s2_iter = s2_iter_no_suffix.skip(prefix_len);
+    len1 -= prefix_len + suffix_len;
+    len2 -= prefix_len + suffix_len;
+
+    RemovedAffix {
+        s1: s1_iter,
+        len1,
+        s2: s2_iter,
+        len2,
+        prefix_len,
+        suffix_len,
+    }
 }

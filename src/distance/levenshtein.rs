@@ -1,6 +1,4 @@
-use crate::details::common::{
-    find_common_prefix, find_common_suffix, norm_sim_to_norm_dist, HashableChar, UnrefIterator,
-};
+use crate::details::common::{norm_sim_to_norm_dist, remove_common_affix, HashableChar};
 use crate::details::distance::{
     build_cached_distance_metric_funcs, build_cached_normalized_metric_funcs,
     build_distance_metric_funcs, build_normalized_metric_funcs,
@@ -178,17 +176,17 @@ fn _levenshtein_min_distance(len1: usize, len2: usize, weights: &LevenshteinWeig
 
 fn generalized_levenshtein_distance<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
-    mut len1: usize,
+    len1: usize,
     s2: Iter2,
-    mut len2: usize,
+    len2: usize,
     weights: &LevenshteinWeightTable,
     score_cutoff: usize,
 ) -> usize
 where
     Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
     Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
-    Elem1: PartialEq<Elem2>,
-    Elem2: PartialEq<Elem1>,
+    Elem1: PartialEq<Elem2> + HashableChar,
+    Elem2: PartialEq<Elem1> + HashableChar,
 {
     let min_edits = _levenshtein_min_distance(len1, len2, weights);
     if min_edits > score_cutoff {
@@ -196,16 +194,16 @@ where
     }
 
     // common affix does not effect Levenshtein distance
-    let suffix_len = find_common_suffix(s1.clone(), s2.clone());
-    let s1_iter_no_suffix = s1.take(len1 - suffix_len);
-    let s2_iter_no_suffix = s2.take(len2 - suffix_len);
-    let prefix_len = find_common_prefix(s1_iter_no_suffix.clone(), s2_iter_no_suffix.clone());
-    let s1_iter = s1_iter_no_suffix.skip(prefix_len);
-    let s2_iter = s2_iter_no_suffix.skip(prefix_len);
-    len1 -= prefix_len + suffix_len;
-    len2 -= prefix_len + suffix_len;
+    let affix = remove_common_affix(s1, len1, s2, len2);
 
-    generalized_levenshtein_wagner_fischer(s1_iter, len1, s2_iter, len2, weights, score_cutoff)
+    generalized_levenshtein_wagner_fischer(
+        affix.s1,
+        affix.len1,
+        affix.s2,
+        affix.len2,
+        weights,
+        score_cutoff,
+    )
 }
 
 /// An encoded mbleven model table.
@@ -942,9 +940,9 @@ where
 fn uniform_levenshtein_distance_with_pm<Iter1, Iter2, Elem1, Elem2>(
     pm: &BlockPatternMatchVector,
     s1: Iter1,
-    mut len1: usize,
+    len1: usize,
     s2: Iter2,
-    mut len2: usize,
+    len2: usize,
     mut score_cutoff: usize,
     mut score_hint: usize,
 ) -> usize
@@ -1028,27 +1026,20 @@ where
     }
 
     // common affix does not effect Levenshtein distance
-    let suffix_len = find_common_suffix(s1.clone(), s2.clone());
-    let s1_iter_no_suffix = s1.take(len1 - suffix_len);
-    let s2_iter_no_suffix = s2.take(len2 - suffix_len);
-    let prefix_len = find_common_prefix(s1_iter_no_suffix.clone(), s2_iter_no_suffix.clone());
-    let s1_iter = s1_iter_no_suffix.skip(prefix_len);
-    let s2_iter = s2_iter_no_suffix.skip(prefix_len);
-    len1 -= prefix_len + suffix_len;
-    len2 -= prefix_len + suffix_len;
+    let affix = remove_common_affix(s1, len1, s2, len2);
 
-    if len1 == 0 || len2 == 0 {
-        return len1 + len2;
+    if affix.len1 == 0 || affix.len2 == 0 {
+        return affix.len1 + affix.len2;
     }
 
-    levenshtein_mbleven2018(s1_iter, len1, s2_iter, len2, score_cutoff)
+    levenshtein_mbleven2018(affix.s1, affix.len1, affix.s2, affix.len2, score_cutoff)
 }
 
 fn uniform_levenshtein_distance_without_pm<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
-    mut len1: usize,
+    len1: usize,
     s2: Iter2,
-    mut len2: usize,
+    len2: usize,
     mut score_cutoff: usize,
     mut score_hint: usize,
 ) -> usize
@@ -1083,29 +1074,22 @@ where
 
     // common affix does not effect Levenshtein distance
     // todo is this really the best way to remove the common affix?
-    let suffix_len = find_common_suffix(s1.clone(), s2.clone());
-    let s1_iter_no_suffix = s1.take(len1 - suffix_len);
-    let s2_iter_no_suffix = s2.take(len2 - suffix_len);
-    let prefix_len = find_common_prefix(s1_iter_no_suffix.clone(), s2_iter_no_suffix.clone());
-    let s1_iter = s1_iter_no_suffix.skip(prefix_len);
-    let s2_iter = s2_iter_no_suffix.skip(prefix_len);
-    len1 -= prefix_len + suffix_len;
-    len2 -= prefix_len + suffix_len;
+    let affix = remove_common_affix(s1, len1, s2, len2);
 
-    if len1 == 0 || len2 == 0 {
-        return len1 + len2;
+    if affix.len1 == 0 || affix.len2 == 0 {
+        return affix.len1 + affix.len2;
     }
 
     if score_cutoff < 4 {
-        return levenshtein_mbleven2018(s1_iter, len1, s2_iter, len2, score_cutoff);
+        return levenshtein_mbleven2018(affix.s1, affix.len1, affix.s2, affix.len2, score_cutoff);
     }
 
     // todo could safe up to 25% even without score_cutoff when ignoring irrelevant paths
     // in the upper and lower corner
-    let mut full_band = min(len1, 2 * score_cutoff + 1);
+    let mut full_band = min(affix.len1, 2 * score_cutoff + 1);
 
     /* when the short strings has less then 65 elements Hyyrös' algorithm can be used */
-    if len2 <= 64 {
+    if affix.len2 <= 64 {
         // rust fails to elide the copy when returning the array
         // from PatternMatchVector::new so manually inline it
         //let block = PatternMatchVector::new(s2_iter.clone());
@@ -1114,42 +1098,48 @@ where
             map_signed: BitvectorHashmap::default(),
             extended_ascii: [0; 256],
         };
-        pm.insert(s2_iter.clone());
+        pm.insert(affix.s2.clone());
 
-        let res: LevenshteinResult<0, 0> =
-            levenshtein_hyrroe2003(&pm, s2_iter, len2, s1_iter, len1, score_cutoff);
+        let res: LevenshteinResult<0, 0> = levenshtein_hyrroe2003(
+            &pm,
+            affix.s2,
+            affix.len2,
+            affix.s1,
+            affix.len1,
+            score_cutoff,
+        );
         res.dist
     } else if full_band <= 64 {
         let res: LevenshteinResult<0, 0> = levenshtein_hyrroe2003_small_band_without_pm(
-            s1_iter,
-            len1,
-            s2_iter,
-            len2,
+            affix.s1,
+            affix.len1,
+            affix.s2,
+            affix.len2,
             score_cutoff,
         );
         res.dist
     } else {
-        let mut pm = BlockPatternMatchVector::new(len1);
-        pm.insert(s1_iter.clone());
+        let mut pm = BlockPatternMatchVector::new(affix.len1);
+        pm.insert(affix.s1.clone());
         while score_hint < score_cutoff {
-            full_band = min(len1, 2 * score_hint + 1);
+            full_band = min(affix.len1, 2 * score_hint + 1);
 
             let score = if full_band <= 64 {
                 levenshtein_hyrroe2003_small_band_with_pm(
                     &pm,
-                    s1_iter.clone(),
-                    len1,
-                    s2_iter.clone(),
-                    len2,
+                    affix.s1.clone(),
+                    affix.len1,
+                    affix.s2.clone(),
+                    affix.len2,
                     score_hint,
                 )
             } else {
                 let res: LevenshteinResult<0, 0> = levenshtein_hyrroe2003_block(
                     &pm,
-                    s1_iter.clone(),
-                    len1,
-                    s2_iter.clone(),
-                    len2,
+                    affix.s1.clone(),
+                    affix.len1,
+                    affix.s2.clone(),
+                    affix.len2,
                     score_hint,
                     -1,
                 );
@@ -1168,10 +1158,10 @@ where
 
         let res: LevenshteinResult<0, 0> = levenshtein_hyrroe2003_block(
             &pm,
-            s1_iter.clone(),
-            len1,
-            s2_iter.clone(),
-            len2,
+            affix.s1.clone(),
+            affix.len1,
+            affix.s2.clone(),
+            affix.len2,
             score_cutoff,
             -1,
         );
@@ -1521,9 +1511,7 @@ where
     {
         _levenshtein_distance_with_pm(
             &self.pm,
-            UnrefIterator {
-                seq: self.s1.iter(),
-            },
+            self.s1.iter().copied(),
             self.s1.len(),
             s2,
             len2,

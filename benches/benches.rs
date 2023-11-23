@@ -4,7 +4,6 @@ use rand::{distributions::Alphanumeric, Rng};
 use rapidfuzz::distance;
 
 use std::str::Bytes;
-use strsim::{generic_damerau_levenshtein, generic_levenshtein, osa_distance};
 
 fn generate(len: usize) -> String {
     rand::thread_rng()
@@ -26,9 +25,53 @@ impl<'a, 'b> IntoIterator for &'a StringWrapper<'b> {
 }
 
 fn benchmark(c: &mut Criterion) {
-    let mut group = c.benchmark_group("OSA");
+    let mut group = c.benchmark_group("JaroWinkler");
 
-    for i in [4, 6, 8, 10, 12, 16, 32, 64, 128, 256].iter() {
+    let lens = (2..128).step_by(2);
+
+    /*
+    for i in [4, 6, 8, 10, 12, 16, 32, 64, 128].iter() {
+        let s1 = generate(*i);
+        let s2 = generate(*i);
+
+        group.bench_with_input(BenchmarkId::new("rapidfuzz", i), &(&s1, &s2), |b, val| {
+            b.iter(|| {
+                black_box(distance::jaro_winkler::similarity(
+                    val.0.bytes(),
+                    val.1.bytes(),
+                    None,
+                    None,
+                    None,
+                ));
+            })
+        });
+
+        let cached = distance::jaro_winkler::CachedJaroWinkler::new(s1.bytes(), None);
+        group.bench_with_input(
+            BenchmarkId::new("cached_rapidfuzz", i),
+            &(&cached, &s2),
+            |b, val| {
+                b.iter(|| {
+                    black_box(cached.similarity(val.1.bytes(), None, None));
+                })
+            },
+        );
+
+        group.bench_with_input(BenchmarkId::new("strsim", i), &(&s1, &s2), |b, val| {
+            b.iter(|| {
+                black_box(strsim::generic_jaro_winkler(
+                    &StringWrapper(val.0),
+                    &StringWrapper(val.1),
+                ));
+            })
+        });
+    }*/
+
+    group.finish();
+
+    group = c.benchmark_group("OSA");
+
+    /*for i in [4, 6, 8, 10, 12, 16, 32, 64, 128].iter() {
         let s1 = generate(*i);
         let s2 = generate(*i);
 
@@ -56,16 +99,16 @@ fn benchmark(c: &mut Criterion) {
 
         group.bench_with_input(BenchmarkId::new("strsim", i), &(&s1, &s2), |b, val| {
             b.iter(|| {
-                black_box(osa_distance(val.0, val.1));
+                black_box(strsim::osa_distance(val.0, val.1));
             })
         });
-    }
+    }*/
 
     group.finish();
 
     group = c.benchmark_group("Levenshtein");
 
-    for i in [4, 6, 8, 10, 12, 16, 32, 64, 128, 256].iter() {
+    /*for i in [4, 6, 8, 10, 12, 16, 32, 64, 128].iter() {
         let s1 = generate(*i);
         let s2 = generate(*i);
 
@@ -82,7 +125,7 @@ fn benchmark(c: &mut Criterion) {
         });
         group.bench_with_input(BenchmarkId::new("strsim", i), &(&s1, &s2), |b, val| {
             b.iter(|| {
-                black_box(generic_levenshtein(
+                black_box(strsim::generic_levenshtein(
                     &StringWrapper(val.0),
                     &StringWrapper(val.1),
                 ));
@@ -99,15 +142,15 @@ fn benchmark(c: &mut Criterion) {
                 })
             },
         );
-    }
+    }*/
 
     group.finish();
 
     group = c.benchmark_group("DamerauLevenshtein");
 
-    for i in [4, 6, 8, 10, 12, 16, 32, 64, 128, 256].iter() {
-        let s1 = generate(*i);
-        let s2 = generate(*i);
+    for i in lens.clone() {
+        let s1 = generate(i);
+        let s2 = generate(i);
 
         group.bench_with_input(BenchmarkId::new("rapidfuzz", i), &(&s1, &s2), |b, val| {
             b.iter(|| {
@@ -122,7 +165,7 @@ fn benchmark(c: &mut Criterion) {
         let (x, y): (Vec<_>, Vec<_>) = (s1.bytes().collect(), s2.bytes().collect());
         group.bench_with_input(BenchmarkId::new("strsim", i), &(&x, &y), |b, val| {
             b.iter(|| {
-                black_box(generic_damerau_levenshtein(
+                black_box(strsim::generic_damerau_levenshtein(
                     val.0.as_slice(),
                     val.1.as_slice(),
                 ));

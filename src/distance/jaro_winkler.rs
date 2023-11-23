@@ -1,4 +1,4 @@
-use crate::details::common::{norm_sim_to_norm_dist, HashableChar, UnrefIterator};
+use crate::details::common::{norm_sim_to_norm_dist, HashableChar};
 use crate::details::distance::{
     build_cached_normalized_metric_funcs, build_cached_similarity_metric_funcs,
     build_normalized_metric_funcs, build_similarity_metric_funcs,
@@ -305,9 +305,7 @@ where
     {
         jaro_winkler_similarity_with_pm(
             &self.pm,
-            UnrefIterator {
-                seq: self.s1.iter(),
-            },
+            self.s1.iter().copied(),
             self.s1.len(),
             s2,
             len2,

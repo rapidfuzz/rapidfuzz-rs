@@ -1,5 +1,5 @@
 pub(crate) mod common;
-pub(crate) mod distance;
+pub mod distance;
 pub(crate) mod growing_hashmap;
 pub(crate) mod intrinsics;
 pub(crate) mod matrix;

@@ -1,3 +1,5 @@
+use crate::details::common::{norm_sim_to_norm_dist, HashableChar};
+
 macro_rules! less_than_score_cutoff_similarity {
     ($score_cutoff:expr, f32) => {
         1.0
@@ -182,6 +184,135 @@ pub(crate) use build_distance_metric_funcs;
 pub(crate) use build_normalized_metric_funcs;
 pub(crate) use build_similarity_metric_funcs;
 pub(crate) use less_than_score_cutoff_similarity;
+
+// todo can these traits be partially joined? both have to implement the normalized similarity
+// despite the implementation being the same
+pub(crate) trait CachedDistanceMetricUsize<Elem1> {
+    fn maximum(&self, len2: usize) -> usize;
+
+    fn _distance<Iter2, Elem2>(
+        &self,
+        s2: Iter2,
+        len2: usize,
+        score_cutoff: usize,
+        score_hint: usize,
+    ) -> usize
+    where
+        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy;
+
+    fn _similarity<Iter2, Elem2>(
+        &self,
+        s2: Iter2,
+        len2: usize,
+        score_cutoff: usize,
+        mut score_hint: usize,
+    ) -> usize
+    where
+        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    {
+        let maximum = self.maximum(len2);
+        if score_cutoff > maximum {
+            return 0;
+        }
+
+        score_hint = score_hint.min(score_cutoff);
+        let cutoff_distance = maximum - score_cutoff;
+        let hint_distance = maximum - score_hint;
+        let dist = self._distance(s2, len2, cutoff_distance, hint_distance);
+        let sim = maximum - dist;
+        if sim >= score_cutoff {
+            sim
+        } else {
+            0
+        }
+    }
+}
+
+pub(crate) trait CachedNormalizedDistanceMetricUsize<Elem1> {
+    fn _normalized_distance<Iter2, Elem2>(
+        &self,
+        s2: Iter2,
+        len2: usize,
+        score_cutoff: f64,
+        score_hint: f64,
+    ) -> f64
+    where
+        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy;
+    fn _normalized_similarity<Iter2, Elem2>(
+        &self,
+        s2: Iter2,
+        len2: usize,
+        score_cutoff: f64,
+        score_hint: f64,
+    ) -> f64
+    where
+        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy;
+}
+
+impl<Elem1, T: CachedDistanceMetricUsize<Elem1>> CachedNormalizedDistanceMetricUsize<Elem1> for T {
+    fn _normalized_distance<Iter2, Elem2>(
+        &self,
+        s2: Iter2,
+        len2: usize,
+        score_cutoff: f64,
+        score_hint: f64,
+    ) -> f64
+    where
+        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    {
+        let maximum = self.maximum(len2);
+
+        let cutoff_distance = (maximum as f64 * score_cutoff).ceil() as usize;
+        let hint_distance = (maximum as f64 * score_hint).ceil() as usize;
+
+        let dist = self._distance(s2, len2, cutoff_distance, hint_distance);
+        let norm_dist = if maximum != 0 {
+            dist as f64 / maximum as f64
+        } else {
+            0.0
+        };
+        if norm_dist <= score_cutoff {
+            norm_dist
+        } else {
+            1.0
+        }
+    }
+
+    fn _normalized_similarity<Iter2, Elem2>(
+        &self,
+        s2: Iter2,
+        len2: usize,
+        score_cutoff: f64,
+        score_hint: f64,
+    ) -> f64
+    where
+        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    {
+        let cutoff_score = norm_sim_to_norm_dist(score_cutoff);
+        let hint_score = norm_sim_to_norm_dist(score_hint);
+
+        let norm_dist = self._normalized_distance(s2, len2, cutoff_score, hint_score);
+        let norm_sim = 1.0 - norm_dist;
+
+        if norm_sim >= score_cutoff {
+            norm_sim
+        } else {
+            0.0
+        }
+    }
+}
 
 macro_rules! build_cached_normalized_metric_funcs {
     ($impl_type:tt, $res_type:ty, $worst_similarity:expr, $worst_distance:expr) => {

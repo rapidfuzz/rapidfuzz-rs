@@ -1,6 +1,4 @@
-use crate::details::common::{
-    find_common_prefix, norm_sim_to_norm_dist, HashableChar, UnrefIterator,
-};
+use crate::details::common::{find_common_prefix, norm_sim_to_norm_dist, HashableChar};
 use crate::details::distance::{
     build_cached_normalized_metric_funcs, build_cached_similarity_metric_funcs,
     build_normalized_metric_funcs, build_similarity_metric_funcs,
@@ -339,10 +337,7 @@ where
     while flagged_chars != 0 {
         while t_flag == 0 {
             text_word += 1;
-            // todo this was the easiest way I could find to actually skip 64 elements
-            for _ in 0..64 {
-                s2.next();
-            }
+            s2.nth(64 - 1);
             t_flag = flagged.t_flag[text_word];
         }
 
@@ -418,8 +413,6 @@ where
             len1 = len2 + bound;
         }
     };
-    // todo this is a hack so the type of the iterator stays the same
-    // preferably we could just remove them from the iterator without the type changing
     let s1_iter_win = s1.take(len1);
     let s2_iter_win = s2.take(len2);
 
@@ -530,8 +523,6 @@ where
             len1 = len2 + bound;
         }
     };
-    // todo this is a hack so the type of the iterator stays the same
-    // preferably we could just remove them from the iterator without the type changing
     let s1_iter = s1.take(len1);
     let s2_iter = s2.take(len2);
 
@@ -760,9 +751,7 @@ where
     {
         jaro_similarity_with_pm(
             &self.pm,
-            UnrefIterator {
-                seq: self.s1.iter(),
-            },
+            self.s1.iter().copied(),
             self.s1.len(),
             s2,
             len2,
