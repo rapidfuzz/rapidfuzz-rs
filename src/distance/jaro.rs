@@ -86,19 +86,16 @@ fn jaro_common_char_filter(
     sim >= score_cutoff
 }
 
-fn flag_similar_characters_word<PmVec, Iter1, Iter2, Elem1, Elem2>(
+fn flag_similar_characters_word<PmVec, Iter2, Elem2>(
     pm: &PmVec,
-    _s1: Iter1,
     len1: usize,
     mut s2: Iter2,
     len2: usize,
     bound: usize,
 ) -> FlaggedCharsWord
 where
-    Iter1: Iterator<Item = Elem1>,
     Iter2: Iterator<Item = Elem2>,
-    Elem1: PartialEq<Elem2> + HashableChar + Copy,
-    Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    Elem2: HashableChar + Copy,
     PmVec: BitVectorInterface,
 {
     debug_assert!(len1 <= 64);
@@ -228,19 +225,16 @@ fn flag_similar_characters_step<CharT>(
     }
 }
 
-fn flag_similar_characters_block<Iter1, Iter2, Elem1, Elem2>(
+fn flag_similar_characters_block<Iter2, Elem2>(
     pm: &BlockPatternMatchVector,
-    _s1: Iter1,
     len1: usize,
     s2: Iter2,
     len2: usize,
     bound: usize,
 ) -> FlaggedCharsMultiword
 where
-    Iter1: Iterator<Item = Elem1>,
     Iter2: Iterator<Item = Elem2>,
-    Elem1: PartialEq<Elem2> + HashableChar + Copy,
-    Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    Elem2: HashableChar + Copy,
 {
     debug_assert!(len1 > 64 || len2 > 64);
     debug_assert!(bound > len1 || len1 - bound <= len2);
@@ -390,7 +384,7 @@ where
     }
 
     if len1_orig == 1 && len2_orig == 1 {
-        return s1.eq(s2) as u64 as f64;
+        return s1.eq(s2).into();
     }
 
     // since jaro uses a sliding window some parts of T/P might never be in
@@ -431,10 +425,9 @@ where
             map_signed: BitvectorHashmap::default(),
             extended_ascii: [0; 256],
         };
-        pm.insert(s1_iter.clone());
+        pm.insert(s1_iter);
 
-        let flagged =
-            flag_similar_characters_word(&pm, s1_iter.clone(), len1, s2_iter.clone(), len2, bound);
+        let flagged = flag_similar_characters_word(&pm, len1, s2_iter.clone(), len2, bound);
 
         common_chars += flagged.count_common_chars();
 
@@ -442,13 +435,12 @@ where
             return 0.0;
         }
 
-        transpositions = count_transpositions_word(&pm, s2_iter.clone(), len2, &flagged);
+        transpositions = count_transpositions_word(&pm, s2_iter, len2, &flagged);
     } else {
         let mut pm = BlockPatternMatchVector::new(len1);
-        pm.insert(s1_iter.clone());
+        pm.insert(s1_iter);
 
-        let flagged =
-            flag_similar_characters_block(&pm, s1_iter.clone(), len1, s2_iter.clone(), len2, bound);
+        let flagged = flag_similar_characters_block(&pm, len1, s2_iter.clone(), len2, bound);
 
         let flagged_chars = flagged.count_common_chars();
         common_chars += flagged_chars;
@@ -457,8 +449,7 @@ where
             return 0.0;
         }
 
-        transpositions =
-            count_transpositions_block(&pm, s2_iter.clone(), len2, &flagged, flagged_chars);
+        transpositions = count_transpositions_block(&pm, s2_iter, len2, &flagged, flagged_chars);
     }
 
     let sim = jaro_calculate_similarity(len1_orig, len2_orig, common_chars, transpositions);
@@ -500,7 +491,7 @@ where
     }
 
     if len1_orig == 1 && len2_orig == 1 {
-        return s1.eq(s2) as u64 as f64;
+        return s1.eq(s2).into();
     }
 
     // since jaro uses a sliding window some parts of T/P might never be in
@@ -519,7 +510,6 @@ where
             len1 = len2 + bound;
         }
     };
-    let s1_iter = s1.take(len1);
     let s2_iter = s2.take(len2);
 
     // common prefix never includes Transpositions
@@ -529,8 +519,7 @@ where
     if len1 == 0 || len2 == 0 {
         // already has correct number of common chars and transpositions
     } else if len1 <= 64 && len2 <= 64 {
-        let flagged =
-            flag_similar_characters_word(pm, s1_iter.clone(), len1, s2_iter.clone(), len2, bound);
+        let flagged = flag_similar_characters_word(pm, len1, s2_iter.clone(), len2, bound);
 
         common_chars += flagged.count_common_chars();
 
@@ -538,10 +527,9 @@ where
             return 0.0;
         }
 
-        transpositions = count_transpositions_word(pm, s2_iter.clone(), len2, &flagged);
+        transpositions = count_transpositions_word(pm, s2_iter, len2, &flagged);
     } else {
-        let flagged =
-            flag_similar_characters_block(pm, s1_iter.clone(), len1, s2_iter.clone(), len2, bound);
+        let flagged = flag_similar_characters_block(pm, len1, s2_iter.clone(), len2, bound);
 
         let flagged_chars = flagged.count_common_chars();
         common_chars += flagged_chars;
@@ -550,8 +538,7 @@ where
             return 0.0;
         }
 
-        transpositions =
-            count_transpositions_block(pm, s2_iter.clone(), len2, &flagged, flagged_chars);
+        transpositions = count_transpositions_block(pm, s2_iter, len2, &flagged, flagged_chars);
     }
 
     let sim = jaro_calculate_similarity(len1_orig, len2_orig, common_chars, transpositions);
@@ -744,7 +731,7 @@ where
         let mut pm = BlockPatternMatchVector::new(s1.len());
         pm.insert(s1_iter);
 
-        CachedJaro { s1, pm }
+        Self { s1, pm }
     }
 
     pub fn normalized_distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(

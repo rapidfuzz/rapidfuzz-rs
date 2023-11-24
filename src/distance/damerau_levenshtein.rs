@@ -32,7 +32,7 @@
 
 use crate::details::common::{remove_common_affix, HashableChar};
 use crate::details::distance::{DistanceMetricUsize, NormalizedMetricUsize};
-use crate::details::growing_hashmap::HybridGrowingHashmap;
+use crate::details::growing_hashmap::{GrowingHashmap, HybridGrowingHashmap};
 use std::cmp::{max, min};
 use std::mem;
 
@@ -43,7 +43,7 @@ struct RowId {
 
 impl Default for RowId {
     fn default() -> Self {
-        RowId { val: -1 }
+        Self { val: -1 }
     }
 }
 
@@ -69,16 +69,14 @@ where
     let max_val = max(len1, len2) as isize + 1;
 
     let mut last_row_id = HybridGrowingHashmap::<RowId> {
-        map_unsigned: Default::default(),
-        map_signed: Default::default(),
-        extended_ascii: [Default::default(); 256],
+        map_unsigned: GrowingHashmap::default(),
+        map_signed: GrowingHashmap::default(),
+        extended_ascii: [RowId::default(); 256],
     };
     let size = len2 + 2;
     let mut fr = vec![max_val; size];
     let mut r1 = vec![max_val; size];
-    let mut r: Vec<isize> = (max_val..max_val + 1)
-        .chain(0..(size - 1) as isize)
-        .collect();
+    let mut r: Vec<isize> = (max_val..=max_val).chain(0..(size - 1) as isize).collect();
 
     for (i, ch1) in s1.enumerate().map(|(i, ch1)| (i + 1, ch1)) {
         mem::swap(&mut r, &mut r1);
@@ -88,7 +86,7 @@ where
         let mut t = max_val;
 
         for (j, ch2) in s2.clone().enumerate().map(|(j, ch2)| (j + 1, ch2)) {
-            let diag = r1[j] + (ch1 != ch2) as isize;
+            let diag = r1[j] + isize::from(ch1 != ch2);
             let left = r[j] + 1;
             let up = r1[j + 1] + 1;
             let mut temp = min(diag, min(left, up));
@@ -337,9 +335,8 @@ where
         Iter1: IntoIterator<Item = Elem1>,
         Iter1::IntoIter: Clone,
     {
-        let s1_iter = s1.into_iter();
-        CachedDamerauLevenshtein {
-            s1: s1_iter.collect(),
+        Self {
+            s1: s1.into_iter().collect(),
         }
     }
 

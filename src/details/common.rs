@@ -1,6 +1,6 @@
 use std::iter::{Skip, Take};
 
-pub(crate) fn norm_sim_to_norm_dist(score_cutoff: f64) -> f64 {
+pub fn norm_sim_to_norm_dist(score_cutoff: f64) -> f64 {
     let imprecision = 0.00001;
     (1.0 - score_cutoff + imprecision).min(1.0)
 }
@@ -45,7 +45,7 @@ impl_hashable_char!(u16, UNSIGNED, u64);
 impl_hashable_char!(u32, UNSIGNED, u64);
 impl_hashable_char!(u64, UNSIGNED, u64);
 
-pub(crate) fn find_common_prefix<Iter1, Iter2, Elem1, Elem2>(s1: Iter1, s2: Iter2) -> usize
+pub fn find_common_prefix<Iter1, Iter2, Elem1, Elem2>(s1: Iter1, s2: Iter2) -> usize
 where
     Iter1: Iterator<Item = Elem1> + Clone,
     Iter2: Iterator<Item = Elem2> + Clone,
@@ -57,7 +57,7 @@ where
         .count()
 }
 
-pub(crate) fn find_common_suffix<Iter1, Iter2, Elem1, Elem2>(s1: Iter1, s2: Iter2) -> usize
+pub fn find_common_suffix<Iter1, Iter2, Elem1, Elem2>(s1: Iter1, s2: Iter2) -> usize
 where
     Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
     Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -70,7 +70,7 @@ where
         .count()
 }
 
-pub(crate) struct RemovedAffix<Iter1, Iter2, Elem1, Elem2>
+pub struct RemovedAffix<Iter1, Iter2, Elem1, Elem2>
 where
     Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
     Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -85,7 +85,7 @@ where
     pub suffix_len: usize,
 }
 
-pub(crate) fn remove_common_affix<Iter1, Iter2, Elem1, Elem2>(
+pub fn remove_common_affix<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     mut len1: usize,
     s2: Iter2,

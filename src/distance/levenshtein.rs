@@ -11,15 +11,15 @@ use std::cmp::{max, min};
 use std::mem;
 
 #[derive(Clone, Copy)]
-pub struct LevenshteinWeightTable {
+pub struct WeightTable {
     pub insert_cost: usize,
     pub delete_cost: usize,
     pub replace_cost: usize,
 }
 
-impl Default for LevenshteinWeightTable {
+impl Default for WeightTable {
     fn default() -> Self {
-        LevenshteinWeightTable {
+        Self {
             insert_cost: 1,
             delete_cost: 1,
             replace_cost: 1,
@@ -35,18 +35,18 @@ struct LevenshteinRow {
 
 impl Default for LevenshteinRow {
     fn default() -> Self {
-        LevenshteinRow { vp: !0_u64, vn: 0 }
+        Self { vp: !0_u64, vn: 0 }
     }
 }
 
 #[derive(Default)]
-struct LevenshteinResultMatrix {
+struct ResultMatrix {
     vp: ShiftedBitMatrix<u64>,
     vn: ShiftedBitMatrix<u64>,
 }
 
 #[derive(Default)]
-struct LevenshteinResultRow {
+struct ResultRow {
     first_block: usize,
     last_block: usize,
     prev_score: usize,
@@ -54,14 +54,14 @@ struct LevenshteinResultRow {
 }
 
 struct LevenshteinResult<const RECORD_MATRIX: usize, const RECORD_BIT_ROW: usize> {
-    record_matrix: [LevenshteinResultMatrix; RECORD_MATRIX],
-    bit_row: [LevenshteinResultRow; RECORD_BIT_ROW],
+    record_matrix: [ResultMatrix; RECORD_MATRIX],
+    bit_row: [ResultRow; RECORD_BIT_ROW],
     dist: usize,
 }
 
 impl Default for LevenshteinResult<0, 0> {
     fn default() -> Self {
-        LevenshteinResult {
+        Self {
             record_matrix: [],
             bit_row: [],
             dist: 0,
@@ -71,8 +71,8 @@ impl Default for LevenshteinResult<0, 0> {
 
 impl Default for LevenshteinResult<1, 0> {
     fn default() -> Self {
-        LevenshteinResult {
-            record_matrix: [Default::default()],
+        Self {
+            record_matrix: [ResultMatrix::default()],
             bit_row: [],
             dist: 0,
         }
@@ -81,7 +81,7 @@ impl Default for LevenshteinResult<1, 0> {
 
 impl Default for LevenshteinResult<0, 1> {
     fn default() -> Self {
-        LevenshteinResult {
+        Self {
             record_matrix: [],
             bit_row: [Default::default()],
             dist: 0,
@@ -94,7 +94,7 @@ fn generalized_levenshtein_wagner_fischer<Iter1, Iter2, Elem1, Elem2>(
     len1: usize,
     s2: Iter2,
     _len2: usize,
-    weights: &LevenshteinWeightTable,
+    weights: &WeightTable,
     score_cutoff: usize,
 ) -> usize
 where
@@ -148,7 +148,7 @@ where
  * @brief calculates the maximum possible Levenshtein distance based on
  * string lengths and weights
  */
-fn _levenshtein_maximum(len1: usize, len2: usize, weights: &LevenshteinWeightTable) -> usize {
+fn _levenshtein_maximum(len1: usize, len2: usize, weights: &WeightTable) -> usize {
     let max_dist = len1 * weights.delete_cost + len2 * weights.insert_cost;
 
     if len1 >= len2 {
@@ -164,7 +164,7 @@ fn _levenshtein_maximum(len1: usize, len2: usize, weights: &LevenshteinWeightTab
     }
 }
 
-fn _levenshtein_min_distance(len1: usize, len2: usize, weights: &LevenshteinWeightTable) -> usize {
+fn _levenshtein_min_distance(len1: usize, len2: usize, weights: &WeightTable) -> usize {
     max(
         (len1 as isize - len2 as isize) * weights.delete_cost as isize,
         (len2 as isize - len1 as isize) * weights.insert_cost as isize,
@@ -176,7 +176,7 @@ fn generalized_levenshtein_distance<Iter1, Iter2, Elem1, Elem2>(
     len1: usize,
     s2: Iter2,
     len2: usize,
-    weights: &LevenshteinWeightTable,
+    weights: &WeightTable,
     score_cutoff: usize,
 ) -> usize
 where
@@ -254,14 +254,14 @@ where
     let len_diff = len1 - len2;
 
     if score_cutoff == 1 {
-        return score_cutoff + (len_diff == 1 || len1 != 1) as usize;
+        return score_cutoff + usize::from(len_diff == 1 || len1 != 1);
     }
 
     let ops_index = (score_cutoff + score_cutoff * score_cutoff) / 2 + len_diff - 1;
     let possible_ops = &LEVENSHTEIN_MBLEVEN2018_MATRIX[ops_index];
     let mut dist = score_cutoff + 1;
 
-    for &ops_ in possible_ops.iter() {
+    for &ops_ in possible_ops {
         let mut ops = ops_;
         let mut iter_s1 = s1.clone();
         let mut iter_s2 = s2.clone();
@@ -700,7 +700,7 @@ where
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
     LevenshteinResult<RECORD_MATRIX, RECORD_BIT_ROW>: Default,
 {
-    let mut res: LevenshteinResult<RECORD_MATRIX, RECORD_BIT_ROW> = Default::default();
+    let mut res: LevenshteinResult<RECORD_MATRIX, RECORD_BIT_ROW> = LevenshteinResult::default();
     if score_cutoff < len1.abs_diff(len2) {
         res.dist = score_cutoff + 1;
         return res;
@@ -708,7 +708,7 @@ where
 
     let word_size = 64;
     let words = pm.size();
-    let mut vecs: Vec<LevenshteinRow> = vec![Default::default(); words];
+    let mut vecs = vec![LevenshteinRow::default(); words];
     let mut scores: Vec<usize> = (0..words).map(|x| (x + 1) * word_size).collect();
     scores[words - 1] = len1;
     let last = 1_u64 << ((len1 - 1) % word_size);
@@ -775,8 +775,8 @@ where
                 *hp_carry_ = hp >> 63;
                 *hn_carry_ = hn >> 63;
             } else {
-                *hp_carry_ = ((hp & last) != 0) as u64;
-                *hn_carry_ = ((hn & last) != 0) as u64;
+                *hp_carry_ = u64::from((hp & last) != 0);
+                *hn_carry_ = u64::from((hn & last) != 0);
             }
 
             // Step 4: Computing Vp and VN
@@ -1018,7 +1018,7 @@ where
         }
 
         let res: LevenshteinResult<0, 0> =
-            levenshtein_hyrroe2003_block(pm, s1.clone(), len1, s2.clone(), len2, score_cutoff, -1);
+            levenshtein_hyrroe2003_block(pm, s1, len1, s2, len2, score_cutoff, -1);
         return res.dist;
     }
 
@@ -1171,7 +1171,7 @@ fn _levenshtein_distance_without_pm<Iter1, Iter2, Elem1, Elem2>(
     len1: usize,
     s2: Iter2,
     len2: usize,
-    weights: &LevenshteinWeightTable,
+    weights: &WeightTable,
     score_cutoff: usize,
     score_hint: usize,
 ) -> usize
@@ -1208,9 +1208,8 @@ where
             dist *= weights.insert_cost;
             if dist <= score_cutoff {
                 return dist;
-            } else {
-                return score_cutoff + 1;
             }
+            return score_cutoff + 1;
         }
         /*
          * when replace_cost >= insert_cost + delete_cost no substitutions are performed
@@ -1224,9 +1223,8 @@ where
             dist *= weights.insert_cost;
             if dist <= score_cutoff {
                 return dist;
-            } else {
-                return score_cutoff + 1;
             }
+            return score_cutoff + 1;
         }
     }
 
@@ -1240,7 +1238,7 @@ fn _levenshtein_distance_with_pm<Iter1, Iter2, Elem1, Elem2>(
     len1: usize,
     s2: Iter2,
     len2: usize,
-    weights: &LevenshteinWeightTable,
+    weights: &WeightTable,
     score_cutoff: usize,
     score_hint: usize,
 ) -> usize
@@ -1273,9 +1271,8 @@ where
             dist *= weights.insert_cost;
             if dist <= score_cutoff {
                 return dist;
-            } else {
-                return score_cutoff + 1;
             }
+            return score_cutoff + 1;
         }
         /*
          * when replace_cost >= insert_cost + delete_cost no substitutions are performed
@@ -1288,9 +1285,8 @@ where
             dist *= weights.insert_cost;
             if dist <= score_cutoff {
                 return dist;
-            } else {
-                return score_cutoff + 1;
             }
+            return score_cutoff + 1;
         }
     }
 
@@ -1298,12 +1294,12 @@ where
 }
 
 struct Levenshtein {
-    weights: Option<LevenshteinWeightTable>,
+    weights: Option<WeightTable>,
 }
 
 impl DistanceMetricUsize for Levenshtein {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
-        let weights = self.weights.unwrap_or(LevenshteinWeightTable {
+        let weights = self.weights.unwrap_or(WeightTable {
             insert_cost: 1,
             delete_cost: 1,
             replace_cost: 1,
@@ -1326,7 +1322,7 @@ impl DistanceMetricUsize for Levenshtein {
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
-        let weights = self.weights.unwrap_or(LevenshteinWeightTable {
+        let weights = self.weights.unwrap_or(WeightTable {
             insert_cost: 1,
             delete_cost: 1,
             replace_cost: 1,
@@ -1338,7 +1334,7 @@ impl DistanceMetricUsize for Levenshtein {
 pub fn distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    weights: Option<LevenshteinWeightTable>,
+    weights: Option<WeightTable>,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
 ) -> usize
@@ -1367,7 +1363,7 @@ where
 pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    weights: Option<LevenshteinWeightTable>,
+    weights: Option<WeightTable>,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
 ) -> usize
@@ -1396,7 +1392,7 @@ where
 pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    weights: Option<LevenshteinWeightTable>,
+    weights: Option<WeightTable>,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
 ) -> f64
@@ -1425,7 +1421,7 @@ where
 pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    weights: Option<LevenshteinWeightTable>,
+    weights: Option<WeightTable>,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
 ) -> f64
@@ -1454,7 +1450,7 @@ where
 pub struct CachedLevenshtein<Elem1> {
     s1: Vec<Elem1>,
     pm: BlockPatternMatchVector,
-    weights: LevenshteinWeightTable,
+    weights: WeightTable,
 }
 
 impl<CharT> DistanceMetricUsize for CachedLevenshtein<CharT> {
@@ -1494,7 +1490,7 @@ impl<Elem1> CachedLevenshtein<Elem1>
 where
     Elem1: HashableChar + Clone,
 {
-    pub fn new<Iter1>(s1_: Iter1, weights_: Option<LevenshteinWeightTable>) -> Self
+    pub fn new<Iter1>(s1_: Iter1, weights_: Option<WeightTable>) -> Self
     where
         Iter1: IntoIterator<Item = Elem1>,
         Iter1::IntoIter: Clone,
@@ -1502,7 +1498,7 @@ where
         let s1_iter = s1_.into_iter();
         let s1: Vec<Elem1> = s1_iter.clone().collect();
 
-        let weights = weights_.unwrap_or(LevenshteinWeightTable {
+        let weights = weights_.unwrap_or(WeightTable {
             insert_cost: 1,
             delete_cost: 1,
             replace_cost: 1,
@@ -1511,7 +1507,7 @@ where
         let mut pm = BlockPatternMatchVector::new(s1.len());
         pm.insert(s1_iter);
 
-        CachedLevenshtein { s1, pm, weights }
+        Self { s1, pm, weights }
     }
 
     pub fn normalized_distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
@@ -1639,7 +1635,7 @@ mod tests {
     fn _test_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
         s1_: Iter1,
         s2_: Iter2,
-        weights: Option<LevenshteinWeightTable>,
+        weights: Option<WeightTable>,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
     ) -> usize
@@ -1684,7 +1680,7 @@ mod tests {
     fn _test_distance_ascii<ScoreCutoff, ScoreHint>(
         s1: &str,
         s2: &str,
-        weights: Option<LevenshteinWeightTable>,
+        weights: Option<WeightTable>,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
     ) -> usize
@@ -1708,7 +1704,7 @@ mod tests {
     fn _test_normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
         s1_: Iter1,
         s2_: Iter2,
-        weights: Option<LevenshteinWeightTable>,
+        weights: Option<WeightTable>,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
     ) -> f64
@@ -1753,7 +1749,7 @@ mod tests {
     fn _test_normalized_similarity_ascii<ScoreCutoff, ScoreHint>(
         s1: &str,
         s2: &str,
-        weights: Option<LevenshteinWeightTable>,
+        weights: Option<WeightTable>,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
     ) -> f64
@@ -1825,7 +1821,7 @@ mod tests {
     /// weighted levenshtein calculates correct distances
     #[test]
     fn levenshtein_weighted_simple() {
-        let weights = LevenshteinWeightTable {
+        let weights = WeightTable {
             insert_cost: 1,
             delete_cost: 1,
             replace_cost: 2,
@@ -1891,7 +1887,7 @@ mod tests {
         assert_eq!(2, _test_distance_ascii(a, b, None, 1, None));
         assert_eq!(1, _test_distance_ascii(a, b, None, 0, None));
 
-        let weights = LevenshteinWeightTable {
+        let weights = WeightTable {
             insert_cost: 1,
             delete_cost: 1,
             replace_cost: 2,

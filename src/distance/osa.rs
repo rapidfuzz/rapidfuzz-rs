@@ -79,7 +79,7 @@ struct OsaRow {
 
 impl Default for OsaRow {
     fn default() -> Self {
-        OsaRow {
+        Self {
             vp: !0_u64,
             vn: 0_u64,
             d0: 0_u64,
@@ -107,8 +107,8 @@ where
     let last = 1_u64 << ((len1 - 1) % word_size);
 
     let mut curr_dist = len1;
-    let mut old_vecs: Vec<OsaRow> = vec![Default::default(); words + 1];
-    let mut new_vecs: Vec<OsaRow> = vec![Default::default(); words + 1];
+    let mut old_vecs = vec![OsaRow::default(); words + 1];
+    let mut new_vecs = vec![OsaRow::default(); words + 1];
 
     // Searching
     for ch2 in s2 {
@@ -403,7 +403,7 @@ where
         let mut pm = BlockPatternMatchVector::new(s1.len());
         pm.insert(s1_iter);
 
-        CachedOsa { s1, pm }
+        Self { s1, pm }
     }
 
     pub fn normalized_distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(

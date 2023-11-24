@@ -1,6 +1,6 @@
 use std::ops::{BitAnd, Shl};
 
-pub(crate) struct BitMatrix<T>
+pub struct BitMatrix<T>
 where
     T: Clone,
 {
@@ -14,7 +14,7 @@ where
     T: Clone,
 {
     pub fn new(rows: usize, cols: usize, val: T) -> Self {
-        BitMatrix {
+        Self {
             rows,
             cols,
             matrix: vec![val; rows * cols],
@@ -44,7 +44,7 @@ where
     }
 }
 
-pub(crate) struct ShiftedBitMatrix<T>
+pub struct ShiftedBitMatrix<T>
 where
     T: Copy + From<u8> + Shl<usize, Output = T> + BitAnd<T, Output = T> + PartialEq<T>,
 {
@@ -57,7 +57,7 @@ where
     T: Copy + From<u8> + Shl<usize, Output = T> + BitAnd<T, Output = T> + PartialEq<T>,
 {
     pub fn new(rows: usize, cols: usize, val: T) -> Self {
-        ShiftedBitMatrix {
+        Self {
             matrix: BitMatrix::<T>::new(rows, cols, val),
             offsets: vec![0; rows],
         }
@@ -103,6 +103,6 @@ where
     T: Copy + From<u8> + Shl<usize, Output = T> + BitAnd<T, Output = T> + PartialEq<T>,
 {
     fn default() -> Self {
-        ShiftedBitMatrix::new(0, 0, T::from(0))
+        Self::new(0, 0, T::from(0))
     }
 }

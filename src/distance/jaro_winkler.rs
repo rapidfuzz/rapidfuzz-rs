@@ -311,7 +311,7 @@ where
         let mut pm = BlockPatternMatchVector::new(s1.len());
         pm.insert(s1_iter);
 
-        CachedJaroWinkler {
+        Self {
             s1,
             pm,
             prefix_weight: prefix_weight.unwrap_or(0.1),

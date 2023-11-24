@@ -1,6 +1,6 @@
 use crate::details::common::{norm_sim_to_norm_dist, HashableChar};
 
-pub(crate) trait DistanceMetricUsize {
+pub trait DistanceMetricUsize {
     fn maximum(&self, len1: usize, len2: usize) -> usize;
 
     fn _distance<Iter1, Iter2, Elem1, Elem2>(
@@ -51,7 +51,7 @@ pub(crate) trait DistanceMetricUsize {
     }
 }
 
-pub(crate) trait SimilarityMetricUsize {
+pub trait SimilarityMetricUsize {
     fn maximum(&self, len1: usize, len2: usize) -> usize;
 
     fn _distance<Iter1, Iter2, Elem1, Elem2>(
@@ -108,7 +108,7 @@ pub(crate) trait SimilarityMetricUsize {
         Elem2: PartialEq<Elem1> + HashableChar + Copy;
 }
 
-pub(crate) trait NormalizedMetricUsize {
+pub trait NormalizedMetricUsize {
     fn _normalized_distance<Iter1, Iter2, Elem1, Elem2>(
         &self,
         s1: Iter1,
@@ -161,10 +161,10 @@ impl<T: DistanceMetricUsize> NormalizedMetricUsize for T {
         let hint_distance = (maximum as f64 * score_hint).ceil() as usize;
 
         let dist = self._distance(s1, len1, s2, len2, cutoff_distance, hint_distance);
-        let norm_dist = if maximum != 0 {
-            dist as f64 / maximum as f64
-        } else {
+        let norm_dist = if maximum == 0 {
             0.0
+        } else {
+            dist as f64 / maximum as f64
         };
         if norm_dist <= score_cutoff {
             norm_dist
@@ -204,7 +204,7 @@ impl<T: DistanceMetricUsize> NormalizedMetricUsize for T {
 
 // todo how to deduplicate this? Right now NormalizedMetricUsize2
 // could be placed inside SimilarityMetricUsize since it's duplicated anyways
-pub(crate) trait NormalizedMetricUsize2 {
+pub trait NormalizedMetricUsize2 {
     fn _normalized_distance<Iter1, Iter2, Elem1, Elem2>(
         &self,
         s1: Iter1,
@@ -257,10 +257,10 @@ impl<T: SimilarityMetricUsize> NormalizedMetricUsize2 for T {
         let hint_distance = (maximum as f64 * score_hint).ceil() as usize;
 
         let dist = self._distance(s1, len1, s2, len2, cutoff_distance, hint_distance);
-        let norm_dist = if maximum != 0 {
-            dist as f64 / maximum as f64
-        } else {
+        let norm_dist = if maximum == 0 {
             0.0
+        } else {
+            dist as f64 / maximum as f64
         };
         if norm_dist <= score_cutoff {
             norm_dist
@@ -298,7 +298,7 @@ impl<T: SimilarityMetricUsize> NormalizedMetricUsize2 for T {
     }
 }
 
-pub(crate) trait SimilarityMetricf64 {
+pub trait SimilarityMetricf64 {
     fn maximum(&self, len1: usize, len2: usize) -> f64;
 
     fn _distance<Iter1, Iter2, Elem1, Elem2>(
@@ -355,7 +355,7 @@ pub(crate) trait SimilarityMetricf64 {
         Elem2: PartialEq<Elem1> + HashableChar + Copy;
 }
 
-pub(crate) trait NormalizedMetricf64 {
+pub trait NormalizedMetricf64 {
     fn _normalized_distance<Iter1, Iter2, Elem1, Elem2>(
         &self,
         s1: Iter1,

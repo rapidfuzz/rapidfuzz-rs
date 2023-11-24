@@ -17,14 +17,14 @@ struct BitvectorHashmapMapElem {
 /// - works with u64 keys. The caller has to ensure these have no collisions when using e.g. a mixture of u64 and i64 elements
 ///   this can be done e.g. by using two hashmaps one for values < 0 and one for values >= 0
 #[derive(Clone)]
-pub(crate) struct BitvectorHashmap {
+pub struct BitvectorHashmap {
     map: [BitvectorHashmapMapElem; 128],
 }
 
 impl Default for BitvectorHashmap {
     #[inline]
-    fn default() -> BitvectorHashmap {
-        BitvectorHashmap {
+    fn default() -> Self {
+        Self {
             map: [BitvectorHashmapMapElem::default(); 128],
         }
     }
@@ -64,13 +64,13 @@ impl BitvectorHashmap {
     }
 }
 
-pub(crate) struct PatternMatchVector {
+pub struct PatternMatchVector {
     pub map_unsigned: BitvectorHashmap,
     pub map_signed: BitvectorHashmap,
     pub extended_ascii: [u64; 256],
 }
 
-pub(crate) trait BitVectorInterface {
+pub trait BitVectorInterface {
     fn get<CharT>(&self, block: usize, key: CharT) -> u64
     where
         CharT: HashableChar;
@@ -81,12 +81,12 @@ pub(crate) trait BitVectorInterface {
 impl PatternMatchVector {
     // right now this can't be used since rust fails to elide the memcpy
     // on return
-    /*pub fn new<Iter1, CharT>(s1: Iter1) -> PatternMatchVector
+    /*pub fn new<Iter1, CharT>(s1: Iter1) -> Self
     where
         Iter1: Iterator<Item = CharT>,
         CharT: HashableChar,
     {
-        let mut vec = PatternMatchVector {
+        let mut vec = Self {
             map_unsigned: BitvectorHashmap::default(),
             map_signed: BitvectorHashmap::default(),
             extended_ascii: [0; 256],
@@ -114,19 +114,25 @@ impl PatternMatchVector {
         match key.hash_char() {
             Hash::SIGNED(value) => {
                 if value < 0 {
-                    let item = self.map_signed.get_mut(value as u64);
+                    let item = self
+                        .map_signed
+                        .get_mut(u64::from_ne_bytes(value.to_ne_bytes()));
                     *item |= mask;
                 } else if value <= 255 {
-                    let item = &mut self.extended_ascii[value as usize];
+                    let val_u8 = u8::try_from(value).expect("we check the bounds above");
+                    let item = &mut self.extended_ascii[usize::from(val_u8)];
                     *item |= mask;
                 } else {
-                    let item = self.map_unsigned.get_mut(value as u64);
+                    let item = self
+                        .map_unsigned
+                        .get_mut(u64::from_ne_bytes(value.to_ne_bytes()));
                     *item |= mask;
                 }
             }
             Hash::UNSIGNED(value) => {
                 if value <= 255 {
-                    let item = &mut self.extended_ascii[value as usize];
+                    let val_u8 = u8::try_from(value).expect("we check the bounds above");
+                    let item = &mut self.extended_ascii[usize::from(val_u8)];
                     *item |= mask;
                 } else {
                     let item = self.map_unsigned.get_mut(value);
@@ -146,16 +152,19 @@ impl BitVectorInterface for PatternMatchVector {
         match key.hash_char() {
             Hash::SIGNED(value) => {
                 if value < 0 {
-                    self.map_signed.get(value as u64)
+                    self.map_signed.get(u64::from_ne_bytes(value.to_ne_bytes()))
                 } else if value <= 255 {
-                    self.extended_ascii[value as usize]
+                    let val_u8 = u8::try_from(value).expect("we check the bounds above");
+                    self.extended_ascii[usize::from(val_u8)]
                 } else {
-                    self.map_unsigned.get(value as u64)
+                    self.map_unsigned
+                        .get(u64::from_ne_bytes(value.to_ne_bytes()))
                 }
             }
             Hash::UNSIGNED(value) => {
                 if value <= 255 {
-                    self.extended_ascii[value as usize]
+                    let val_u8 = u8::try_from(value).expect("we check the bounds above");
+                    self.extended_ascii[usize::from(val_u8)]
                 } else {
                     self.map_unsigned.get(value)
                 }
@@ -168,7 +177,7 @@ impl BitVectorInterface for PatternMatchVector {
     }
 }
 
-pub(crate) struct BlockPatternMatchVector {
+pub struct BlockPatternMatchVector {
     pub block_count: usize,
     pub map_unsigned: Option<Vec<BitvectorHashmap>>,
     pub map_signed: Option<Vec<BitvectorHashmap>>,
@@ -178,7 +187,7 @@ pub(crate) struct BlockPatternMatchVector {
 impl BlockPatternMatchVector {
     pub fn new(str_len: usize) -> Self {
         let block_count = ceil_div_usize(str_len, 64);
-        BlockPatternMatchVector {
+        Self {
             block_count,
             map_unsigned: None,
             map_signed: None,
@@ -209,36 +218,40 @@ impl BlockPatternMatchVector {
             Hash::SIGNED(value) => {
                 if value < 0 {
                     if self.map_signed.is_none() {
-                        self.map_signed = Some(vec![Default::default(); self.block_count]);
+                        self.map_signed = Some(vec![BitvectorHashmap::default(); self.block_count]);
                     }
                     let item = self
                         .map_signed
                         .as_mut()
                         .expect("map should have been created above")[block]
-                        .get_mut(value as u64);
+                        .get_mut(u64::from_ne_bytes(value.to_ne_bytes()));
                     *item |= mask;
                 } else if value <= 255 {
-                    let item = self.extended_ascii.get_mut(value as usize, block);
+                    let val_u8 = u8::try_from(value).expect("we check the bounds above");
+                    let item = self.extended_ascii.get_mut(val_u8.into(), block);
                     *item |= mask;
                 } else {
                     if self.map_unsigned.is_none() {
-                        self.map_unsigned = Some(vec![Default::default(); self.block_count]);
+                        self.map_unsigned =
+                            Some(vec![BitvectorHashmap::default(); self.block_count]);
                     }
                     let item = self
                         .map_unsigned
                         .as_mut()
                         .expect("map should have been created above")[block]
-                        .get_mut(value as u64);
+                        .get_mut(u64::from_ne_bytes(value.to_ne_bytes()));
                     *item |= mask;
                 }
             }
             Hash::UNSIGNED(value) => {
                 if value <= 255 {
-                    let item = self.extended_ascii.get_mut(value as usize, block);
+                    let val_u8 = u8::try_from(value).expect("we check the bounds above");
+                    let item = self.extended_ascii.get_mut(val_u8.into(), block);
                     *item |= mask;
                 } else {
                     if self.map_unsigned.is_none() {
-                        self.map_unsigned = Some(vec![Default::default(); self.block_count]);
+                        self.map_unsigned =
+                            Some(vec![BitvectorHashmap::default(); self.block_count]);
                     }
                     let item = self
                         .map_unsigned
@@ -262,20 +275,22 @@ impl BitVectorInterface for BlockPatternMatchVector {
         match key.hash_char() {
             Hash::SIGNED(value) => {
                 if value < 0 {
-                    self.map_signed
-                        .as_ref()
-                        .map_or(0, |map| map[block].get(value as u64))
+                    self.map_signed.as_ref().map_or(0, |map| {
+                        map[block].get(u64::from_ne_bytes(value.to_ne_bytes()))
+                    })
                 } else if value <= 255 {
-                    *self.extended_ascii.get(value as usize, block)
+                    let val_u8 = u8::try_from(value).expect("we check the bounds above");
+                    *self.extended_ascii.get(val_u8.into(), block)
                 } else {
-                    self.map_unsigned
-                        .as_ref()
-                        .map_or(0, |map| map[block].get(value as u64))
+                    self.map_unsigned.as_ref().map_or(0, |map| {
+                        map[block].get(u64::from_ne_bytes(value.to_ne_bytes()))
+                    })
                 }
             }
             Hash::UNSIGNED(value) => {
                 if value <= 255 {
-                    *self.extended_ascii.get(value as usize, block)
+                    let val_u8 = u8::try_from(value).expect("we check the bounds above");
+                    *self.extended_ascii.get(val_u8.into(), block)
                 } else {
                     self.map_unsigned
                         .as_ref()

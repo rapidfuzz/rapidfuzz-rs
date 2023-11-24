@@ -4,7 +4,7 @@ use crate::details::distance::{DistanceMetricUsize, NormalizedMetricUsize};
 use std::error::Error;
 use std::fmt::{self, Display, Formatter};
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum HammingError {
     DifferentLengthArgs,
 }
@@ -12,10 +12,10 @@ pub enum HammingError {
 impl Display for HammingError {
     fn fmt(&self, fmt: &mut Formatter) -> Result<(), fmt::Error> {
         let text = match self {
-            HammingError::DifferentLengthArgs => "Differing length arguments provided",
+            Self::DifferentLengthArgs => "Differing length arguments provided",
         };
 
-        write!(fmt, "{}", text)
+        write!(fmt, "{text}")
     }
 }
 
@@ -43,9 +43,8 @@ where
             (None, None) => {
                 if dist <= score_cutoff {
                     return dist;
-                } else {
-                    return score_cutoff + 1;
                 }
+                return score_cutoff + 1;
             }
             _ => {
                 dist += 1;
@@ -240,9 +239,8 @@ where
         Iter1: IntoIterator<Item = Elem1>,
         Iter1::IntoIter: Clone,
     {
-        let s1_iter = s1.into_iter();
-        CachedHamming {
-            s1: s1_iter.collect(),
+        Self {
+            s1: s1.into_iter().collect(),
         }
     }
 

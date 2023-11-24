@@ -250,7 +250,7 @@ where
         Iter1: IntoIterator<Item = Elem1>,
         Iter1::IntoIter: Clone,
     {
-        CachedIndel {
+        Self {
             scorer: CachedLcsSeq::new(s1),
         }
     }

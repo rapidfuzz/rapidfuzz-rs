@@ -13,10 +13,7 @@ struct GrowingHashmapMapElem<ValueType> {
 /// - elements can't be removed
 /// - only allocates memory on first write access.
 ///   This improves performance for hashmaps that are never written to
-pub(crate) struct GrowingHashmap<ValueType>
-where
-    ValueType: Default + Clone + Eq,
-{
+pub struct GrowingHashmap<ValueType> {
     used: i32,
     fill: i32,
     mask: i32,
@@ -29,7 +26,7 @@ where
 {
     #[inline]
     fn default() -> Self {
-        GrowingHashmap {
+        Self {
             used: 0,
             fill: 0,
             mask: -1,
@@ -132,8 +129,7 @@ where
             new_size <<= 1;
         }
 
-        let mut new_map: Vec<GrowingHashmapMapElem<ValueType>> =
-            vec![Default::default(); new_size as usize];
+        let mut new_map = vec![GrowingHashmapMapElem::<ValueType>::default(); new_size as usize];
 
         self.fill = self.used;
         self.mask = new_size - 1;
@@ -160,10 +156,7 @@ where
     }
 }
 
-pub(crate) struct HybridGrowingHashmap<ValueType>
-where
-    ValueType: Default + Clone + Copy + Eq,
-{
+pub struct HybridGrowingHashmap<ValueType> {
     // todo in theory we have a fixed keytype here and so we wouldn't need both
     // an unsigned and signed map. In Practice this probably doesn't matter all that much
     pub map_unsigned: GrowingHashmap<ValueType>,
@@ -192,16 +185,19 @@ where
         match key.hash_char() {
             Hash::SIGNED(value) => {
                 if value < 0 {
-                    self.map_signed.get(value as u64)
+                    self.map_signed.get(u64::from_ne_bytes(value.to_ne_bytes()))
                 } else if value <= 255 {
-                    self.extended_ascii[value as usize]
+                    let val_u8 = u8::try_from(value).expect("we check the bounds above");
+                    self.extended_ascii[usize::from(val_u8)]
                 } else {
-                    self.map_unsigned.get(value as u64)
+                    self.map_unsigned
+                        .get(u64::from_ne_bytes(value.to_ne_bytes()))
                 }
             }
             Hash::UNSIGNED(value) => {
                 if value <= 255 {
-                    self.extended_ascii[value as usize]
+                    let val_u8 = u8::try_from(value).expect("we check the bounds above");
+                    self.extended_ascii[usize::from(val_u8)]
                 } else {
                     self.map_unsigned.get(value)
                 }
@@ -216,16 +212,20 @@ where
         match key.hash_char() {
             Hash::SIGNED(value) => {
                 if value < 0 {
-                    self.map_signed.get_mut(value as u64)
+                    self.map_signed
+                        .get_mut(u64::from_ne_bytes(value.to_ne_bytes()))
                 } else if value <= 255 {
-                    &mut self.extended_ascii[value as usize]
+                    let val_u8 = u8::try_from(value).expect("we check the bounds above");
+                    &mut self.extended_ascii[usize::from(val_u8)]
                 } else {
-                    self.map_unsigned.get_mut(value as u64)
+                    self.map_unsigned
+                        .get_mut(u64::from_ne_bytes(value.to_ne_bytes()))
                 }
             }
             Hash::UNSIGNED(value) => {
                 if value <= 255 {
-                    &mut self.extended_ascii[value as usize]
+                    let val_u8 = u8::try_from(value).expect("we check the bounds above");
+                    &mut self.extended_ascii[usize::from(val_u8)]
                 } else {
                     self.map_unsigned.get_mut(value)
                 }

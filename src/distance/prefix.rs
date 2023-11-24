@@ -158,7 +158,7 @@ where
         Iter1::IntoIter: Clone,
     {
         let s1_iter = s1.into_iter();
-        CachedPrefix {
+        Self {
             s1: s1_iter.collect(),
         }
     }

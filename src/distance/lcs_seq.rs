@@ -8,18 +8,18 @@ use crate::details::pattern_match_vector::{
 use std::cmp::{max, min};
 
 #[derive(Default)]
-struct LcsSeqResultMatrix {
+struct ResultMatrix {
     s: ShiftedBitMatrix<u64>,
 }
 
 struct LcsSeqResult<const RECORD_MATRIX: usize> {
-    record_matrix: [LcsSeqResultMatrix; RECORD_MATRIX],
+    record_matrix: [ResultMatrix; RECORD_MATRIX],
     sim: usize,
 }
 
 impl Default for LcsSeqResult<0> {
     fn default() -> Self {
-        LcsSeqResult {
+        Self {
             record_matrix: [],
             sim: 0,
         }
@@ -28,8 +28,8 @@ impl Default for LcsSeqResult<0> {
 
 impl Default for LcsSeqResult<1> {
     fn default() -> Self {
-        LcsSeqResult {
-            record_matrix: [Default::default()],
+        Self {
+            record_matrix: [ResultMatrix::default()],
             sim: 0,
         }
     }
@@ -100,7 +100,7 @@ where
     let possible_ops = &LCS_SEQ_MBLEVEN2018_MATRIX[ops_index];
     let mut max_len = 0;
 
-    for &ops_ in possible_ops.iter() {
+    for &ops_ in possible_ops {
         let mut ops = ops_;
         let mut iter_s1 = s1.clone();
         let mut iter_s2 = s2.clone();
@@ -160,7 +160,7 @@ where
 {
     let mut s = [!0_u64; N];
 
-    let mut res: LcsSeqResult<RECORD_MATRIX> = Default::default();
+    let mut res: LcsSeqResult<RECORD_MATRIX> = LcsSeqResult::default();
     if RECORD_MATRIX == 1 {
         res.record_matrix[0].s = ShiftedBitMatrix::<u64>::new(len2, N, !0_u64);
     }
@@ -239,7 +239,7 @@ where
     let band_width_left = len1 - score_cutoff;
     let band_width_right = len2 - score_cutoff;
 
-    let mut res: LcsSeqResult<RECORD_MATRIX> = Default::default();
+    let mut res: LcsSeqResult<RECORD_MATRIX> = LcsSeqResult::default();
     if RECORD_MATRIX == 1 {
         let full_band = band_width_left + 1 + band_width_right;
         let full_band_words = min(words, full_band / word_size + 2);
@@ -700,7 +700,7 @@ where
         let mut pm = BlockPatternMatchVector::new(s1.len());
         pm.insert(s1_iter);
 
-        CachedLcsSeq { s1, pm }
+        Self { s1, pm }
     }
 
     pub fn normalized_distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
