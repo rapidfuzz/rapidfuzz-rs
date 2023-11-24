@@ -269,12 +269,12 @@ where
 {
     build_cached_similarity_metric_funcs!(CachedJaro, f64, 0.0, 1.0);
 
-    pub fn new<Iter1>(s1: Iter1, prefix_weight: Option<f64>) -> Self
+    pub fn new<Iter1>(s1_: Iter1, prefix_weight: Option<f64>) -> Self
     where
         Iter1: IntoIterator<Item = Elem1>,
         Iter1::IntoIter: Clone,
     {
-        let s1_iter = s1.into_iter();
+        let s1_iter = s1_.into_iter();
         let s1: Vec<Elem1> = s1_iter.clone().collect();
 
         let mut pm = BlockPatternMatchVector::new(s1.len());

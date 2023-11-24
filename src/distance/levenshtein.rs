@@ -283,10 +283,10 @@ where
                             break;
                         }
                         if (ops & 1) != 0 {
-                            cur1 = iter_s1.next()
+                            cur1 = iter_s1.next();
                         }
                         if (ops & 2) != 0 {
-                            cur2 = iter_s2.next()
+                            cur2 = iter_s2.next();
                         }
 
                         ops >>= 2;
@@ -322,7 +322,7 @@ where
 /// Bitparallel implementation of the Levenshtein distance.
 ///
 /// This implementation requires the first string to have a length <= 64.
-/// The algorithm used is described @cite hyrro_2002 and has a time complexity
+/// The algorithm used is described @cite `hyrro_2002` and has a time complexity
 /// of O(N). Comments and variable names in the implementation follow the
 /// paper. This implementation is used internally when the strings are short enough
 fn levenshtein_hyrroe2003<
@@ -401,7 +401,7 @@ where
         res.bit_row[0].last_block = 0;
 
         res.bit_row[0].prev_score = len2;
-        res.bit_row[0].vecs.push(LevenshteinRow { vp, vn })
+        res.bit_row[0].vecs.push(LevenshteinRow { vp, vn });
     }
 
     res
@@ -754,41 +754,41 @@ where
         // rust can't mutably borrow + borrow at the same time and the closure would borrow on creation.
         // so pass everything we need to borrow in explicitly ...
         let mut advance_block = |word: usize,
-                                 vecs: &mut Vec<LevenshteinRow>,
-                                 hp_carry: &mut u64,
-                                 hn_carry: &mut u64| {
+                                 vecs_: &mut Vec<LevenshteinRow>,
+                                 hp_carry_: &mut u64,
+                                 hn_carry_: &mut u64| {
             // Step 1: Computing D0
             let pm_j = pm.get(word, ch2);
-            let vn = vecs[word].vn;
-            let vp = vecs[word].vp;
+            let vn = vecs_[word].vn;
+            let vp = vecs_[word].vp;
 
-            let x = pm_j | *hn_carry;
+            let x = pm_j | *hn_carry_;
             let d0 = ((x & vp).wrapping_add(vp) ^ vp) | x | vn;
 
             // Step 2: Computing HP and HN
             let mut hp = vn | !(d0 | vp);
             let mut hn = d0 & vp;
 
-            let hp_carry_temp = *hp_carry;
-            let hn_carry_temp = *hn_carry;
+            let hp_carry_temp = *hp_carry_;
+            let hn_carry_temp = *hn_carry_;
             if word < words - 1 {
-                *hp_carry = hp >> 63;
-                *hn_carry = hn >> 63;
+                *hp_carry_ = hp >> 63;
+                *hn_carry_ = hn >> 63;
             } else {
-                *hp_carry = ((hp & last) != 0) as u64;
-                *hn_carry = ((hn & last) != 0) as u64;
+                *hp_carry_ = ((hp & last) != 0) as u64;
+                *hn_carry_ = ((hn & last) != 0) as u64;
             }
 
             // Step 4: Computing Vp and VN
             hp = (hp << 1) | hp_carry_temp;
             hn = (hn << 1) | hn_carry_temp;
 
-            vecs[word].vp = hn | !(d0 | hp);
-            vecs[word].vn = hp & d0;
+            vecs_[word].vp = hn | !(d0 | hp);
+            vecs_[word].vn = hp & d0;
 
             if RECORD_MATRIX == 1 {
-                *res.record_matrix[0].vp.get_mut(row, word - first_block) = vecs[word].vp;
-                *res.record_matrix[0].vn.get_mut(row, word - first_block) = vecs[word].vn;
+                *res.record_matrix[0].vp.get_mut(row, word - first_block) = vecs_[word].vp;
+                *res.record_matrix[0].vn.get_mut(row, word - first_block) = vecs_[word].vn;
             }
         };
 
@@ -1494,12 +1494,12 @@ impl<Elem1> CachedLevenshtein<Elem1>
 where
     Elem1: HashableChar + Clone,
 {
-    pub fn new<Iter1>(s1: Iter1, weights_: Option<LevenshteinWeightTable>) -> Self
+    pub fn new<Iter1>(s1_: Iter1, weights_: Option<LevenshteinWeightTable>) -> Self
     where
         Iter1: IntoIterator<Item = Elem1>,
         Iter1::IntoIter: Clone,
     {
-        let s1_iter = s1.into_iter();
+        let s1_iter = s1_.into_iter();
         let s1: Vec<Elem1> = s1_iter.clone().collect();
 
         let weights = weights_.unwrap_or(LevenshteinWeightTable {

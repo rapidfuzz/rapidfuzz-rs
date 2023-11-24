@@ -4,7 +4,7 @@ use crate::details::distance::{DistanceMetricUsize, NormalizedMetricUsize};
 use std::error::Error;
 use std::fmt::{self, Display, Formatter};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum HammingError {
     DifferentLengthArgs,
 }
@@ -54,7 +54,7 @@ where
     }
 }
 
-struct Hamming {}
+struct Hamming;
 
 impl DistanceMetricUsize for Hamming {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
@@ -241,8 +241,9 @@ where
         Iter1::IntoIter: Clone,
     {
         let s1_iter = s1.into_iter();
-        let s1: Vec<Elem1> = s1_iter.clone().collect();
-        CachedHamming { s1 }
+        CachedHamming {
+            s1: s1_iter.collect(),
+        }
     }
 
     pub fn distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(

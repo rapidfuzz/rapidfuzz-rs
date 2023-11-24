@@ -17,7 +17,7 @@ struct FlaggedCharsWord {
 }
 
 impl FlaggedCharsWord {
-    fn count_common_chars(&self) -> usize {
+    const fn count_common_chars(&self) -> usize {
         self.p_flag.count_ones() as usize
     }
 }
@@ -566,7 +566,7 @@ where
     }
 }
 
-pub(crate) struct Jaro {}
+pub(crate) struct Jaro;
 
 impl Jaro {
     build_similarity_metric_funcs!(Jaro, f64, 0.0, 1.0);
@@ -719,12 +719,12 @@ where
 {
     build_cached_similarity_metric_funcs!(CachedJaro, f64, 0.0, 1.0);
 
-    pub fn new<Iter1>(s1: Iter1) -> Self
+    pub fn new<Iter1>(s1_: Iter1) -> Self
     where
         Iter1: IntoIterator<Item = Elem1>,
         Iter1::IntoIter: Clone,
     {
-        let s1_iter = s1.into_iter();
+        let s1_iter = s1_.into_iter();
         let s1: Vec<Elem1> = s1_iter.clone().collect();
 
         let mut pm = BlockPatternMatchVector::new(s1.len());

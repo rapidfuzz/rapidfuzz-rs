@@ -5,6 +5,7 @@ pub(crate) fn norm_sim_to_norm_dist(score_cutoff: f64) -> f64 {
     (1.0 - score_cutoff + imprecision).min(1.0)
 }
 
+#[derive(Debug, Copy, Clone)]
 pub enum Hash {
     UNSIGNED(u64),
     SIGNED(i64),

@@ -1,7 +1,7 @@
 use crate::details::common::{find_common_suffix, HashableChar};
 use crate::details::distance::{NormalizedMetricUsize2, SimilarityMetricUsize};
 
-struct Postfix {}
+struct Postfix;
 
 impl SimilarityMetricUsize for Postfix {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
@@ -158,8 +158,9 @@ where
         Iter1::IntoIter: Clone,
     {
         let s1_iter = s1.into_iter();
-        let s1: Vec<Elem1> = s1_iter.clone().collect();
-        CachedPostfix { s1 }
+        CachedPostfix {
+            s1: s1_iter.collect(),
+        }
     }
 
     pub fn normalized_distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(

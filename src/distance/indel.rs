@@ -3,7 +3,7 @@ use crate::details::distance::{DistanceMetricUsize, NormalizedMetricUsize, Simil
 use crate::details::pattern_match_vector::BlockPatternMatchVector;
 use crate::distance::lcs_seq::{lcs_seq_similarity_with_pm, CachedLcsSeq, LcsSeq};
 
-pub(crate) struct Indel {}
+pub(crate) struct Indel;
 
 impl DistanceMetricUsize for Indel {
     fn maximum(&self, len1: usize, len2: usize) -> usize {

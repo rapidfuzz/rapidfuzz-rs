@@ -119,9 +119,9 @@ where
                     break;
                 }
                 if (ops & 1) != 0 {
-                    cur1 = iter_s1.next()
+                    cur1 = iter_s1.next();
                 } else if (ops & 2) != 0 {
-                    cur2 = iter_s2.next()
+                    cur2 = iter_s2.next();
                 }
 
                 ops >>= 2;
@@ -439,7 +439,7 @@ where
             affix.s2,
             affix.len2,
             score_cutoff - lcs_sim,
-        )
+        );
     }
 
     if lcs_sim >= score_cutoff {
@@ -493,7 +493,7 @@ where
         };
         if max_misses < 5 {
             lcs_sim +=
-                lcs_seq_mbleven2018(affix.s1, affix.len1, affix.s2, affix.len2, adjusted_cutoff)
+                lcs_seq_mbleven2018(affix.s1, affix.len1, affix.s2, affix.len2, adjusted_cutoff);
         } else {
             lcs_sim += longest_common_subsequence_without_pm(
                 affix.s1,
@@ -512,7 +512,7 @@ where
     }
 }
 
-pub(crate) struct LcsSeq {}
+pub(crate) struct LcsSeq;
 
 impl SimilarityMetricUsize for LcsSeq {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
@@ -689,12 +689,12 @@ impl<Elem1> CachedLcsSeq<Elem1>
 where
     Elem1: HashableChar + Clone,
 {
-    pub fn new<Iter1>(s1: Iter1) -> Self
+    pub fn new<Iter1>(s1_: Iter1) -> Self
     where
         Iter1: IntoIterator<Item = Elem1>,
         Iter1::IntoIter: Clone,
     {
-        let s1_iter = s1.into_iter();
+        let s1_iter = s1_.into_iter();
         let s1: Vec<Elem1> = s1_iter.clone().collect();
 
         let mut pm = BlockPatternMatchVector::new(s1.len());

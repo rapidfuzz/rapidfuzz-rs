@@ -8,7 +8,7 @@ use std::mem;
 /// Bitparallel implementation of the OSA distance.
 ///
 /// This implementation requires the first string to have a length <= 64.
-/// The algorithm used is described @cite hyrro_2002 and has a time complexity
+/// The algorithm used is described @cite `hyrro_2002` and has a time complexity
 /// of O(N). Comments and variable names in the implementation follow the
 /// paper. This implementation is used internally when the strings are short enough
 fn osa_hyrroe2003<PmVec, Iter1, Iter2, Elem1, Elem2>(
@@ -166,7 +166,7 @@ where
     }
 }
 
-pub(crate) struct Osa {}
+pub(crate) struct Osa;
 
 impl DistanceMetricUsize for Osa {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
@@ -180,7 +180,7 @@ impl DistanceMetricUsize for Osa {
         s2: Iter2,
         len2: usize,
         score_cutoff: usize,
-        _score_hint: usize,
+        score_hint: usize,
     ) -> usize
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
@@ -189,7 +189,7 @@ impl DistanceMetricUsize for Osa {
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
         if len1 < len2 {
-            return self._distance(s2, len2, s1, len1, score_cutoff, _score_hint);
+            return self._distance(s2, len2, s1, len1, score_cutoff, score_hint);
         }
 
         let affix = remove_common_affix(s1, len1, s2, len2);
@@ -392,12 +392,12 @@ impl<Elem1> CachedOsa<Elem1>
 where
     Elem1: HashableChar + Clone,
 {
-    pub fn new<Iter1>(s1: Iter1) -> Self
+    pub fn new<Iter1>(s1_: Iter1) -> Self
     where
         Iter1: IntoIterator<Item = Elem1>,
         Iter1::IntoIter: Clone,
     {
-        let s1_iter = s1.into_iter();
+        let s1_iter = s1_.into_iter();
         let s1: Vec<Elem1> = s1_iter.clone().collect();
 
         let mut pm = BlockPatternMatchVector::new(s1.len());

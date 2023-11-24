@@ -153,7 +153,7 @@ where
     )
 }
 
-pub(crate) struct DamerauLevenshtein {}
+pub(crate) struct DamerauLevenshtein;
 
 impl DistanceMetricUsize for DamerauLevenshtein {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
@@ -338,8 +338,9 @@ where
         Iter1::IntoIter: Clone,
     {
         let s1_iter = s1.into_iter();
-        let s1: Vec<Elem1> = s1_iter.clone().collect();
-        CachedDamerauLevenshtein { s1 }
+        CachedDamerauLevenshtein {
+            s1: s1_iter.collect(),
+        }
     }
 
     pub fn normalized_distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
