@@ -309,7 +309,7 @@ pub trait SimilarityMetricf64 {
         len2: usize,
         score_cutoff: f64,
         score_hint: f64,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -329,13 +329,13 @@ pub trait SimilarityMetricf64 {
             0.0
         };
 
-        let sim = self._similarity(s1, len1, s2, len2, cutoff_similarity, hint_similarity);
+        let sim = self._similarity(s1, len1, s2, len2, cutoff_similarity, hint_similarity)?;
         let dist = maximum - sim;
 
         if dist <= score_cutoff {
-            dist
+            Some(dist)
         } else {
-            1.0
+            None
         }
     }
 
@@ -347,7 +347,7 @@ pub trait SimilarityMetricf64 {
         len2: usize,
         score_cutoff: f64,
         score_hint: f64,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -364,7 +364,7 @@ pub trait NormalizedMetricf64 {
         len2: usize,
         score_cutoff: f64,
         score_hint: f64,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -378,7 +378,7 @@ pub trait NormalizedMetricf64 {
         len2: usize,
         score_cutoff: f64,
         score_hint: f64,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -395,7 +395,7 @@ impl<T: SimilarityMetricf64> NormalizedMetricf64 for T {
         len2: usize,
         score_cutoff: f64,
         score_hint: f64,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -407,12 +407,12 @@ impl<T: SimilarityMetricf64> NormalizedMetricf64 for T {
         let cutoff_distance = maximum * score_cutoff;
         let hint_distance = maximum * score_hint;
 
-        let dist = self._distance(s1, len1, s2, len2, cutoff_distance, hint_distance);
+        let dist = self._distance(s1, len1, s2, len2, cutoff_distance, hint_distance)?;
         let norm_dist = if maximum > 0.0 { dist / maximum } else { 0.0 };
         if norm_dist <= score_cutoff {
-            norm_dist
+            Some(norm_dist)
         } else {
-            1.0
+            None
         }
     }
 
@@ -424,7 +424,7 @@ impl<T: SimilarityMetricf64> NormalizedMetricf64 for T {
         len2: usize,
         score_cutoff: f64,
         score_hint: f64,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -434,13 +434,13 @@ impl<T: SimilarityMetricf64> NormalizedMetricf64 for T {
         let cutoff_score = norm_sim_to_norm_dist(score_cutoff);
         let hint_score = norm_sim_to_norm_dist(score_hint);
 
-        let norm_dist = self._normalized_distance(s1, len1, s2, len2, cutoff_score, hint_score);
+        let norm_dist = self._normalized_distance(s1, len1, s2, len2, cutoff_score, hint_score)?;
         let norm_sim = 1.0 - norm_dist;
 
         if norm_sim >= score_cutoff {
-            norm_sim
+            Some(norm_sim)
         } else {
-            0.0
+            None
         }
     }
 }

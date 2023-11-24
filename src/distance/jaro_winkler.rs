@@ -11,7 +11,7 @@ fn jaro_winkler_similarity_without_pm<Iter1, Iter2, Elem1, Elem2>(
     len2: usize,
     prefix_weight: f64,
     score_cutoff: f64,
-) -> f64
+) -> Option<f64>
 where
     Iter1: Iterator<Item = Elem1> + Clone,
     Iter2: Iterator<Item = Elem2> + Clone,
@@ -35,15 +35,15 @@ where
         }
     }
 
-    let mut sim = jaro_similarity_without_pm(s1, len1, s2, len2, jaro_score_cutoff);
+    let mut sim = jaro_similarity_without_pm(s1, len1, s2, len2, jaro_score_cutoff)?;
     if sim > 0.7 {
         sim += prefix as f64 * prefix_weight / (1.0 - sim);
     }
 
     if sim >= score_cutoff {
-        sim
+        Some(sim)
     } else {
-        0.0
+        None
     }
 }
 
@@ -55,7 +55,7 @@ fn jaro_winkler_similarity_with_pm<Iter1, Iter2, Elem1, Elem2>(
     len2: usize,
     prefix_weight: f64,
     score_cutoff: f64,
-) -> f64
+) -> Option<f64>
 where
     Iter1: Iterator<Item = Elem1> + Clone,
     Iter2: Iterator<Item = Elem2> + Clone,
@@ -79,15 +79,15 @@ where
         }
     }
 
-    let mut sim = jaro_similarity_with_pm(pm, s1, len1, s2, len2, jaro_score_cutoff);
+    let mut sim = jaro_similarity_with_pm(pm, s1, len1, s2, len2, jaro_score_cutoff)?;
     if sim > 0.7 {
         sim += prefix as f64 * prefix_weight / (1.0 - sim);
     }
 
     if sim >= score_cutoff {
-        sim
+        Some(sim)
     } else {
-        0.0
+        None
     }
 }
 
@@ -108,7 +108,7 @@ impl SimilarityMetricf64 for JaroWinkler {
         len2: usize,
         score_cutoff: f64,
         _score_hint: f64,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -132,7 +132,7 @@ pub fn distance<Iter1, Iter2, Elem1, Elem2, PrefixWeight, ScoreCutoff, ScoreHint
     prefix_weight: PrefixWeight,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> f64
+) -> Option<f64>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -165,7 +165,7 @@ pub fn similarity<Iter1, Iter2, Elem1, Elem2, PrefixWeight, ScoreCutoff, ScoreHi
     prefix_weight: PrefixWeight,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> f64
+) -> Option<f64>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -198,7 +198,7 @@ pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, PrefixWeight, ScoreCutoff
     prefix_weight: PrefixWeight,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> f64
+) -> Option<f64>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -231,7 +231,7 @@ pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, PrefixWeight, ScoreCuto
     prefix_weight: PrefixWeight,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> f64
+) -> Option<f64>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -277,7 +277,7 @@ impl<CharT> SimilarityMetricf64 for CachedJaroWinkler<CharT> {
         len2: usize,
         score_cutoff: f64,
         _score_hint: f64,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -323,7 +323,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -348,7 +348,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -373,7 +373,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -398,7 +398,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,

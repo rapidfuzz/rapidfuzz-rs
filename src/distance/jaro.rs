@@ -360,7 +360,7 @@ pub(crate) fn jaro_similarity_without_pm<Iter1, Iter2, Elem1, Elem2>(
     s2: Iter2,
     mut len2: usize,
     score_cutoff: f64,
-) -> f64
+) -> Option<f64>
 where
     Iter1: Iterator<Item = Elem1> + Clone,
     Iter2: Iterator<Item = Elem2> + Clone,
@@ -371,20 +371,20 @@ where
     let len2_orig = len2;
 
     if score_cutoff > 1.0 {
-        return 0.0;
+        return None;
     }
 
     if len1_orig == 0 && len2_orig == 0 {
-        return 1.0;
+        return Some(1.0);
     }
 
     // filter out based on the length difference between the two strings
     if !jaro_length_filter(len1_orig, len2_orig, score_cutoff) {
-        return 0.0;
+        return if score_cutoff > 0.0 { None } else { Some(0.0) };
     }
 
     if len1_orig == 1 && len2_orig == 1 {
-        return s1.eq(s2).into();
+        return Some(s1.eq(s2).into());
     }
 
     // since jaro uses a sliding window some parts of T/P might never be in
@@ -432,7 +432,7 @@ where
         common_chars += flagged.count_common_chars();
 
         if !jaro_common_char_filter(len1_orig, len2_orig, common_chars, score_cutoff) {
-            return 0.0;
+            return if score_cutoff > 0.0 { None } else { Some(0.0) };
         }
 
         transpositions = count_transpositions_word(&pm, s2_iter, len2, &flagged);
@@ -446,7 +446,7 @@ where
         common_chars += flagged_chars;
 
         if !jaro_common_char_filter(len1_orig, len2_orig, common_chars, score_cutoff) {
-            return 0.0;
+            return if score_cutoff > 0.0 { None } else { Some(0.0) };
         }
 
         transpositions = count_transpositions_block(&pm, s2_iter, len2, &flagged, flagged_chars);
@@ -454,9 +454,9 @@ where
 
     let sim = jaro_calculate_similarity(len1_orig, len2_orig, common_chars, transpositions);
     if sim >= score_cutoff {
-        sim
+        Some(sim)
     } else {
-        0.0
+        None
     }
 }
 
@@ -467,7 +467,7 @@ pub(crate) fn jaro_similarity_with_pm<Iter1, Iter2, Elem1, Elem2>(
     s2: Iter2,
     mut len2: usize,
     score_cutoff: f64,
-) -> f64
+) -> Option<f64>
 where
     Iter1: Iterator<Item = Elem1> + Clone,
     Iter2: Iterator<Item = Elem2> + Clone,
@@ -478,20 +478,20 @@ where
     let len2_orig = len2;
 
     if score_cutoff > 1.0 {
-        return 0.0;
+        return None;
     }
 
     if len1_orig == 0 && len2_orig == 0 {
-        return 1.0;
+        return Some(1.0);
     }
 
     // filter out based on the length difference between the two strings
     if !jaro_length_filter(len1_orig, len2_orig, score_cutoff) {
-        return 0.0;
+        return if score_cutoff > 0.0 { None } else { Some(0.0) };
     }
 
     if len1_orig == 1 && len2_orig == 1 {
-        return s1.eq(s2).into();
+        return Some(s1.eq(s2).into());
     }
 
     // since jaro uses a sliding window some parts of T/P might never be in
@@ -524,7 +524,7 @@ where
         common_chars += flagged.count_common_chars();
 
         if !jaro_common_char_filter(len1_orig, len2_orig, common_chars, score_cutoff) {
-            return 0.0;
+            return if score_cutoff > 0.0 { None } else { Some(0.0) };
         }
 
         transpositions = count_transpositions_word(pm, s2_iter, len2, &flagged);
@@ -535,7 +535,7 @@ where
         common_chars += flagged_chars;
 
         if !jaro_common_char_filter(len1_orig, len2_orig, common_chars, score_cutoff) {
-            return 0.0;
+            return if score_cutoff > 0.0 { None } else { Some(0.0) };
         }
 
         transpositions = count_transpositions_block(pm, s2_iter, len2, &flagged, flagged_chars);
@@ -543,9 +543,9 @@ where
 
     let sim = jaro_calculate_similarity(len1_orig, len2_orig, common_chars, transpositions);
     if sim >= score_cutoff {
-        sim
+        Some(sim)
     } else {
-        0.0
+        None
     }
 }
 
@@ -564,7 +564,7 @@ impl SimilarityMetricf64 for Jaro {
         len2: usize,
         score_cutoff: f64,
         _score_hint: f64,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -580,7 +580,7 @@ pub fn distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s2: Iter2,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> f64
+) -> Option<f64>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -608,7 +608,7 @@ pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s2: Iter2,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> f64
+) -> Option<f64>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -636,7 +636,7 @@ pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s2: Iter2,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> f64
+) -> Option<f64>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -664,7 +664,7 @@ pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>
     s2: Iter2,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> f64
+) -> Option<f64>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -705,7 +705,7 @@ impl<CharT> SimilarityMetricf64 for CachedJaro<CharT> {
         len2: usize,
         score_cutoff: f64,
         _score_hint: f64,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -739,7 +739,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -764,7 +764,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -789,7 +789,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -814,7 +814,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -840,8 +840,14 @@ mod tests {
     use super::*;
     macro_rules! assert_delta {
         ($x:expr, $y:expr, $d:expr) => {
-            if ($x - $y).abs() > $d {
-                panic!();
+            match ($x, $y) {
+                (None, None) => {}
+                (Some(val1), Some(val2)) => {
+                    if (val1 - val2).abs() > $d {
+                        panic!("{:?} != {:?}", $x, $y);
+                    }
+                }
+                (_, _) => panic!("{:?} != {:?}", $x, $y),
             }
         };
     }
@@ -851,7 +857,7 @@ mod tests {
         s2_: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter1: IntoIterator<Item = Elem1>,
         Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -893,7 +899,7 @@ mod tests {
         s2: &str,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         ScoreCutoff: Into<Option<f64>> + Clone,
         ScoreHint: Into<Option<f64>> + Clone,
@@ -915,7 +921,7 @@ mod tests {
         s2_: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter1: IntoIterator<Item = Elem1>,
         Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -957,7 +963,7 @@ mod tests {
         s2: &str,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         ScoreCutoff: Into<Option<f64>> + Clone,
         ScoreHint: Into<Option<f64>> + Clone,
@@ -1046,15 +1052,18 @@ mod tests {
         for score_cutoff in score_cutoffs {
             for (i, name1) in names.iter().enumerate() {
                 for (j, name2) in names.iter().enumerate() {
-                    let mut expected_sim = scores[i * names.len() + j];
-                    if score_cutoff > expected_sim {
-                        expected_sim = 0.0;
-                    }
+                    let score = scores[i * names.len() + j];
+                    let expected_sim = if score_cutoff <= score {
+                        Some(score)
+                    } else {
+                        None
+                    };
+                    let expected_dist = expected_sim.map(|s| 1.0 - s);
 
                     let sim = _test_similarity_ascii(name1, name2, score_cutoff, None);
                     let dist = _test_distance_ascii(name1, name2, 1.0 - score_cutoff, None);
                     assert_delta!(expected_sim, sim, 0.0001);
-                    assert_delta!(1.0 - expected_sim, dist, 0.0001);
+                    assert_delta!(expected_dist, dist, 0.0001);
                 }
             }
         }
