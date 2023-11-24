@@ -114,7 +114,11 @@ where
         }
 
         while let (Some(ch1), Some(ch2)) = (&cur1, &cur2) {
-            if ch1 != ch2 {
+            if ch1 == ch2 {
+                cur_len += 1;
+                cur1 = iter_s1.next();
+                cur2 = iter_s2.next();
+            } else {
                 if ops == 0 {
                     break;
                 }
@@ -125,10 +129,6 @@ where
                 }
 
                 ops >>= 2;
-            } else {
-                cur_len += 1;
-                cur1 = iter_s1.next();
-                cur2 = iter_s2.next();
             }
         }
 

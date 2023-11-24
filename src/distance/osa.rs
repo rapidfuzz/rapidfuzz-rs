@@ -50,8 +50,8 @@ where
         let mut hn = d0 & vp;
 
         /* Step 3: Computing the value D[m,j] */
-        curr_dist += (hp & mask != 0) as usize;
-        curr_dist -= (hn & mask != 0) as usize;
+        curr_dist += usize::from(hp & mask != 0);
+        curr_dist -= usize::from(hn & mask != 0);
 
         /* Step 4: Computing Vp and VN */
         hp = (hp << 1) | 1;
@@ -139,8 +139,8 @@ where
             let mut hn = d0 & vp;
 
             if word == words - 1 {
-                curr_dist += (hp & last != 0) as usize;
-                curr_dist -= (hn & last != 0) as usize;
+                curr_dist += usize::from(hp & last != 0);
+                curr_dist -= usize::from(hn & last != 0);
             }
 
             let hp_carry_temp = hp_carry;

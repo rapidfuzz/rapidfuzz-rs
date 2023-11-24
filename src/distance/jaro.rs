@@ -113,7 +113,7 @@ where
     for ch2 in (&mut s2).take(bound) {
         let pm_j = pm.get(0, ch2) & bound_mask & !flagged.p_flag;
         flagged.p_flag |= blsi_u64(pm_j);
-        flagged.t_flag |= ((pm_j != 0) as u64) << j;
+        flagged.t_flag |= u64::from(pm_j != 0) << j;
 
         bound_mask = (bound_mask << 1) | 1;
         j += 1;
@@ -122,7 +122,7 @@ where
     for ch2 in s2 {
         let pm_j = pm.get(0, ch2) & bound_mask & !flagged.p_flag;
         flagged.p_flag |= blsi_u64(pm_j);
-        flagged.t_flag |= ((pm_j != 0) as u64) << j;
+        flagged.t_flag |= u64::from(pm_j != 0) << j;
 
         bound_mask <<= 1;
         j += 1;
@@ -152,7 +152,7 @@ fn flag_similar_characters_step<CharT>(
             & (!flagged.p_flag[word]);
 
         flagged.p_flag[word] |= blsi_u64(pm_j);
-        flagged.t_flag[j_word] |= ((pm_j != 0) as u64) << j_pos;
+        flagged.t_flag[j_word] |= u64::from(pm_j != 0) << j_pos;
         return;
     }
 
@@ -221,7 +221,7 @@ fn flag_similar_characters_step<CharT>(
         let pm_j = pm.get(word, t_j) & bound_mask.last_mask & (!flagged.p_flag[word]);
 
         flagged.p_flag[word] |= blsi_u64(pm_j);
-        flagged.t_flag[j_word] |= ((pm_j != 0) as u64) << j_pos;
+        flagged.t_flag[j_word] |= u64::from(pm_j != 0) << j_pos;
     }
 }
 
@@ -298,7 +298,7 @@ where
             .clone()
             .nth(t_flag.trailing_zeros() as usize)
             .expect("these can't be outside, since we set the flags based on available indexes");
-        transpositions += ((pm.get(0, ch2) & pattern_flag_mask) == 0) as usize;
+        transpositions += usize::from((pm.get(0, ch2) & pattern_flag_mask) == 0);
 
         t_flag = blsr_u64(t_flag);
         p_flag ^= pattern_flag_mask;
@@ -343,7 +343,7 @@ where
                 "these can't be outside, since we set the flags based on available indexes",
             );
 
-            transpositions += ((pm.get(pattern_word, ch2) & pattern_flag_mask) == 0) as usize;
+            transpositions += usize::from((pm.get(pattern_word, ch2) & pattern_flag_mask) == 0);
 
             t_flag = blsr_u64(t_flag);
             p_flag ^= pattern_flag_mask;

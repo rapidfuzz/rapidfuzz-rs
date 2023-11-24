@@ -93,7 +93,7 @@ where
 
     fn allocate(&mut self) {
         self.mask = 8 - 1;
-        self.map = Some(vec![Default::default(); 8]);
+        self.map = Some(vec![GrowingHashmapMapElem::default(); 8]);
     }
 
     /// lookup key inside the hashmap using a similar collision resolution

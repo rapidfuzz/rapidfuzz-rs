@@ -83,7 +83,7 @@ impl Default for LevenshteinResult<0, 1> {
     fn default() -> Self {
         Self {
             record_matrix: [],
-            bit_row: [Default::default()],
+            bit_row: [ResultRow::default()],
             dist: 0,
         }
     }
@@ -277,7 +277,10 @@ where
         loop {
             match (&cur1, &cur2) {
                 (Some(ch1), Some(ch2)) => {
-                    if ch1 != ch2 {
+                    if ch1 == ch2 {
+                        cur1 = iter_s1.next();
+                        cur2 = iter_s2.next();
+                    } else {
                         cur_dist += 1;
                         if ops == 0 {
                             break;
@@ -290,9 +293,6 @@ where
                         }
 
                         ops >>= 2;
-                    } else {
-                        cur1 = iter_s1.next();
-                        cur2 = iter_s2.next();
                     }
                 }
                 (Some(_), None) => {
@@ -376,8 +376,8 @@ where
         let mut hn = d0 & vp;
 
         // Step 3: Computing the value D[m,j]
-        res.dist += (hp & mask != 0) as usize;
-        res.dist -= (hn & mask != 0) as usize;
+        res.dist += usize::from(hp & mask != 0);
+        res.dist -= usize::from(hn & mask != 0);
 
         // Step 4: Computing Vp and VN
         hp = (hp << 1) | 1;
@@ -677,6 +677,7 @@ where
     res
 }
 
+#[allow(clippy::too_many_lines)]
 fn levenshtein_hyrroe2003_block<
     const RECORD_MATRIX: usize,
     const RECORD_BIT_ROW: usize,
@@ -739,8 +740,8 @@ where
 
     // Searching
     for (row, ch2) in s2.enumerate() {
-        let mut hp_carry: u64 = 1;
-        let mut hn_carry: u64 = 0;
+        let mut hp_carry: bool = true;
+        let mut hn_carry: bool = false;
 
         if RECORD_MATRIX == 1 {
             res.record_matrix[0]
@@ -755,14 +756,14 @@ where
         // so pass everything we need to borrow in explicitly ...
         let mut advance_block = |word: usize,
                                  vecs_: &mut Vec<LevenshteinRow>,
-                                 hp_carry_: &mut u64,
-                                 hn_carry_: &mut u64| {
+                                 hp_carry_: &mut bool,
+                                 hn_carry_: &mut bool| {
             // Step 1: Computing D0
             let pm_j = pm.get(word, ch2);
             let vn = vecs_[word].vn;
             let vp = vecs_[word].vp;
 
-            let x = pm_j | *hn_carry_;
+            let x = pm_j | u64::from(*hn_carry_);
             let d0 = ((x & vp).wrapping_add(vp) ^ vp) | x | vn;
 
             // Step 2: Computing HP and HN
@@ -772,16 +773,16 @@ where
             let hp_carry_temp = *hp_carry_;
             let hn_carry_temp = *hn_carry_;
             if word < words - 1 {
-                *hp_carry_ = hp >> 63;
-                *hn_carry_ = hn >> 63;
+                *hp_carry_ = (hp >> 63) != 0;
+                *hn_carry_ = (hn >> 63) != 0;
             } else {
-                *hp_carry_ = u64::from((hp & last) != 0);
-                *hn_carry_ = u64::from((hn & last) != 0);
+                *hp_carry_ = (hp & last) != 0;
+                *hn_carry_ = (hn & last) != 0;
             }
 
             // Step 4: Computing Vp and VN
-            hp = (hp << 1) | hp_carry_temp;
-            hn = (hn << 1) | hn_carry_temp;
+            hp = (hp << 1) | u64::from(hp_carry_temp);
+            hn = (hn << 1) | u64::from(hn_carry_temp);
 
             vecs_[word].vp = hn | !(d0 | hp);
             vecs_[word].vn = hp & d0;
@@ -808,8 +809,8 @@ where
         {
             // Step 3: Computing the value D[m,j]
             advance_block(word, &mut vecs, &mut hp_carry, &mut hn_carry);
-            *score += hp_carry as usize;
-            *score -= hn_carry as usize;
+            *score += usize::from(hp_carry);
+            *score -= usize::from(hn_carry);
         }
 
         score_cutoff = min(
@@ -843,12 +844,12 @@ where
             } else {
                 64
             };
-            scores[last_block] =
-                scores[last_block - 1] + chars_in_block - hp_carry as usize + hn_carry as usize;
+            scores[last_block] = scores[last_block - 1] + chars_in_block - usize::from(hp_carry)
+                + usize::from(hn_carry);
 
             advance_block(last_block, &mut vecs, &mut hp_carry, &mut hn_carry);
-            scores[last_block] += hp_carry as usize;
-            scores[last_block] -= hn_carry as usize;
+            scores[last_block] += usize::from(hp_carry);
+            scores[last_block] -= usize::from(hn_carry);
         }
 
         while last_block >= first_block {
@@ -904,7 +905,7 @@ where
 
         if RECORD_BIT_ROW == 1 && row as isize == stop_row {
             if first_block == 0 {
-                res.bit_row[0].prev_score = stop_row as usize + 1;
+                res.bit_row[0].prev_score = row + 1;
             } else {
                 // count backwards to find score at last position in previous block
                 let relevant_bits = min((first_block + 1) * 64, len1) % 64;
@@ -955,7 +956,7 @@ where
 
     // when no differences are allowed a direct comparision is sufficient
     if score_cutoff == 0 {
-        return !s1.into_iter().eq(s2) as usize;
+        return usize::from(!s1.into_iter().eq(s2));
     }
 
     if score_cutoff < len1.abs_diff(len2) {
@@ -1062,7 +1063,7 @@ where
 
     // when no differences are allowed a direct comparision is sufficient
     if score_cutoff == 0 {
-        return !s1.into_iter().eq(s2) as usize;
+        return usize::from(!s1.into_iter().eq(s2));
     }
 
     if score_cutoff < len1.abs_diff(len2) {
