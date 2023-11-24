@@ -1,7 +1,7 @@
 [package]
 description="rapid fuzzy string matching library"
 name = "rapidfuzz"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["maxbachmann <oss@maxbachmann.de>"]
 edition = "2021"
 readme = "Readme.md"

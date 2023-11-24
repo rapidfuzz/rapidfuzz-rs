@@ -1,6 +1,6 @@
 use crate::details::common::{remove_common_affix, HashableChar};
 use crate::details::distance::{DistanceMetricUsize, NormalizedMetricUsize};
-use crate::details::growing_hashmap::HybridGrowingHashmap;
+use crate::details::growing_hashmap::{GrowingHashmap, HybridGrowingHashmap};
 use crate::details::intrinsics::{ceil_div_usize, shr64};
 use crate::details::matrix::ShiftedBitMatrix;
 use crate::details::pattern_match_vector::{
@@ -461,7 +461,7 @@ where
             let hn = d0 & vp;
 
             // Step 3: Computing the value D[m,j]
-            curr_dist += (d0 & diagonal_mask == 0) as usize;
+            curr_dist += usize::from(d0 & diagonal_mask == 0);
 
             if curr_dist > break_score {
                 return score_cutoff + 1;
@@ -499,8 +499,8 @@ where
         let hn = d0 & vp;
 
         // Step 3: Computing the value D[m,j]
-        curr_dist += (hp & horizontal_mask != 0) as usize;
-        curr_dist -= (hn & horizontal_mask != 0) as usize;
+        curr_dist += usize::from(hp & horizontal_mask != 0);
+        curr_dist -= usize::from(hn & horizontal_mask != 0);
         horizontal_mask >>= 1;
 
         if curr_dist > break_score {
@@ -577,8 +577,8 @@ where
     // rust fails to remove the array memcpy on return
     // let pm = HybridGrowingHashmap::<(isize, u64)>::new();
     let mut pm = HybridGrowingHashmap::<(isize, u64)> {
-        map_unsigned: Default::default(),
-        map_signed: Default::default(),
+        map_unsigned: GrowingHashmap::default(),
+        map_signed: GrowingHashmap::default(),
         extended_ascii: [Default::default(); 256],
     };
 
@@ -613,7 +613,7 @@ where
         let hn = d0 & vp;
 
         // Step 3: Computing the value D[m,j]
-        res.dist += (d0 & diagonal_mask == 0) as usize;
+        res.dist += usize::from(d0 & diagonal_mask == 0);
 
         if res.dist > break_score {
             res.dist = score_cutoff + 1;
@@ -651,8 +651,8 @@ where
         let hn = d0 & vp;
 
         // Step 3: Computing the value D[m,j]
-        res.dist += (hp & horizontal_mask != 0) as usize;
-        res.dist -= (hn & horizontal_mask != 0) as usize;
+        res.dist += usize::from(hp & horizontal_mask != 0);
+        res.dist -= usize::from(hn & horizontal_mask != 0);
         horizontal_mask >>= 1;
 
         if res.dist > break_score {

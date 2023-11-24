@@ -172,8 +172,8 @@ where
     // on return
     /*pub fn new() -> Self {
         HybridGrowingHashmap {
-            map_unsigned: Default::default(),
-            map_signed: Default::default(),
+            map_unsigned: GrowingHashmap::default(),
+            map_signed: GrowingHashmap::default(),
             extended_ascii: [Default::default(); 256],
         }
     }*/
