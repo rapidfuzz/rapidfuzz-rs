@@ -1,9 +1,5 @@
-use crate::details::common::{find_common_prefix, norm_sim_to_norm_dist, HashableChar};
-use crate::details::distance::{
-    build_cached_normalized_metric_funcs, build_cached_similarity_metric_funcs,
-    build_normalized_metric_funcs, build_similarity_metric_funcs,
-    less_than_score_cutoff_similarity,
-};
+use crate::details::common::{find_common_prefix, HashableChar};
+use crate::details::distance::{NormalizedMetricf64, SimilarityMetricf64};
 use crate::details::intrinsics::{bit_mask_lsb_u64, blsi_u64, blsr_u64, ceil_div_usize};
 use crate::details::pattern_match_vector::{
     BitVectorInterface, BitvectorHashmap, BlockPatternMatchVector, PatternMatchVector,
@@ -568,14 +564,13 @@ where
 
 pub(crate) struct Jaro;
 
-impl Jaro {
-    build_similarity_metric_funcs!(Jaro, f64, 0.0, 1.0);
-
-    fn maximum(_len1: usize, _len2: usize) -> f64 {
+impl SimilarityMetricf64 for Jaro {
+    fn maximum(&self, _len1: usize, _len2: usize) -> f64 {
         1.0
     }
 
-    pub(crate) fn similarity<Iter1, Iter2, Elem1, Elem2>(
+    fn _similarity<Iter1, Iter2, Elem1, Elem2>(
+        &self,
         s1: Iter1,
         len1: usize,
         s2: Iter2,
@@ -589,7 +584,7 @@ impl Jaro {
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
-        jaro_similarity_without_pm(s1.into_iter(), len1, s2, len2, score_cutoff)
+        jaro_similarity_without_pm(s1, len1, s2, len2, score_cutoff)
     }
 }
 
@@ -611,7 +606,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Jaro::distance(
+    Jaro {}._distance(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -639,7 +634,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Jaro::similarity(
+    Jaro {}._similarity(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -667,7 +662,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Jaro::normalized_distance(
+    Jaro {}._normalized_distance(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -695,7 +690,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Jaro::normalized_similarity(
+    Jaro {}._normalized_similarity(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -705,20 +700,39 @@ where
     )
 }
 
-pub struct CachedJaro<Elem1>
-where
-    Elem1: HashableChar + Clone,
-{
+pub struct CachedJaro<Elem1> {
     s1: Vec<Elem1>,
     pm: BlockPatternMatchVector,
+}
+
+impl<CharT> SimilarityMetricf64 for CachedJaro<CharT> {
+    fn maximum(&self, _len1: usize, _len2: usize) -> f64 {
+        1.0
+    }
+
+    fn _similarity<Iter1, Iter2, Elem1, Elem2>(
+        &self,
+        s1: Iter1,
+        len1: usize,
+        s2: Iter2,
+        len2: usize,
+        score_cutoff: f64,
+        _score_hint: f64,
+    ) -> f64
+    where
+        Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
+        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    {
+        jaro_similarity_with_pm(&self.pm, s1, len1, s2, len2, score_cutoff)
+    }
 }
 
 impl<Elem1> CachedJaro<Elem1>
 where
     Elem1: HashableChar + Clone,
 {
-    build_cached_similarity_metric_funcs!(CachedJaro, f64, 0.0, 1.0);
-
     pub fn new<Iter1>(s1_: Iter1) -> Self
     where
         Iter1: IntoIterator<Item = Elem1>,
@@ -733,29 +747,103 @@ where
         CachedJaro { s1, pm }
     }
 
-    fn maximum(&self, _len2: usize) -> f64 {
-        1.0
-    }
-
-    fn _similarity<Iter2, Elem2>(
+    pub fn normalized_distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
-        len2: usize,
-        score_cutoff: f64,
-        _score_hint: f64,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
     ) -> f64
     where
-        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
+        Iter2: IntoIterator<Item = Elem2>,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<f64>>,
+        ScoreHint: Into<Option<f64>>,
     {
-        jaro_similarity_with_pm(
-            &self.pm,
+        let s2_iter = s2.into_iter();
+        self._normalized_distance(
             self.s1.iter().copied(),
             self.s1.len(),
-            s2,
-            len2,
-            score_cutoff,
+            s2_iter.clone(),
+            s2_iter.count(),
+            score_cutoff.into().unwrap_or(1.0),
+            score_hint.into().unwrap_or(1.0),
+        )
+    }
+
+    pub fn normalized_similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
+        &self,
+        s2: Iter2,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> f64
+    where
+        Iter2: IntoIterator<Item = Elem2>,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<f64>>,
+        ScoreHint: Into<Option<f64>>,
+    {
+        let s2_iter = s2.into_iter();
+        self._normalized_similarity(
+            self.s1.iter().copied(),
+            self.s1.len(),
+            s2_iter.clone(),
+            s2_iter.count(),
+            score_cutoff.into().unwrap_or(0.0),
+            score_hint.into().unwrap_or(0.0),
+        )
+    }
+
+    pub fn distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
+        &self,
+        s2: Iter2,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> f64
+    where
+        Iter2: IntoIterator<Item = Elem2>,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<f64>>,
+        ScoreHint: Into<Option<f64>>,
+    {
+        let s2_iter = s2.into_iter();
+        self._distance(
+            self.s1.iter().copied(),
+            self.s1.len(),
+            s2_iter.clone(),
+            s2_iter.count(),
+            score_cutoff.into().unwrap_or(1.0),
+            score_hint.into().unwrap_or(1.0),
+        )
+    }
+
+    pub fn similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
+        &self,
+        s2: Iter2,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> f64
+    where
+        Iter2: IntoIterator<Item = Elem2>,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<f64>>,
+        ScoreHint: Into<Option<f64>>,
+    {
+        let s2_iter = s2.into_iter();
+        self._similarity(
+            self.s1.iter().copied(),
+            self.s1.len(),
+            s2_iter.clone(),
+            s2_iter.count(),
+            score_cutoff.into().unwrap_or(0.0),
+            score_hint.into().unwrap_or(0.0),
         )
     }
 }

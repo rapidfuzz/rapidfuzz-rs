@@ -171,8 +171,8 @@ where
         let mut calc = |word: usize| {
             let matches = pm.get(word, ch2);
             let u = s[word] & matches;
-            let x: u64;
-            (x, carry) = carrying_add(s[word], u, carry);
+            let (x, carry_) = carrying_add(s[word], u, carry);
+            carry = carry_;
             s[word] = x | (s[word] - u);
 
             if RECORD_MATRIX == 1 {
@@ -262,8 +262,8 @@ where
         for (word, s_ref) in s.iter_mut().enumerate().take(last_block).skip(first_block) {
             let matches = pm.get(word, ch2);
             let u = *s_ref & matches;
-            let x: u64;
-            (x, carry) = carrying_add(*s_ref, u, carry);
+            let (x, carry_) = carrying_add(*s_ref, u, carry);
+            carry = carry_;
             *s_ref = x | (*s_ref - u);
 
             if RECORD_MATRIX == 1 {

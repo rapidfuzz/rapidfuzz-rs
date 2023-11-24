@@ -22,12 +22,12 @@ where
     }
 
     #[allow(dead_code)]
-    pub fn rows(&self) -> usize {
+    pub const fn rows(&self) -> usize {
         self.rows
     }
 
     #[allow(dead_code)]
-    pub fn cols(&self) -> usize {
+    pub const fn cols(&self) -> usize {
         self.cols
     }
 
@@ -70,7 +70,7 @@ where
         if offset < 0 {
             col += (-offset) as usize;
         } else if col >= offset as usize {
-            col -= offset as usize
+            col -= offset as usize;
         }
         // bit on the left of the band
         else {

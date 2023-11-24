@@ -31,7 +31,7 @@ impl Default for BitvectorHashmap {
 }
 
 impl BitvectorHashmap {
-    pub fn get(&self, key: u64) -> u64 {
+    pub const fn get(&self, key: u64) -> u64 {
         self.map[self.lookup(key)].value
     }
 
@@ -43,8 +43,8 @@ impl BitvectorHashmap {
     }
 
     /// lookup key inside the hashmap using a similar collision resolution
-    /// strategy to CPython and Ruby
-    fn lookup(&self, key: u64) -> usize {
+    /// strategy to `CPython` and `Ruby`
+    const fn lookup(&self, key: u64) -> usize {
         let mut i = (key % 128) as usize;
 
         if self.map[i].value == 0 || self.map[i].key == key {
@@ -209,7 +209,7 @@ impl BlockPatternMatchVector {
             Hash::SIGNED(value) => {
                 if value < 0 {
                     if self.map_signed.is_none() {
-                        self.map_signed = Some(vec![Default::default(); self.block_count])
+                        self.map_signed = Some(vec![Default::default(); self.block_count]);
                     }
                     let item = self
                         .map_signed
@@ -222,7 +222,7 @@ impl BlockPatternMatchVector {
                     *item |= mask;
                 } else {
                     if self.map_unsigned.is_none() {
-                        self.map_unsigned = Some(vec![Default::default(); self.block_count])
+                        self.map_unsigned = Some(vec![Default::default(); self.block_count]);
                     }
                     let item = self
                         .map_unsigned
@@ -238,7 +238,7 @@ impl BlockPatternMatchVector {
                     *item |= mask;
                 } else {
                     if self.map_unsigned.is_none() {
-                        self.map_unsigned = Some(vec![Default::default(); self.block_count])
+                        self.map_unsigned = Some(vec![Default::default(); self.block_count]);
                     }
                     let item = self
                         .map_unsigned
@@ -262,27 +262,24 @@ impl BitVectorInterface for BlockPatternMatchVector {
         match key.hash_char() {
             Hash::SIGNED(value) => {
                 if value < 0 {
-                    match &self.map_signed {
-                        Some(map) => map[block].get(value as u64),
-                        None => 0,
-                    }
+                    self.map_signed
+                        .as_ref()
+                        .map_or(0, |map| map[block].get(value as u64))
                 } else if value <= 255 {
                     *self.extended_ascii.get(value as usize, block)
                 } else {
-                    match &self.map_unsigned {
-                        Some(map) => map[block].get(value as u64),
-                        None => 0,
-                    }
+                    self.map_unsigned
+                        .as_ref()
+                        .map_or(0, |map| map[block].get(value as u64))
                 }
             }
             Hash::UNSIGNED(value) => {
                 if value <= 255 {
                     *self.extended_ascii.get(value as usize, block)
                 } else {
-                    match &self.map_unsigned {
-                        Some(map) => map[block].get(value),
-                        None => 0,
-                    }
+                    self.map_unsigned
+                        .as_ref()
+                        .map_or(0, |map| map[block].get(value))
                 }
             }
         }

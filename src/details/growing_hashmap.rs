@@ -9,7 +9,7 @@ struct GrowingHashmapMapElem<ValueType> {
 /// specialized hashmap to store user provided types
 /// this implementation relies on a couple of base assumptions in order to simplify the implementation
 /// - the hashmap does not have an upper limit of included items
-/// - the default value for the ValueType can be used as a dummy value to indicate an empty cell
+/// - the default value for the `ValueType` can be used as a dummy value to indicate an empty cell
 /// - elements can't be removed
 /// - only allocates memory on first write access.
 ///   This improves performance for hashmaps that are never written to
@@ -43,25 +43,24 @@ where
     ValueType: Default + Clone + Eq + Copy,
 {
     #[allow(dead_code)]
-    pub fn size(&self) -> i32 {
+    pub const fn size(&self) -> i32 {
         self.used
     }
 
     #[allow(dead_code)]
-    pub fn capacity(&self) -> i32 {
+    pub const fn capacity(&self) -> i32 {
         self.mask + 1
     }
 
     #[allow(dead_code)]
-    pub fn empty(&self) -> bool {
+    pub const fn empty(&self) -> bool {
         self.used == 0
     }
 
     pub fn get(&self, key: u64) -> ValueType {
-        match &self.map {
-            None => Default::default(),
-            Some(map) => map[self.lookup(key)].value,
-        }
+        self.map
+            .as_ref()
+            .map_or_else(|| Default::default(), |map| map[self.lookup(key)].value)
     }
 
     pub fn get_mut(&mut self, key: u64) -> &mut ValueType {
@@ -101,7 +100,7 @@ where
     }
 
     /// lookup key inside the hashmap using a similar collision resolution
-    /// strategy to CPython and Ruby
+    /// strategy to `CPython` and `Ruby`
     fn lookup(&self, key: u64) -> usize {
         let hash = key;
         let mut i = (hash & self.mask as u64) as usize;

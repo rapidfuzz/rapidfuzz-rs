@@ -15,7 +15,7 @@
     missing_copy_implementations,
     //missing_debug_implementations,
     //clippy::missing_docs_in_private_items,
-    clippy::missing_errors_doc,
+    //clippy::missing_errors_doc,
     clippy::missing_panics_doc,
     clippy::mod_module_files,
     non_ascii_idents,
@@ -26,7 +26,6 @@
     clippy::semicolon_if_nothing_returned,
     clippy::unseparated_literal_suffix,
     clippy::shadow_unrelated,
-    clippy::similar_names,
     clippy::suspicious_operation_groupings,
     unused_crate_dependencies,
     unused_extern_crates,
@@ -39,7 +38,7 @@
     clippy::wildcard_imports
 )]
 
-pub mod details;
+pub(crate) mod details;
 pub mod distance;
 
 pub use crate::details::common::{Hash, HashableChar};

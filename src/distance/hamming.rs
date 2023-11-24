@@ -37,7 +37,7 @@ where
         match (s1.next(), s2.next()) {
             (Some(ch1), Some(ch2)) => {
                 if ch1 != ch2 {
-                    dist += 1
+                    dist += 1;
                 }
             }
             (None, None) => {

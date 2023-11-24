@@ -908,7 +908,7 @@ where
             } else {
                 // count backwards to find score at last position in previous block
                 let relevant_bits = min((first_block + 1) * 64, len1) % 64;
-                let mut mask = !0u64;
+                let mut mask = !0_u64;
                 if relevant_bits != 0 {
                     mask >>= 64 - relevant_bits;
                 }
