@@ -1,8 +1,5 @@
-use crate::details::common::{norm_sim_to_norm_dist, remove_common_affix, HashableChar};
-use crate::details::distance::{
-    build_cached_distance_metric_funcs, build_cached_normalized_metric_funcs,
-    build_distance_metric_funcs, build_normalized_metric_funcs,
-};
+use crate::details::common::{remove_common_affix, HashableChar};
+use crate::details::distance::{DistanceMetricUsize, NormalizedMetricUsize};
 use crate::details::pattern_match_vector::{
     BitVectorInterface, BitvectorHashmap, BlockPatternMatchVector, PatternMatchVector,
 };
@@ -171,14 +168,13 @@ where
 
 pub(crate) struct Osa {}
 
-impl Osa {
-    build_distance_metric_funcs!(Osa, usize, 0, usize::MAX);
-
-    fn maximum(len1: usize, len2: usize) -> usize {
+impl DistanceMetricUsize for Osa {
+    fn maximum(&self, len1: usize, len2: usize) -> usize {
         len1.max(len2)
     }
 
-    pub(crate) fn distance<Iter1, Iter2, Elem1, Elem2>(
+    fn _distance<Iter1, Iter2, Elem1, Elem2>(
+        &self,
         s1: Iter1,
         len1: usize,
         s2: Iter2,
@@ -193,7 +189,7 @@ impl Osa {
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
         if len1 < len2 {
-            return Osa::distance(s2, len2, s1, len1, score_cutoff, _score_hint);
+            return self._distance(s2, len2, s1, len1, score_cutoff, _score_hint);
         }
 
         let affix = remove_common_affix(s1, len1, s2, len2);
@@ -255,7 +251,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Osa::distance(
+    Osa {}._distance(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -283,7 +279,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Osa::similarity(
+    Osa {}._similarity(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -311,7 +307,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Osa::normalized_distance(
+    Osa {}._normalized_distance(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -339,7 +335,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Osa::normalized_similarity(
+    Osa {}._normalized_similarity(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -349,20 +345,53 @@ where
     )
 }
 
-pub struct CachedOsa<Elem1>
-where
-    Elem1: HashableChar + Clone,
-{
+pub struct CachedOsa<Elem1> {
     s1: Vec<Elem1>,
     pm: BlockPatternMatchVector,
+}
+
+impl<CharT> DistanceMetricUsize for CachedOsa<CharT> {
+    fn maximum(&self, len1: usize, len2: usize) -> usize {
+        len1.max(len2)
+    }
+
+    fn _distance<Iter1, Iter2, Elem1, Elem2>(
+        &self,
+        s1: Iter1,
+        len1: usize,
+        s2: Iter2,
+        len2: usize,
+        score_cutoff: usize,
+        _score_hint: usize,
+    ) -> usize
+    where
+        Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
+        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    {
+        let dist = if self.s1.is_empty() {
+            len2
+        } else if len2 == 0 {
+            self.s1.len()
+        } else if self.s1.len() <= 64 {
+            osa_hyrroe2003(&self.pm, s1, len1, s2, len2, score_cutoff)
+        } else {
+            osa_hyrroe2003_block(&self.pm, s1, len1, s2, len2, score_cutoff)
+        };
+
+        if dist <= score_cutoff {
+            dist
+        } else {
+            score_cutoff + 1
+        }
+    }
 }
 
 impl<Elem1> CachedOsa<Elem1>
 where
     Elem1: HashableChar + Clone,
 {
-    build_cached_distance_metric_funcs!(CachedOsa, usize, 0, usize::MAX);
-
     pub fn new<Iter1>(s1: Iter1) -> Self
     where
         Iter1: IntoIterator<Item = Elem1>,
@@ -377,51 +406,104 @@ where
         CachedOsa { s1, pm }
     }
 
-    fn maximum(&self, len2: usize) -> usize {
-        self.s1.len().max(len2)
-    }
-
-    fn _distance<Iter2, Elem2>(
+    pub fn normalized_distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
-        len2: usize,
-        score_cutoff: usize,
-        _score_hint: usize,
-    ) -> usize
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> f64
     where
-        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
+        Iter2: IntoIterator<Item = Elem2>,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<f64>>,
+        ScoreHint: Into<Option<f64>>,
     {
-        let dist = if self.s1.is_empty() {
-            len2
-        } else if len2 == 0 {
-            self.s1.len()
-        } else if self.s1.len() <= 64 {
-            osa_hyrroe2003(
-                &self.pm,
-                self.s1.iter().copied(),
-                self.s1.len(),
-                s2,
-                len2,
-                score_cutoff,
-            )
-        } else {
-            osa_hyrroe2003_block(
-                &self.pm,
-                self.s1.iter().copied(),
-                self.s1.len(),
-                s2,
-                len2,
-                score_cutoff,
-            )
-        };
+        let s2_iter = s2.into_iter();
+        self._normalized_distance(
+            self.s1.iter().copied(),
+            self.s1.len(),
+            s2_iter.clone(),
+            s2_iter.count(),
+            score_cutoff.into().unwrap_or(1.0),
+            score_hint.into().unwrap_or(1.0),
+        )
+    }
 
-        if dist <= score_cutoff {
-            dist
-        } else {
-            score_cutoff + 1
-        }
+    pub fn normalized_similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
+        &self,
+        s2: Iter2,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> f64
+    where
+        Iter2: IntoIterator<Item = Elem2>,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<f64>>,
+        ScoreHint: Into<Option<f64>>,
+    {
+        let s2_iter = s2.into_iter();
+        self._normalized_similarity(
+            self.s1.iter().copied(),
+            self.s1.len(),
+            s2_iter.clone(),
+            s2_iter.count(),
+            score_cutoff.into().unwrap_or(0.0),
+            score_hint.into().unwrap_or(0.0),
+        )
+    }
+
+    pub fn distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
+        &self,
+        s2: Iter2,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> usize
+    where
+        Iter2: IntoIterator<Item = Elem2>,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<usize>>,
+        ScoreHint: Into<Option<usize>>,
+    {
+        let s2_iter = s2.into_iter();
+        self._distance(
+            self.s1.iter().copied(),
+            self.s1.len(),
+            s2_iter.clone(),
+            s2_iter.count(),
+            score_cutoff.into().unwrap_or(usize::MAX),
+            score_hint.into().unwrap_or(usize::MAX),
+        )
+    }
+
+    pub fn similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
+        &self,
+        s2: Iter2,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> usize
+    where
+        Iter2: IntoIterator<Item = Elem2>,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<usize>>,
+        ScoreHint: Into<Option<usize>>,
+    {
+        let s2_iter = s2.into_iter();
+        self._similarity(
+            self.s1.iter().copied(),
+            self.s1.len(),
+            s2_iter.clone(),
+            s2_iter.count(),
+            score_cutoff.into().unwrap_or(0),
+            score_hint.into().unwrap_or(0),
+        )
     }
 }
 

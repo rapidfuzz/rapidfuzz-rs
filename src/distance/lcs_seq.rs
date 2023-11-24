@@ -1,9 +1,5 @@
-use crate::details::common::{norm_sim_to_norm_dist, remove_common_affix, HashableChar};
-use crate::details::distance::{
-    build_cached_normalized_metric_funcs, build_cached_similarity_metric_funcs,
-    build_normalized_metric_funcs, build_similarity_metric_funcs,
-    less_than_score_cutoff_similarity,
-};
+use crate::details::common::{remove_common_affix, HashableChar};
+use crate::details::distance::{NormalizedMetricUsize2, SimilarityMetricUsize};
 use crate::details::intrinsics::{carrying_add, ceil_div_usize};
 use crate::details::matrix::ShiftedBitMatrix;
 use crate::details::pattern_match_vector::{
@@ -518,14 +514,13 @@ where
 
 pub(crate) struct LcsSeq {}
 
-impl LcsSeq {
-    build_similarity_metric_funcs!(LcsSeq, usize, 0, usize::MAX);
-
-    fn maximum(len1: usize, len2: usize) -> usize {
+impl SimilarityMetricUsize for LcsSeq {
+    fn maximum(&self, len1: usize, len2: usize) -> usize {
         max(len1, len2)
     }
 
-    pub(crate) fn similarity<Iter1, Iter2, Elem1, Elem2>(
+    fn _similarity<Iter1, Iter2, Elem1, Elem2>(
+        &self,
         s1: Iter1,
         len1: usize,
         s2: Iter2,
@@ -561,7 +556,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    LcsSeq::distance(
+    LcsSeq {}._distance(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -589,7 +584,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    LcsSeq::similarity(
+    LcsSeq {}._similarity(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -617,7 +612,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    LcsSeq::normalized_distance(
+    LcsSeq {}._normalized_distance(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -645,7 +640,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    LcsSeq::normalized_similarity(
+    LcsSeq {}._normalized_similarity(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -663,12 +658,37 @@ where
     pub(crate) pm: BlockPatternMatchVector,
 }
 
+impl<CharT> SimilarityMetricUsize for CachedLcsSeq<CharT>
+where
+    CharT: HashableChar + Clone,
+{
+    fn maximum(&self, len1: usize, len2: usize) -> usize {
+        len1.max(len2)
+    }
+
+    fn _similarity<Iter1, Iter2, Elem1, Elem2>(
+        &self,
+        s1: Iter1,
+        len1: usize,
+        s2: Iter2,
+        len2: usize,
+        score_cutoff: usize,
+        _score_hint: usize,
+    ) -> usize
+    where
+        Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
+        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    {
+        lcs_seq_similarity_with_pm(&self.pm, s1, len1, s2, len2, score_cutoff)
+    }
+}
+
 impl<Elem1> CachedLcsSeq<Elem1>
 where
     Elem1: HashableChar + Clone,
 {
-    build_cached_similarity_metric_funcs!(CachedLcsSeq, usize, 0, usize::MAX);
-
     pub fn new<Iter1>(s1: Iter1) -> Self
     where
         Iter1: IntoIterator<Item = Elem1>,
@@ -683,29 +703,103 @@ where
         CachedLcsSeq { s1, pm }
     }
 
-    fn maximum(&self, len2: usize) -> usize {
-        max(self.s1.len(), len2)
-    }
-
-    pub(crate) fn _similarity<Iter2, Elem2>(
+    pub fn normalized_distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
-        len2: usize,
-        score_cutoff: usize,
-        _score_hint: usize,
-    ) -> usize
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> f64
     where
-        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
+        Iter2: IntoIterator<Item = Elem2>,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<f64>>,
+        ScoreHint: Into<Option<f64>>,
     {
-        lcs_seq_similarity_with_pm(
-            &self.pm,
+        let s2_iter = s2.into_iter();
+        self._normalized_distance(
             self.s1.iter().copied(),
             self.s1.len(),
-            s2,
-            len2,
-            score_cutoff,
+            s2_iter.clone(),
+            s2_iter.count(),
+            score_cutoff.into().unwrap_or(1.0),
+            score_hint.into().unwrap_or(1.0),
+        )
+    }
+
+    pub fn normalized_similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
+        &self,
+        s2: Iter2,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> f64
+    where
+        Iter2: IntoIterator<Item = Elem2>,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<f64>>,
+        ScoreHint: Into<Option<f64>>,
+    {
+        let s2_iter = s2.into_iter();
+        self._normalized_similarity(
+            self.s1.iter().copied(),
+            self.s1.len(),
+            s2_iter.clone(),
+            s2_iter.count(),
+            score_cutoff.into().unwrap_or(0.0),
+            score_hint.into().unwrap_or(0.0),
+        )
+    }
+
+    pub fn distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
+        &self,
+        s2: Iter2,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> usize
+    where
+        Iter2: IntoIterator<Item = Elem2>,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<usize>>,
+        ScoreHint: Into<Option<usize>>,
+    {
+        let s2_iter = s2.into_iter();
+        self._distance(
+            self.s1.iter().copied(),
+            self.s1.len(),
+            s2_iter.clone(),
+            s2_iter.count(),
+            score_cutoff.into().unwrap_or(usize::MAX),
+            score_hint.into().unwrap_or(usize::MAX),
+        )
+    }
+
+    pub fn similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
+        &self,
+        s2: Iter2,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> usize
+    where
+        Iter2: IntoIterator<Item = Elem2>,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<usize>>,
+        ScoreHint: Into<Option<usize>>,
+    {
+        let s2_iter = s2.into_iter();
+        self._similarity(
+            self.s1.iter().copied(),
+            self.s1.len(),
+            s2_iter.clone(),
+            s2_iter.count(),
+            score_cutoff.into().unwrap_or(0),
+            score_hint.into().unwrap_or(0),
         )
     }
 }

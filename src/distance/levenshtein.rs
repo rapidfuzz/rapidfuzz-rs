@@ -1,8 +1,5 @@
-use crate::details::common::{norm_sim_to_norm_dist, remove_common_affix, HashableChar};
-use crate::details::distance::{
-    build_cached_distance_metric_funcs, build_cached_normalized_metric_funcs,
-    build_distance_metric_funcs, build_normalized_metric_funcs,
-};
+use crate::details::common::{remove_common_affix, HashableChar};
+use crate::details::distance::{DistanceMetricUsize, NormalizedMetricUsize};
 use crate::details::growing_hashmap::HybridGrowingHashmap;
 use crate::details::intrinsics::{ceil_div_usize, shr64};
 use crate::details::matrix::ShiftedBitMatrix;
@@ -1223,7 +1220,7 @@ where
             // max can make use of the common divisor of the three weights
             let new_score_cutoff = ceil_div_usize(score_cutoff, weights.insert_cost);
             let new_score_hint = ceil_div_usize(score_hint, weights.insert_cost);
-            let mut dist = Indel::distance(s1, len1, s2, len2, new_score_cutoff, new_score_hint);
+            let mut dist = Indel {}._distance(s1, len1, s2, len2, new_score_cutoff, new_score_hint);
             dist *= weights.insert_cost;
             if dist <= score_cutoff {
                 return dist;
@@ -1300,13 +1297,13 @@ where
     generalized_levenshtein_distance(s1, len1, s2, len2, weights, score_cutoff)
 }
 
-struct Levenshtein {}
+struct Levenshtein {
+    weights: Option<LevenshteinWeightTable>,
+}
 
-impl Levenshtein {
-    build_distance_metric_funcs!(Levenshtein, usize, 0, usize::MAX, weights: Option<LevenshteinWeightTable>);
-
-    fn maximum(len1: usize, len2: usize, weights_: Option<LevenshteinWeightTable>) -> usize {
-        let weights = weights_.unwrap_or(LevenshteinWeightTable {
+impl DistanceMetricUsize for Levenshtein {
+    fn maximum(&self, len1: usize, len2: usize) -> usize {
+        let weights = self.weights.unwrap_or(LevenshteinWeightTable {
             insert_cost: 1,
             delete_cost: 1,
             replace_cost: 1,
@@ -1314,12 +1311,12 @@ impl Levenshtein {
         _levenshtein_maximum(len1, len2, &weights)
     }
 
-    fn distance<Iter1, Iter2, Elem1, Elem2>(
+    fn _distance<Iter1, Iter2, Elem1, Elem2>(
+        &self,
         s1: Iter1,
         len1: usize,
         s2: Iter2,
         len2: usize,
-        weights_: Option<LevenshteinWeightTable>,
         score_cutoff: usize,
         score_hint: usize,
     ) -> usize
@@ -1329,7 +1326,7 @@ impl Levenshtein {
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
-        let weights = weights_.unwrap_or(LevenshteinWeightTable {
+        let weights = self.weights.unwrap_or(LevenshteinWeightTable {
             insert_cost: 1,
             delete_cost: 1,
             replace_cost: 1,
@@ -1357,12 +1354,11 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Levenshtein::distance(
+    Levenshtein { weights }._distance(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        weights,
         score_cutoff.into().unwrap_or(usize::MAX),
         score_hint.into().unwrap_or(usize::MAX),
     )
@@ -1387,12 +1383,11 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Levenshtein::similarity(
+    Levenshtein { weights }._similarity(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        weights,
         score_cutoff.into().unwrap_or(0),
         score_hint.into().unwrap_or(0),
     )
@@ -1417,12 +1412,11 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Levenshtein::normalized_distance(
+    Levenshtein { weights }._normalized_distance(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        weights,
         score_cutoff.into().unwrap_or(1.0),
         score_hint.into().unwrap_or(1.0),
     )
@@ -1447,32 +1441,59 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Levenshtein::normalized_similarity(
+    Levenshtein { weights }._normalized_similarity(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        weights,
         score_cutoff.into().unwrap_or(0.0),
         score_hint.into().unwrap_or(0.0),
     )
 }
 
-pub struct CachedLevenshtein<Elem1>
-where
-    Elem1: HashableChar + Clone,
-{
+pub struct CachedLevenshtein<Elem1> {
     s1: Vec<Elem1>,
     pm: BlockPatternMatchVector,
     weights: LevenshteinWeightTable,
+}
+
+impl<CharT> DistanceMetricUsize for CachedLevenshtein<CharT> {
+    fn maximum(&self, len1: usize, len2: usize) -> usize {
+        _levenshtein_maximum(len1, len2, &self.weights)
+    }
+
+    fn _distance<Iter1, Iter2, Elem1, Elem2>(
+        &self,
+        s1: Iter1,
+        len1: usize,
+        s2: Iter2,
+        len2: usize,
+        score_cutoff: usize,
+        score_hint: usize,
+    ) -> usize
+    where
+        Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
+        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    {
+        _levenshtein_distance_with_pm(
+            &self.pm,
+            s1,
+            len1,
+            s2,
+            len2,
+            &self.weights,
+            score_cutoff,
+            score_hint,
+        )
+    }
 }
 
 impl<Elem1> CachedLevenshtein<Elem1>
 where
     Elem1: HashableChar + Clone,
 {
-    build_cached_distance_metric_funcs!(CachedLevenshtein, usize, 0, usize::MAX);
-
     pub fn new<Iter1>(s1: Iter1, weights_: Option<LevenshteinWeightTable>) -> Self
     where
         Iter1: IntoIterator<Item = Elem1>,
@@ -1493,31 +1514,103 @@ where
         CachedLevenshtein { s1, pm, weights }
     }
 
-    fn maximum(&self, len2: usize) -> usize {
-        _levenshtein_maximum(self.s1.len(), len2, &self.weights)
-    }
-
-    fn _distance<Iter2, Elem2>(
+    pub fn normalized_distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
-        len2: usize,
-        score_cutoff: usize,
-        score_hint: usize,
-    ) -> usize
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> f64
     where
-        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
+        Iter2: IntoIterator<Item = Elem2>,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<f64>>,
+        ScoreHint: Into<Option<f64>>,
     {
-        _levenshtein_distance_with_pm(
-            &self.pm,
+        let s2_iter = s2.into_iter();
+        self._normalized_distance(
             self.s1.iter().copied(),
             self.s1.len(),
-            s2,
-            len2,
-            &self.weights,
-            score_cutoff,
-            score_hint,
+            s2_iter.clone(),
+            s2_iter.count(),
+            score_cutoff.into().unwrap_or(1.0),
+            score_hint.into().unwrap_or(1.0),
+        )
+    }
+
+    pub fn normalized_similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
+        &self,
+        s2: Iter2,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> f64
+    where
+        Iter2: IntoIterator<Item = Elem2>,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<f64>>,
+        ScoreHint: Into<Option<f64>>,
+    {
+        let s2_iter = s2.into_iter();
+        self._normalized_similarity(
+            self.s1.iter().copied(),
+            self.s1.len(),
+            s2_iter.clone(),
+            s2_iter.count(),
+            score_cutoff.into().unwrap_or(0.0),
+            score_hint.into().unwrap_or(0.0),
+        )
+    }
+
+    pub fn distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
+        &self,
+        s2: Iter2,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> usize
+    where
+        Iter2: IntoIterator<Item = Elem2>,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<usize>>,
+        ScoreHint: Into<Option<usize>>,
+    {
+        let s2_iter = s2.into_iter();
+        self._distance(
+            self.s1.iter().copied(),
+            self.s1.len(),
+            s2_iter.clone(),
+            s2_iter.count(),
+            score_cutoff.into().unwrap_or(usize::MAX),
+            score_hint.into().unwrap_or(usize::MAX),
+        )
+    }
+
+    pub fn similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
+        &self,
+        s2: Iter2,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> usize
+    where
+        Iter2: IntoIterator<Item = Elem2>,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<usize>>,
+        ScoreHint: Into<Option<usize>>,
+    {
+        let s2_iter = s2.into_iter();
+        self._similarity(
+            self.s1.iter().copied(),
+            self.s1.len(),
+            s2_iter.clone(),
+            s2_iter.count(),
+            score_cutoff.into().unwrap_or(0),
+            score_hint.into().unwrap_or(0),
         )
     }
 }

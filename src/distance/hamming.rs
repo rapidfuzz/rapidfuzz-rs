@@ -1,8 +1,5 @@
-use crate::details::common::{norm_sim_to_norm_dist, HashableChar};
-use crate::details::distance::{
-    build_cached_distance_metric_funcs, build_cached_normalized_metric_funcs,
-    build_distance_metric_funcs, build_normalized_metric_funcs, CachedDistanceMetricUsize,
-};
+use crate::details::common::HashableChar;
+use crate::details::distance::{DistanceMetricUsize, NormalizedMetricUsize};
 
 use std::error::Error;
 use std::fmt::{self, Display, Formatter};
@@ -59,14 +56,13 @@ where
 
 struct Hamming {}
 
-impl Hamming {
-    build_distance_metric_funcs!(Hamming, usize, 0, usize::MAX);
-
-    fn maximum(len1: usize, len2: usize) -> usize {
+impl DistanceMetricUsize for Hamming {
+    fn maximum(&self, len1: usize, len2: usize) -> usize {
         len1.max(len2)
     }
 
-    fn distance<Iter1, Iter2, Elem1, Elem2>(
+    fn _distance<Iter1, Iter2, Elem1, Elem2>(
+        &self,
         s1: Iter1,
         _len1: usize,
         s2: Iter2,
@@ -110,7 +106,7 @@ where
         return Err(HammingError::DifferentLengthArgs);
     }
 
-    Ok(Hamming::distance(
+    Ok(Hamming {}._distance(
         s1_iter,
         len1,
         s2_iter,
@@ -146,7 +142,7 @@ where
         return Err(HammingError::DifferentLengthArgs);
     }
 
-    Ok(Hamming::similarity(
+    Ok(Hamming {}._similarity(
         s1_iter,
         len1,
         s2_iter,
@@ -182,7 +178,7 @@ where
         return Err(HammingError::DifferentLengthArgs);
     }
 
-    Ok(Hamming::normalized_distance(
+    Ok(Hamming {}._normalized_distance(
         s1_iter,
         len1,
         s2_iter,
@@ -218,7 +214,7 @@ where
         return Err(HammingError::DifferentLengthArgs);
     }
 
-    Ok(Hamming::normalized_similarity(
+    Ok(Hamming {}._normalized_similarity(
         s1_iter,
         len1,
         s2_iter,
@@ -228,51 +224,11 @@ where
     ))
 }
 
-struct CachedHammingImpl<Elem1> {
-    s1: Vec<Elem1>,
-}
-
-impl<Elem1> CachedHammingImpl<Elem1>
-where
-    Elem1: HashableChar + Clone,
-{
-    build_cached_distance_metric_funcs!(CachedHammingImpl, usize, 0, usize::MAX);
-
-    pub fn new<Iter1>(s1: Iter1) -> Self
-    where
-        Iter1: IntoIterator<Item = Elem1>,
-        Iter1::IntoIter: Clone,
-    {
-        let s1_iter = s1.into_iter();
-        let s1: Vec<Elem1> = s1_iter.clone().collect();
-        CachedHammingImpl { s1 }
-    }
-
-    fn maximum(&self, len2: usize) -> usize {
-        self.s1.len() + len2
-    }
-
-    fn _distance<Iter2, Elem2>(
-        &self,
-        s2: Iter2,
-        _len2: usize,
-        score_cutoff: usize,
-        _score_hint: usize,
-    ) -> usize
-    where
-        Iter2: Iterator<Item = Elem2>,
-        Elem1: PartialEq<Elem2> + HashableChar + Copy,
-        Elem2: PartialEq<Elem1> + HashableChar + Copy,
-    {
-        hamming_impl(self.s1.iter().copied(), s2, score_cutoff)
-    }
-}
-
 pub struct CachedHamming<Elem1>
 where
     Elem1: HashableChar + Clone,
 {
-    scorer: CachedHammingImpl<Elem1>,
+    s1: Vec<Elem1>,
 }
 
 impl<Elem1> CachedHamming<Elem1>
@@ -284,9 +240,9 @@ where
         Iter1: IntoIterator<Item = Elem1>,
         Iter1::IntoIter: Clone,
     {
-        CachedHamming {
-            scorer: CachedHammingImpl::new(s1),
-        }
+        let s1_iter = s1.into_iter();
+        let s1: Vec<Elem1> = s1_iter.clone().collect();
+        CachedHamming { s1 }
     }
 
     pub fn distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
@@ -304,20 +260,7 @@ where
         ScoreCutoff: Into<Option<usize>>,
         ScoreHint: Into<Option<usize>>,
     {
-        let s2_iter = s2.into_iter();
-        let len1 = self.scorer.s1.len();
-        let len2 = s2_iter.clone().count();
-
-        if !pad && len1 != len2 {
-            return Err(HammingError::DifferentLengthArgs);
-        }
-
-        Ok(self.scorer._distance(
-            s2_iter,
-            len2,
-            score_cutoff.into().unwrap_or(usize::MAX),
-            score_hint.into().unwrap_or(usize::MAX),
-        ))
+        distance(self.s1.iter().copied(), s2, pad, score_cutoff, score_hint)
     }
 
     pub fn similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
@@ -335,20 +278,7 @@ where
         ScoreCutoff: Into<Option<usize>>,
         ScoreHint: Into<Option<usize>>,
     {
-        let s2_iter = s2.into_iter();
-        let len1 = self.scorer.s1.len();
-        let len2 = s2_iter.clone().count();
-
-        if !pad && len1 != len2 {
-            return Err(HammingError::DifferentLengthArgs);
-        }
-
-        Ok(self.scorer._similarity(
-            s2_iter,
-            len2,
-            score_cutoff.into().unwrap_or(0),
-            score_hint.into().unwrap_or(0),
-        ))
+        similarity(self.s1.iter().copied(), s2, pad, score_cutoff, score_hint)
     }
 
     pub fn normalized_distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
@@ -366,20 +296,7 @@ where
         ScoreCutoff: Into<Option<f64>>,
         ScoreHint: Into<Option<f64>>,
     {
-        let s2_iter = s2.into_iter();
-        let len1 = self.scorer.s1.len();
-        let len2 = s2_iter.clone().count();
-
-        if !pad && len1 != len2 {
-            return Err(HammingError::DifferentLengthArgs);
-        }
-
-        Ok(self.scorer._normalized_distance(
-            s2_iter,
-            len2,
-            score_cutoff.into().unwrap_or(1.0),
-            score_hint.into().unwrap_or(1.0),
-        ))
+        normalized_distance(self.s1.iter().copied(), s2, pad, score_cutoff, score_hint)
     }
 
     pub fn normalized_similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
@@ -397,20 +314,7 @@ where
         ScoreCutoff: Into<Option<f64>>,
         ScoreHint: Into<Option<f64>>,
     {
-        let s2_iter = s2.into_iter();
-        let len1 = self.scorer.s1.len();
-        let len2 = s2_iter.clone().count();
-
-        if !pad && len1 != len2 {
-            return Err(HammingError::DifferentLengthArgs);
-        }
-
-        Ok(self.scorer._normalized_similarity(
-            s2_iter,
-            len2,
-            score_cutoff.into().unwrap_or(0.0),
-            score_hint.into().unwrap_or(0.0),
-        ))
+        normalized_similarity(self.s1.iter().copied(), s2, pad, score_cutoff, score_hint)
     }
 }
 
