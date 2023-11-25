@@ -226,10 +226,7 @@ where
     ))
 }
 
-pub struct BatchComparator<Elem1>
-where
-    Elem1: HashableChar + Clone,
-{
+pub struct BatchComparator<Elem1> {
     s1: Vec<Elem1>,
 }
 

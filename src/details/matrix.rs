@@ -1,9 +1,6 @@
 use std::ops::{BitAnd, Shl};
 
-pub struct BitMatrix<T>
-where
-    T: Clone,
-{
+pub struct BitMatrix<T> {
     rows: usize,
     cols: usize,
     matrix: Vec<T>,
@@ -44,10 +41,7 @@ where
     }
 }
 
-pub struct ShiftedBitMatrix<T>
-where
-    T: Copy + From<u8> + Shl<usize, Output = T> + BitAnd<T, Output = T> + PartialEq<T>,
-{
+pub struct ShiftedBitMatrix<T> {
     matrix: BitMatrix<T>,
     offsets: Vec<isize>,
 }

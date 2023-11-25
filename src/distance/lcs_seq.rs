@@ -655,18 +655,12 @@ where
     )
 }
 
-pub struct BatchComparator<Elem1>
-where
-    Elem1: HashableChar + Clone,
-{
+pub struct BatchComparator<Elem1> {
     pub(crate) s1: Vec<Elem1>,
     pub(crate) pm: BlockPatternMatchVector,
 }
 
-impl<CharT> MetricUsize for BatchComparator<CharT>
-where
-    CharT: HashableChar + Clone,
-{
+impl<CharT> MetricUsize for BatchComparator<CharT> {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
         len1.max(len2)
     }
