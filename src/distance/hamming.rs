@@ -247,6 +247,7 @@ where
         }
     }
 
+    /// Distance calculated similar to [`distance`]
     pub fn distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
@@ -265,6 +266,7 @@ where
         distance(self.s1.iter().copied(), s2, pad, score_cutoff, score_hint)
     }
 
+    /// Similarity calculated similar to [`similarity`]
     pub fn similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
@@ -283,6 +285,7 @@ where
         similarity(self.s1.iter().copied(), s2, pad, score_cutoff, score_hint)
     }
 
+    /// Normalized distance calculated similar to [`normalized_distance`]
     pub fn normalized_distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
@@ -301,6 +304,7 @@ where
         normalized_distance(self.s1.iter().copied(), s2, pad, score_cutoff, score_hint)
     }
 
+    /// Normalized similarity calculated similar to [`normalized_similarity`]
     pub fn normalized_similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,

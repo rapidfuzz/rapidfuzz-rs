@@ -318,6 +318,7 @@ where
         }
     }
 
+    /// Normalized distance calculated similar to [`normalized_distance`]
     pub fn normalized_distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
@@ -343,6 +344,7 @@ where
         )
     }
 
+    /// Normalized similarity calculated similar to [`normalized_similarity`]
     pub fn normalized_similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
@@ -368,6 +370,7 @@ where
         )
     }
 
+    /// Distance calculated similar to [`distance`]
     pub fn distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
@@ -393,6 +396,7 @@ where
         )
     }
 
+    /// Similarity calculated similar to [`similarity`]
     pub fn similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,

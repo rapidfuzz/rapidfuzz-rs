@@ -37,6 +37,7 @@ RapidFuzz is a general purpose string matching library. It provides blazingly fa
 ## Installation
 
 ## Usage
+
 ## License
-RapidFuzz is licensed under the MIT license since I believe that everyone should be able to use it without being forced to adopt the GPL license. Thats why the library is based on an older version of fuzzywuzzy that was MIT licensed as well.
-This old version of fuzzywuzzy can be found [here](https://github.com/seatgeek/fuzzywuzzy/tree/4bf28161f7005f3aa9d4d931455ac55126918df7).
+Copyright 2023 - present [maxbachmann](https://github.com/maxbachmann). `RapidFuzz` is free and open-source software licensed under the [MIT License](https://github.com/maxbachmann/rapidfuzz-rs/blob/main/LICENSE).
+
