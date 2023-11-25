@@ -145,9 +145,9 @@ where
     distance_zhao(affix.s1, affix.len1, affix.s2, affix.len2, score_cutoff)
 }
 
-pub(crate) struct DamerauLevenshtein;
+struct IndividualComparator;
 
-impl MetricUsize for DamerauLevenshtein {
+impl MetricUsize for IndividualComparator {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
         max(len1, len2)
     }
@@ -200,7 +200,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    DamerauLevenshtein {}._distance(
+    IndividualComparator {}._distance(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -232,7 +232,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    DamerauLevenshtein {}._similarity(
+    IndividualComparator {}._similarity(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -264,7 +264,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    DamerauLevenshtein {}._normalized_distance(
+    IndividualComparator {}._normalized_distance(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -296,7 +296,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    DamerauLevenshtein {}._normalized_similarity(
+    IndividualComparator {}._normalized_similarity(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -313,14 +313,14 @@ where
 /// ```
 /// use rapidfuzz::distance::damerau_levenshtein;
 ///
-/// let scorer = damerau_levenshtein::CachedDamerauLevenshtein::new("CA".chars());
+/// let scorer = damerau_levenshtein::BatchComparator::new("CA".chars());
 /// assert_eq!(Some(2), scorer.distance("ABC".chars(), None, None));
 /// ```
-pub struct CachedDamerauLevenshtein<Elem1> {
+pub struct BatchComparator<Elem1> {
     s1: Vec<Elem1>,
 }
 
-impl<Elem1> CachedDamerauLevenshtein<Elem1>
+impl<Elem1> BatchComparator<Elem1>
 where
     Elem1: HashableChar + Clone,
 {
@@ -460,9 +460,9 @@ mod tests {
             score_hint.clone(),
         );
 
-        let scorer1 = CachedDamerauLevenshtein::new(s1.clone());
+        let scorer1 = BatchComparator::new(s1.clone());
         let res3 = scorer1.distance(s2.clone(), score_cutoff.clone(), score_hint.clone());
-        let scorer2 = CachedDamerauLevenshtein::new(s2.clone());
+        let scorer2 = BatchComparator::new(s2.clone());
         let res4 = scorer2.distance(s1.clone(), score_cutoff, score_hint);
 
         assert_eq!(res1, res2);
@@ -523,10 +523,10 @@ mod tests {
             score_cutoff.clone(),
             score_hint.clone(),
         );
-        let scorer1 = CachedDamerauLevenshtein::new(s1.clone());
+        let scorer1 = BatchComparator::new(s1.clone());
         let res3 =
             scorer1.normalized_similarity(s2.clone(), score_cutoff.clone(), score_hint.clone());
-        let scorer2 = CachedDamerauLevenshtein::new(s2.clone());
+        let scorer2 = BatchComparator::new(s2.clone());
         let res4 = scorer2.normalized_similarity(s1.clone(), score_cutoff, score_hint);
 
         assert_delta!(res1, res2, 0.0001);

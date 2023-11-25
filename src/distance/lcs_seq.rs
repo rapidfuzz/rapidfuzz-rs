@@ -12,12 +12,12 @@ struct ResultMatrix {
     s: ShiftedBitMatrix<u64>,
 }
 
-struct LcsSeqResult<const RECORD_MATRIX: usize> {
+struct DistanceResult<const RECORD_MATRIX: usize> {
     record_matrix: [ResultMatrix; RECORD_MATRIX],
     sim: Option<usize>,
 }
 
-impl Default for LcsSeqResult<0> {
+impl Default for DistanceResult<0> {
     fn default() -> Self {
         Self {
             record_matrix: [],
@@ -26,7 +26,7 @@ impl Default for LcsSeqResult<0> {
     }
 }
 
-impl Default for LcsSeqResult<1> {
+impl Default for DistanceResult<1> {
     fn default() -> Self {
         Self {
             record_matrix: [ResultMatrix::default()],
@@ -149,18 +149,18 @@ fn lcs_unroll<const N: usize, const RECORD_MATRIX: usize, PmVec, Iter1, Iter2, E
     s2: Iter2,
     len2: usize,
     score_cutoff: usize,
-) -> LcsSeqResult<RECORD_MATRIX>
+) -> DistanceResult<RECORD_MATRIX>
 where
     Iter1: Iterator<Item = Elem1> + Clone,
     Iter2: Iterator<Item = Elem2> + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
     PmVec: BitVectorInterface,
-    LcsSeqResult<RECORD_MATRIX>: Default,
+    DistanceResult<RECORD_MATRIX>: Default,
 {
     let mut s = [!0_u64; N];
 
-    let mut res: LcsSeqResult<RECORD_MATRIX> = LcsSeqResult::default();
+    let mut res: DistanceResult<RECORD_MATRIX> = DistanceResult::default();
     if RECORD_MATRIX == 1 {
         res.record_matrix[0].s = ShiftedBitMatrix::<u64>::new(len2, N, !0_u64);
     }
@@ -216,14 +216,14 @@ fn lcs_blockwise<const RECORD_MATRIX: usize, PmVec, Iter1, Iter2, Elem1, Elem2>(
     s2: Iter2,
     len2: usize,
     score_cutoff: usize,
-) -> LcsSeqResult<RECORD_MATRIX>
+) -> DistanceResult<RECORD_MATRIX>
 where
     Iter1: Iterator<Item = Elem1> + Clone,
     Iter2: Iterator<Item = Elem2> + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
     PmVec: BitVectorInterface,
-    LcsSeqResult<RECORD_MATRIX>: Default,
+    DistanceResult<RECORD_MATRIX>: Default,
 {
     debug_assert!(score_cutoff <= len1);
     debug_assert!(score_cutoff <= len2);
@@ -235,7 +235,7 @@ where
     let band_width_left = len1 - score_cutoff;
     let band_width_right = len2 - score_cutoff;
 
-    let mut res: LcsSeqResult<RECORD_MATRIX> = LcsSeqResult::default();
+    let mut res: DistanceResult<RECORD_MATRIX> = DistanceResult::default();
     if RECORD_MATRIX == 1 {
         let full_band = band_width_left + 1 + band_width_right;
         let full_band_words = min(words, full_band / word_size + 2);
@@ -307,7 +307,7 @@ where
     let full_band_words = min(words, (full_band / word_size) + 2);
 
     if full_band_words < words {
-        let res: LcsSeqResult<0> = lcs_blockwise(pm, s1, len1, s2, len2, score_cutoff);
+        let res: DistanceResult<0> = lcs_blockwise(pm, s1, len1, s2, len2, score_cutoff);
         return res.sim;
     }
 
@@ -352,7 +352,7 @@ where
             func(pm, s1, len1, s2, len2, score_cutoff).sim
         }
         _ => {
-            let res: LcsSeqResult<0> = lcs_blockwise(pm, s1, len1, s2, len2, score_cutoff);
+            let res: DistanceResult<0> = lcs_blockwise(pm, s1, len1, s2, len2, score_cutoff);
             res.sim
         }
     }
@@ -517,9 +517,9 @@ where
     }
 }
 
-pub(crate) struct LcsSeq;
+pub(crate) struct IndividualComparator;
 
-impl MetricUsize for LcsSeq {
+impl MetricUsize for IndividualComparator {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
         max(len1, len2)
     }
@@ -561,7 +561,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    LcsSeq {}._distance(
+    IndividualComparator {}._distance(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -589,7 +589,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    LcsSeq {}._similarity(
+    IndividualComparator {}._similarity(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -617,7 +617,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    LcsSeq {}._normalized_distance(
+    IndividualComparator {}._normalized_distance(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -645,7 +645,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    LcsSeq {}._normalized_similarity(
+    IndividualComparator {}._normalized_similarity(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -655,7 +655,7 @@ where
     )
 }
 
-pub struct CachedLcsSeq<Elem1>
+pub struct BatchComparator<Elem1>
 where
     Elem1: HashableChar + Clone,
 {
@@ -663,7 +663,7 @@ where
     pub(crate) pm: BlockPatternMatchVector,
 }
 
-impl<CharT> MetricUsize for CachedLcsSeq<CharT>
+impl<CharT> MetricUsize for BatchComparator<CharT>
 where
     CharT: HashableChar + Clone,
 {
@@ -690,7 +690,7 @@ where
     }
 }
 
-impl<Elem1> CachedLcsSeq<Elem1>
+impl<Elem1> BatchComparator<Elem1>
 where
     Elem1: HashableChar + Clone,
 {
@@ -858,9 +858,9 @@ mod tests {
             score_hint.clone(),
         );
 
-        let scorer1 = CachedLcsSeq::new(s1.clone());
+        let scorer1 = BatchComparator::new(s1.clone());
         let res3 = scorer1.distance(s2.clone(), score_cutoff.clone(), score_hint.clone());
-        let scorer2 = CachedLcsSeq::new(s2.clone());
+        let scorer2 = BatchComparator::new(s2.clone());
         let res4 = scorer2.distance(s1.clone(), score_cutoff, score_hint);
 
         assert_eq!(res1, res2);
@@ -922,9 +922,9 @@ mod tests {
             score_hint.clone(),
         );
 
-        let scorer1 = CachedLcsSeq::new(s1.clone());
+        let scorer1 = BatchComparator::new(s1.clone());
         let res3 = scorer1.similarity(s2.clone(), score_cutoff.clone(), score_hint.clone());
-        let scorer2 = CachedLcsSeq::new(s2.clone());
+        let scorer2 = BatchComparator::new(s2.clone());
         let res4 = scorer2.similarity(s1.clone(), score_cutoff, score_hint);
 
         assert_eq!(res1, res2);
@@ -985,10 +985,10 @@ mod tests {
             score_cutoff.clone(),
             score_hint.clone(),
         );
-        let scorer1 = CachedLcsSeq::new(s1.clone());
+        let scorer1 = BatchComparator::new(s1.clone());
         let res3 =
             scorer1.normalized_distance(s2.clone(), score_cutoff.clone(), score_hint.clone());
-        let scorer2 = CachedLcsSeq::new(s2.clone());
+        let scorer2 = BatchComparator::new(s2.clone());
         let res4 = scorer2.normalized_distance(s1.clone(), score_cutoff, score_hint);
 
         assert_delta!(res1, res2, 0.0001);
@@ -1049,10 +1049,10 @@ mod tests {
             score_cutoff.clone(),
             score_hint.clone(),
         );
-        let scorer1 = CachedLcsSeq::new(s1.clone());
+        let scorer1 = BatchComparator::new(s1.clone());
         let res3 =
             scorer1.normalized_similarity(s2.clone(), score_cutoff.clone(), score_hint.clone());
-        let scorer2 = CachedLcsSeq::new(s2.clone());
+        let scorer2 = BatchComparator::new(s2.clone());
         let res4 = scorer2.normalized_similarity(s1.clone(), score_cutoff, score_hint);
 
         assert_delta!(res1, res2, 0.0001);

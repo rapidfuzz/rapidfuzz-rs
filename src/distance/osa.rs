@@ -166,9 +166,9 @@ where
     }
 }
 
-pub(crate) struct Osa;
+struct IndividualComparator;
 
-impl MetricUsize for Osa {
+impl MetricUsize for IndividualComparator {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
         len1.max(len2)
     }
@@ -253,7 +253,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Osa {}._distance(
+    IndividualComparator {}._distance(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -281,7 +281,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Osa {}._similarity(
+    IndividualComparator {}._similarity(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -309,7 +309,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Osa {}._normalized_distance(
+    IndividualComparator {}._normalized_distance(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -337,7 +337,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Osa {}._normalized_similarity(
+    IndividualComparator {}._normalized_similarity(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -347,12 +347,12 @@ where
     )
 }
 
-pub struct CachedOsa<Elem1> {
+pub struct BatchComparator<Elem1> {
     s1: Vec<Elem1>,
     pm: BlockPatternMatchVector,
 }
 
-impl<CharT> MetricUsize for CachedOsa<CharT> {
+impl<CharT> MetricUsize for BatchComparator<CharT> {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
         len1.max(len2)
     }
@@ -392,7 +392,7 @@ impl<CharT> MetricUsize for CachedOsa<CharT> {
     }
 }
 
-impl<Elem1> CachedOsa<Elem1>
+impl<Elem1> BatchComparator<Elem1>
 where
     Elem1: HashableChar + Clone,
 {
@@ -534,9 +534,9 @@ mod tests {
         let res1 = distance(s1.clone(), s2.clone(), score_cutoff, score_hint);
         let res2 = distance(s2.clone(), s1.clone(), score_cutoff, score_hint);
 
-        let scorer1 = CachedOsa::new(s1.clone());
+        let scorer1 = BatchComparator::new(s1.clone());
         let res3 = scorer1.distance(s2.clone(), score_cutoff, score_hint);
-        let scorer2 = CachedOsa::new(s2.clone());
+        let scorer2 = BatchComparator::new(s2.clone());
         let res4 = scorer2.distance(s1.clone(), score_cutoff, score_hint);
 
         assert_eq!(res1, res2);

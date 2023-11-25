@@ -544,9 +544,9 @@ where
     }
 }
 
-pub(crate) struct Jaro;
+pub(crate) struct IndividualComparator;
 
-impl Metricf64 for Jaro {
+impl Metricf64 for IndividualComparator {
     fn maximum(&self, _len1: usize, _len2: usize) -> f64 {
         1.0
     }
@@ -588,7 +588,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Jaro {}._distance(
+    IndividualComparator {}._distance(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -616,7 +616,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Jaro {}._similarity(
+    IndividualComparator {}._similarity(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -644,7 +644,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Jaro {}._normalized_distance(
+    IndividualComparator {}._normalized_distance(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -672,7 +672,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Jaro {}._normalized_similarity(
+    IndividualComparator {}._normalized_similarity(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -682,12 +682,12 @@ where
     )
 }
 
-pub struct CachedJaro<Elem1> {
+pub struct BatchComparator<Elem1> {
     s1: Vec<Elem1>,
     pm: BlockPatternMatchVector,
 }
 
-impl<CharT> Metricf64 for CachedJaro<CharT> {
+impl<CharT> Metricf64 for BatchComparator<CharT> {
     fn maximum(&self, _len1: usize, _len2: usize) -> f64 {
         1.0
     }
@@ -711,7 +711,7 @@ impl<CharT> Metricf64 for CachedJaro<CharT> {
     }
 }
 
-impl<Elem1> CachedJaro<Elem1>
+impl<Elem1> BatchComparator<Elem1>
 where
     Elem1: HashableChar + Clone,
 {
@@ -878,9 +878,9 @@ mod tests {
             score_hint.clone(),
         );
 
-        let scorer1 = CachedJaro::new(s1.clone());
+        let scorer1 = BatchComparator::new(s1.clone());
         let res3 = scorer1.distance(s2.clone(), score_cutoff.clone(), score_hint.clone());
-        let scorer2 = CachedJaro::new(s2.clone());
+        let scorer2 = BatchComparator::new(s2.clone());
         let res4 = scorer2.distance(s1.clone(), score_cutoff, score_hint);
 
         assert_delta!(res1, res2, 0.0001);
@@ -942,9 +942,9 @@ mod tests {
             score_hint.clone(),
         );
 
-        let scorer1 = CachedJaro::new(s1.clone());
+        let scorer1 = BatchComparator::new(s1.clone());
         let res3 = scorer1.similarity(s2.clone(), score_cutoff.clone(), score_hint.clone());
-        let scorer2 = CachedJaro::new(s2.clone());
+        let scorer2 = BatchComparator::new(s2.clone());
         let res4 = scorer2.similarity(s1.clone(), score_cutoff, score_hint);
 
         assert_delta!(res1, res2, 0.0001);

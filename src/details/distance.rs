@@ -56,7 +56,7 @@ pub trait MetricUsize {
             }
 
             if let Some(hint) = score_hint {
-                score_hint = Some(hint.min(cutoff))
+                score_hint = Some(hint.min(cutoff));
             }
         }
 
@@ -206,7 +206,7 @@ pub trait Metricf64 {
             }
 
             if let Some(hint) = score_hint {
-                score_hint = Some(hint.min(cutoff))
+                score_hint = Some(hint.min(cutoff));
             }
         }
 

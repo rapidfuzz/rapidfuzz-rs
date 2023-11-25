@@ -1,15 +1,15 @@
 use crate::details::common::HashableChar;
 use crate::details::distance::MetricUsize;
 
-use std::error::Error;
+use std::error;
 use std::fmt::{self, Display, Formatter};
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
-pub enum HammingError {
+pub enum Error {
     DifferentLengthArgs,
 }
 
-impl Display for HammingError {
+impl Display for Error {
     fn fmt(&self, fmt: &mut Formatter) -> Result<(), fmt::Error> {
         let text = match self {
             Self::DifferentLengthArgs => "Differing length arguments provided",
@@ -19,7 +19,7 @@ impl Display for HammingError {
     }
 }
 
-impl Error for HammingError {}
+impl error::Error for Error {}
 
 fn distance_impl<Iter1, Iter2, Elem1, Elem2>(
     mut s1: Iter1,
@@ -53,9 +53,9 @@ where
     }
 }
 
-struct Hamming;
+struct IndividualComparator;
 
-impl MetricUsize for Hamming {
+impl MetricUsize for IndividualComparator {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
         len1.max(len2)
     }
@@ -85,7 +85,7 @@ pub fn distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     pad: bool,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> Result<Option<usize>, HammingError>
+) -> Result<Option<usize>, Error>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -102,10 +102,10 @@ where
     let len2 = s2_iter.clone().count();
 
     if !pad && len1 != len2 {
-        return Err(HammingError::DifferentLengthArgs);
+        return Err(Error::DifferentLengthArgs);
     }
 
-    Ok(Hamming {}._distance(
+    Ok(IndividualComparator {}._distance(
         s1_iter,
         len1,
         s2_iter,
@@ -121,7 +121,7 @@ pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     pad: bool,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> Result<Option<usize>, HammingError>
+) -> Result<Option<usize>, Error>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -138,10 +138,10 @@ where
     let len2 = s2_iter.clone().count();
 
     if !pad && len1 != len2 {
-        return Err(HammingError::DifferentLengthArgs);
+        return Err(Error::DifferentLengthArgs);
     }
 
-    Ok(Hamming {}._similarity(
+    Ok(IndividualComparator {}._similarity(
         s1_iter,
         len1,
         s2_iter,
@@ -157,7 +157,7 @@ pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     pad: bool,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> Result<Option<f64>, HammingError>
+) -> Result<Option<f64>, Error>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -174,10 +174,10 @@ where
     let len2 = s2_iter.clone().count();
 
     if !pad && len1 != len2 {
-        return Err(HammingError::DifferentLengthArgs);
+        return Err(Error::DifferentLengthArgs);
     }
 
-    Ok(Hamming {}._normalized_distance(
+    Ok(IndividualComparator {}._normalized_distance(
         s1_iter,
         len1,
         s2_iter,
@@ -196,7 +196,7 @@ pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>
     pad: bool,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> Result<Option<f64>, HammingError>
+) -> Result<Option<f64>, Error>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -213,10 +213,10 @@ where
     let len2 = s2_iter.clone().count();
 
     if !pad && len1 != len2 {
-        return Err(HammingError::DifferentLengthArgs);
+        return Err(Error::DifferentLengthArgs);
     }
 
-    Ok(Hamming {}._normalized_similarity(
+    Ok(IndividualComparator {}._normalized_similarity(
         s1_iter,
         len1,
         s2_iter,
@@ -226,14 +226,14 @@ where
     ))
 }
 
-pub struct CachedHamming<Elem1>
+pub struct BatchComparator<Elem1>
 where
     Elem1: HashableChar + Clone,
 {
     s1: Vec<Elem1>,
 }
 
-impl<Elem1> CachedHamming<Elem1>
+impl<Elem1> BatchComparator<Elem1>
 where
     Elem1: HashableChar + Clone,
 {
@@ -253,7 +253,7 @@ where
         pad: bool,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> Result<Option<usize>, HammingError>
+    ) -> Result<Option<usize>, Error>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -271,7 +271,7 @@ where
         pad: bool,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> Result<Option<usize>, HammingError>
+    ) -> Result<Option<usize>, Error>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -289,7 +289,7 @@ where
         pad: bool,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> Result<Option<f64>, HammingError>
+    ) -> Result<Option<f64>, Error>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -307,7 +307,7 @@ where
         pad: bool,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> Result<Option<f64>, HammingError>
+    ) -> Result<Option<f64>, Error>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -362,7 +362,7 @@ mod tests {
     #[test]
     fn unequal_length() {
         assert_eq!(
-            Err(HammingError::DifferentLengthArgs),
+            Err(Error::DifferentLengthArgs),
             distance("ham".chars(), "hamming".chars(), false, None, None)
         );
 

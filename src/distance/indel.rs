@@ -3,9 +3,9 @@ use crate::details::distance::MetricUsize;
 use crate::details::pattern_match_vector::BlockPatternMatchVector;
 use crate::distance::lcs_seq;
 
-pub(crate) struct Indel;
+pub(crate) struct IndividualComparator;
 
-impl MetricUsize for Indel {
+impl MetricUsize for IndividualComparator {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
         len1 + len2
     }
@@ -39,8 +39,14 @@ impl MetricUsize for Indel {
         } else {
             0
         };
-        let lcs_sim =
-            lcs_seq::LcsSeq {}._similarity(s1, len1, s2, len2, Some(lcs_cutoff), Some(lcs_hint))?;
+        let lcs_sim = lcs_seq::IndividualComparator {}._similarity(
+            s1,
+            len1,
+            s2,
+            len2,
+            Some(lcs_cutoff),
+            Some(lcs_hint),
+        )?;
         let dist = maximum - 2 * lcs_sim;
         if dist <= score_cutoff {
             Some(dist)
@@ -68,7 +74,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Indel {}._distance(
+    IndividualComparator {}._distance(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -96,7 +102,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Indel {}._similarity(
+    IndividualComparator {}._similarity(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -124,7 +130,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Indel {}._normalized_distance(
+    IndividualComparator {}._normalized_distance(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -152,7 +158,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Indel {}._normalized_similarity(
+    IndividualComparator {}._normalized_similarity(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -192,14 +198,14 @@ where
     }
 }
 
-pub struct CachedIndel<Elem1>
+pub struct BatchComparator<Elem1>
 where
     Elem1: HashableChar + Clone,
 {
-    scorer: lcs_seq::CachedLcsSeq<Elem1>,
+    scorer: lcs_seq::BatchComparator<Elem1>,
 }
 
-impl<CharT> MetricUsize for CachedIndel<CharT>
+impl<CharT> MetricUsize for BatchComparator<CharT>
 where
     CharT: HashableChar + Clone,
 {
@@ -248,7 +254,7 @@ where
     }
 }
 
-impl<Elem1> CachedIndel<Elem1>
+impl<Elem1> BatchComparator<Elem1>
 where
     Elem1: HashableChar + Clone,
 {
@@ -258,7 +264,7 @@ where
         Iter1::IntoIter: Clone,
     {
         Self {
-            scorer: lcs_seq::CachedLcsSeq::new(s1),
+            scorer: lcs_seq::BatchComparator::new(s1),
         }
     }
 

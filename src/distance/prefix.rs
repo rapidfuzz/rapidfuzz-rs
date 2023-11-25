@@ -1,9 +1,9 @@
 use crate::details::common::{find_common_prefix, HashableChar};
 use crate::details::distance::MetricUsize;
 
-struct Prefix;
+struct IndividualComparator;
 
-impl MetricUsize for Prefix {
+impl MetricUsize for IndividualComparator {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
         len1.max(len2)
     }
@@ -51,7 +51,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Prefix {}._distance(
+    IndividualComparator {}._distance(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -79,7 +79,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Prefix {}._similarity(
+    IndividualComparator {}._similarity(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -107,7 +107,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Prefix {}._normalized_distance(
+    IndividualComparator {}._normalized_distance(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -135,7 +135,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Prefix {}._normalized_similarity(
+    IndividualComparator {}._normalized_similarity(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -145,11 +145,11 @@ where
     )
 }
 
-pub struct CachedPrefix<Elem1> {
+pub struct BatchComparator<Elem1> {
     s1: Vec<Elem1>,
 }
 
-impl<Elem1> CachedPrefix<Elem1>
+impl<Elem1> BatchComparator<Elem1>
 where
     Elem1: HashableChar + Clone,
 {

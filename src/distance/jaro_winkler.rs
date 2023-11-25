@@ -91,11 +91,11 @@ where
     }
 }
 
-pub(crate) struct JaroWinkler {
+pub(crate) struct IndividualComparator {
     prefix_weight: Option<f64>,
 }
 
-impl Metricf64 for JaroWinkler {
+impl Metricf64 for IndividualComparator {
     fn maximum(&self, _len1: usize, _len2: usize) -> f64 {
         1.0
     }
@@ -146,7 +146,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    JaroWinkler {
+    IndividualComparator {
         prefix_weight: prefix_weight.into(),
     }
     ._distance(
@@ -179,7 +179,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    JaroWinkler {
+    IndividualComparator {
         prefix_weight: prefix_weight.into(),
     }
     ._similarity(
@@ -212,7 +212,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    JaroWinkler {
+    IndividualComparator {
         prefix_weight: prefix_weight.into(),
     }
     ._normalized_distance(
@@ -245,7 +245,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    JaroWinkler {
+    IndividualComparator {
         prefix_weight: prefix_weight.into(),
     }
     ._normalized_similarity(
@@ -258,13 +258,13 @@ where
     )
 }
 
-pub struct CachedJaroWinkler<Elem1> {
+pub struct BatchComparator<Elem1> {
     s1: Vec<Elem1>,
     pm: BlockPatternMatchVector,
     prefix_weight: f64,
 }
 
-impl<CharT> Metricf64 for CachedJaroWinkler<CharT> {
+impl<CharT> Metricf64 for BatchComparator<CharT> {
     fn maximum(&self, _len1: usize, _len2: usize) -> f64 {
         1.0
     }
@@ -296,7 +296,7 @@ impl<CharT> Metricf64 for CachedJaroWinkler<CharT> {
     }
 }
 
-impl<Elem1> CachedJaroWinkler<Elem1>
+impl<Elem1> BatchComparator<Elem1>
 where
     Elem1: HashableChar + Clone,
 {

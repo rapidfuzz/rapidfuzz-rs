@@ -53,13 +53,13 @@ struct ResultRow {
     vecs: Vec<LevenshteinRow>,
 }
 
-struct LevenshteinResult<const RECORD_MATRIX: usize, const RECORD_BIT_ROW: usize> {
+struct DistanceResult<const RECORD_MATRIX: usize, const RECORD_BIT_ROW: usize> {
     record_matrix: [ResultMatrix; RECORD_MATRIX],
     bit_row: [ResultRow; RECORD_BIT_ROW],
     dist: Option<usize>,
 }
 
-impl Default for LevenshteinResult<0, 0> {
+impl Default for DistanceResult<0, 0> {
     fn default() -> Self {
         Self {
             record_matrix: [],
@@ -69,7 +69,7 @@ impl Default for LevenshteinResult<0, 0> {
     }
 }
 
-impl Default for LevenshteinResult<1, 0> {
+impl Default for DistanceResult<1, 0> {
     fn default() -> Self {
         Self {
             record_matrix: [ResultMatrix::default()],
@@ -79,7 +79,7 @@ impl Default for LevenshteinResult<1, 0> {
     }
 }
 
-impl Default for LevenshteinResult<0, 1> {
+impl Default for DistanceResult<0, 1> {
     fn default() -> Self {
         Self {
             record_matrix: [],
@@ -346,14 +346,14 @@ fn hyrroe2003<
     s2: Iter2,
     len2: usize,
     score_cutoff: usize,
-) -> LevenshteinResult<RECORD_MATRIX, RECORD_BIT_ROW>
+) -> DistanceResult<RECORD_MATRIX, RECORD_BIT_ROW>
 where
     Iter1: Iterator<Item = Elem1>,
     Iter2: Iterator<Item = Elem2>,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
     PmVec: BitVectorInterface,
-    LevenshteinResult<RECORD_MATRIX, RECORD_BIT_ROW>: Default,
+    DistanceResult<RECORD_MATRIX, RECORD_BIT_ROW>: Default,
 {
     debug_assert!(len1 != 0);
 
@@ -362,7 +362,7 @@ where
     let mut vn: u64 = 0;
 
     let mut dist = len1;
-    let mut res = LevenshteinResult::<RECORD_MATRIX, RECORD_BIT_ROW>::default();
+    let mut res = DistanceResult::<RECORD_MATRIX, RECORD_BIT_ROW>::default();
     if RECORD_MATRIX == 1 {
         res.record_matrix[0].vp = ShiftedBitMatrix::<u64>::new(len2, 1, !0_u64);
         res.record_matrix[0].vn = ShiftedBitMatrix::<u64>::new(len2, 1, 0);
@@ -533,13 +533,13 @@ fn hyrroe2003_small_band_without_pm<const RECORD_MATRIX: usize, Iter1, Iter2, El
     mut s2: Iter2,
     len2: usize,
     score_cutoff: usize,
-) -> LevenshteinResult<RECORD_MATRIX, 0>
+) -> DistanceResult<RECORD_MATRIX, 0>
 where
     Iter1: Iterator<Item = Elem1> + Clone,
     Iter2: Iterator<Item = Elem2> + Clone,
     Elem1: PartialEq<Elem2> + HashableChar,
     Elem2: PartialEq<Elem1> + HashableChar,
-    LevenshteinResult<RECORD_MATRIX, 0>: Default,
+    DistanceResult<RECORD_MATRIX, 0>: Default,
 {
     debug_assert!(score_cutoff <= len1);
     debug_assert!(score_cutoff <= len2);
@@ -550,7 +550,7 @@ where
     let mut vn: u64 = 0;
 
     let mut dist = score_cutoff;
-    let mut res = LevenshteinResult::<RECORD_MATRIX, 0>::default();
+    let mut res = DistanceResult::<RECORD_MATRIX, 0>::default();
     if RECORD_MATRIX == 1 {
         res.record_matrix[0].vp = ShiftedBitMatrix::<u64>::new(len2, 1, !0_u64);
         res.record_matrix[0].vn = ShiftedBitMatrix::<u64>::new(len2, 1, 0);
@@ -693,15 +693,15 @@ fn hyrroe2003_block<
     len2: usize,
     mut score_cutoff: usize,
     stop_row: isize,
-) -> LevenshteinResult<RECORD_MATRIX, RECORD_BIT_ROW>
+) -> DistanceResult<RECORD_MATRIX, RECORD_BIT_ROW>
 where
     Iter1: Iterator<Item = Elem1> + Clone,
     Iter2: Iterator<Item = Elem2> + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
-    LevenshteinResult<RECORD_MATRIX, RECORD_BIT_ROW>: Default,
+    DistanceResult<RECORD_MATRIX, RECORD_BIT_ROW>: Default,
 {
-    let mut res: LevenshteinResult<RECORD_MATRIX, RECORD_BIT_ROW> = LevenshteinResult::default();
+    let mut res: DistanceResult<RECORD_MATRIX, RECORD_BIT_ROW> = DistanceResult::default();
     if score_cutoff < len1.abs_diff(len2) {
         res.dist = None;
         return res;
@@ -978,7 +978,7 @@ where
         let mut full_band = min(len1, 2 * score_cutoff + 1);
 
         if len1 <= 64 {
-            let res: LevenshteinResult<0, 0> = hyrroe2003(pm, s1, len1, s2, len2, score_cutoff);
+            let res: DistanceResult<0, 0> = hyrroe2003(pm, s1, len1, s2, len2, score_cutoff);
             return res.dist;
         } else if full_band <= 64 {
             return hyrroe2003_small_band_with_pm(pm, s1, len1, s2, len2, score_cutoff);
@@ -990,7 +990,7 @@ where
             let score = if full_band <= 64 {
                 hyrroe2003_small_band_with_pm(pm, s1.clone(), len1, s2.clone(), len2, score_hint)
             } else {
-                let res: LevenshteinResult<0, 0> =
+                let res: DistanceResult<0, 0> =
                     hyrroe2003_block(pm, s1.clone(), len1, s2.clone(), len2, score_hint, -1);
                 res.dist
             };
@@ -1005,8 +1005,7 @@ where
             score_hint *= 2;
         }
 
-        let res: LevenshteinResult<0, 0> =
-            hyrroe2003_block(pm, s1, len1, s2, len2, score_cutoff, -1);
+        let res: DistanceResult<0, 0> = hyrroe2003_block(pm, s1, len1, s2, len2, score_cutoff, -1);
         return res.dist;
     }
 
@@ -1078,7 +1077,7 @@ where
         };
         pm.insert(affix.s2.clone());
 
-        let res: LevenshteinResult<0, 0> = hyrroe2003(
+        let res: DistanceResult<0, 0> = hyrroe2003(
             &pm,
             affix.s2,
             affix.len2,
@@ -1088,7 +1087,7 @@ where
         );
         res.dist
     } else if full_band <= 64 {
-        let res: LevenshteinResult<0, 0> = hyrroe2003_small_band_without_pm(
+        let res: DistanceResult<0, 0> = hyrroe2003_small_band_without_pm(
             affix.s1,
             affix.len1,
             affix.s2,
@@ -1112,7 +1111,7 @@ where
                     score_hint,
                 )
             } else {
-                let res: LevenshteinResult<0, 0> = hyrroe2003_block(
+                let res: DistanceResult<0, 0> = hyrroe2003_block(
                     &pm,
                     affix.s1.clone(),
                     affix.len1,
@@ -1134,7 +1133,7 @@ where
             score_hint *= 2;
         }
 
-        let res: LevenshteinResult<0, 0> = hyrroe2003_block(
+        let res: DistanceResult<0, 0> = hyrroe2003_block(
             &pm,
             affix.s1.clone(),
             affix.len1,
@@ -1194,7 +1193,7 @@ where
             // max can make use of the common divisor of the three weights
             let new_score_cutoff = ceil_div_usize(score_cutoff, weights.insert_cost);
             let new_score_hint = ceil_div_usize(score_hint, weights.insert_cost);
-            let mut dist = indel::Indel {}._distance(
+            let mut dist = indel::IndividualComparator {}._distance(
                 s1,
                 len1,
                 s2,
@@ -1268,11 +1267,11 @@ where
     generalized_distance(s1, len1, s2, len2, weights, score_cutoff)
 }
 
-struct Levenshtein {
+struct IndividualComparator {
     weights: Option<WeightTable>,
 }
 
-impl MetricUsize for Levenshtein {
+impl MetricUsize for IndividualComparator {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
         let weights = self.weights.unwrap_or(WeightTable {
             insert_cost: 1,
@@ -1333,7 +1332,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Levenshtein { weights }._distance(
+    IndividualComparator { weights }._distance(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -1362,7 +1361,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Levenshtein { weights }._similarity(
+    IndividualComparator { weights }._similarity(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -1391,7 +1390,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Levenshtein { weights }._normalized_distance(
+    IndividualComparator { weights }._normalized_distance(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -1420,7 +1419,7 @@ where
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    Levenshtein { weights }._normalized_similarity(
+    IndividualComparator { weights }._normalized_similarity(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -1430,13 +1429,13 @@ where
     )
 }
 
-pub struct CachedLevenshtein<Elem1> {
+pub struct BatchComparator<Elem1> {
     s1: Vec<Elem1>,
     pm: BlockPatternMatchVector,
     weights: WeightTable,
 }
 
-impl<CharT> MetricUsize for CachedLevenshtein<CharT> {
+impl<CharT> MetricUsize for BatchComparator<CharT> {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
         _maximum(len1, len2, &self.weights)
     }
@@ -1469,7 +1468,7 @@ impl<CharT> MetricUsize for CachedLevenshtein<CharT> {
     }
 }
 
-impl<Elem1> CachedLevenshtein<Elem1>
+impl<Elem1> BatchComparator<Elem1>
 where
     Elem1: HashableChar + Clone,
 {
@@ -1655,9 +1654,9 @@ mod tests {
             score_hint.clone(),
         );
 
-        let scorer1 = CachedLevenshtein::new(s1.clone(), weights);
+        let scorer1 = BatchComparator::new(s1.clone(), weights);
         let res3 = scorer1.distance(s2.clone(), score_cutoff.clone(), score_hint.clone());
-        let scorer2 = CachedLevenshtein::new(s2.clone(), weights);
+        let scorer2 = BatchComparator::new(s2.clone(), weights);
         let res4 = scorer2.distance(s1.clone(), score_cutoff, score_hint);
 
         assert_eq!(res1, res2);
@@ -1723,10 +1722,10 @@ mod tests {
             score_cutoff.clone(),
             score_hint.clone(),
         );
-        let scorer1 = CachedLevenshtein::new(s1.clone(), weights);
+        let scorer1 = BatchComparator::new(s1.clone(), weights);
         let res3 =
             scorer1.normalized_similarity(s2.clone(), score_cutoff.clone(), score_hint.clone());
-        let scorer2 = CachedLevenshtein::new(s2.clone(), weights);
+        let scorer2 = BatchComparator::new(s2.clone(), weights);
         let res4 = scorer2.normalized_similarity(s1.clone(), score_cutoff, score_hint);
 
         assert_delta!(res1, res2, 0.0001);
