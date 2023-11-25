@@ -1,7 +1,7 @@
 use crate::details::common::HashableChar;
 use crate::details::distance::MetricUsize;
 use crate::details::pattern_match_vector::BlockPatternMatchVector;
-use crate::distance::lcs_seq::{lcs_seq_similarity_with_pm, CachedLcsSeq, LcsSeq};
+use crate::distance::lcs_seq;
 
 pub(crate) struct Indel;
 
@@ -40,7 +40,7 @@ impl MetricUsize for Indel {
             0
         };
         let lcs_sim =
-            LcsSeq {}._similarity(s1, len1, s2, len2, Some(lcs_cutoff), Some(lcs_hint))?;
+            lcs_seq::LcsSeq {}._similarity(s1, len1, s2, len2, Some(lcs_cutoff), Some(lcs_hint))?;
         let dist = maximum - 2 * lcs_sim;
         if dist <= score_cutoff {
             Some(dist)
@@ -162,7 +162,7 @@ where
     )
 }
 
-pub(crate) fn indel_distance_with_pm<Iter1, Iter2, Elem1, Elem2>(
+pub(crate) fn distance_with_pm<Iter1, Iter2, Elem1, Elem2>(
     pm: &BlockPatternMatchVector,
     s1: Iter1,
     len1: usize,
@@ -183,7 +183,7 @@ where
         0
     };
 
-    let lcs_sim = lcs_seq_similarity_with_pm(pm, s1, len1, s2, len2, lcs_cutoff)?;
+    let lcs_sim = lcs_seq::similarity_with_pm(pm, s1, len1, s2, len2, lcs_cutoff)?;
     let dist = maximum - 2 * lcs_sim;
     if dist <= score_cutoff {
         Some(dist)
@@ -196,7 +196,7 @@ pub struct CachedIndel<Elem1>
 where
     Elem1: HashableChar + Clone,
 {
-    scorer: CachedLcsSeq<Elem1>,
+    scorer: lcs_seq::CachedLcsSeq<Elem1>,
 }
 
 impl<CharT> MetricUsize for CachedIndel<CharT>
@@ -258,7 +258,7 @@ where
         Iter1::IntoIter: Clone,
     {
         Self {
-            scorer: CachedLcsSeq::new(s1),
+            scorer: lcs_seq::CachedLcsSeq::new(s1),
         }
     }
 

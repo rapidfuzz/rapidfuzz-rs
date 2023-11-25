@@ -21,7 +21,7 @@ impl Display for HammingError {
 
 impl Error for HammingError {}
 
-fn hamming_impl<Iter1, Iter2, Elem1, Elem2>(
+fn distance_impl<Iter1, Iter2, Elem1, Elem2>(
     mut s1: Iter1,
     mut s2: Iter2,
     score_cutoff: usize,
@@ -75,7 +75,7 @@ impl MetricUsize for Hamming {
         Elem1: PartialEq<Elem2> + HashableChar,
         Elem2: PartialEq<Elem1> + HashableChar,
     {
-        hamming_impl(s1, s2, score_cutoff.unwrap_or(usize::MAX))
+        distance_impl(s1, s2, score_cutoff.unwrap_or(usize::MAX))
     }
 }
 
@@ -324,7 +324,7 @@ where
 mod tests {
     use super::*;
 
-    fn assert_hamming_dist(dist: usize, str1: &str, str2: &str) {
+    fn assert_dist(dist: usize, str1: &str, str2: &str) {
         assert_eq!(
             Ok(Some(dist)),
             distance(str1.chars(), str2.chars(), false, None, None)
@@ -332,17 +332,17 @@ mod tests {
     }
 
     #[test]
-    fn hamming_empty() {
-        assert_hamming_dist(0, "", "")
+    fn empty() {
+        assert_dist(0, "", "")
     }
 
     #[test]
-    fn hamming_same() {
-        assert_hamming_dist(0, "hamming", "hamming")
+    fn same() {
+        assert_dist(0, "hamming", "hamming")
     }
 
     #[test]
-    fn hamming_numbers() {
+    fn numbers() {
         assert_eq!(
             Ok(Some(1)),
             distance([1, 2, 4], [1, 2, 3], false, None, None)
@@ -350,17 +350,17 @@ mod tests {
     }
 
     #[test]
-    fn hamming_diff() {
-        assert_hamming_dist(3, "hamming", "hammers")
+    fn diff() {
+        assert_dist(3, "hamming", "hammers")
     }
 
     #[test]
-    fn hamming_diff_multibyte() {
-        assert_hamming_dist(2, "hamming", "h香mmüng");
+    fn diff_multibyte() {
+        assert_dist(2, "hamming", "h香mmüng");
     }
 
     #[test]
-    fn hamming_unequal_length() {
+    fn unequal_length() {
         assert_eq!(
             Err(HammingError::DifferentLengthArgs),
             distance("ham".chars(), "hamming".chars(), false, None, None)
@@ -373,7 +373,7 @@ mod tests {
     }
 
     #[test]
-    fn hamming_names() {
-        assert_hamming_dist(14, "Friedrich Nietzs", "Jean-Paul Sartre")
+    fn names() {
+        assert_dist(14, "Friedrich Nietzs", "Jean-Paul Sartre")
     }
 }

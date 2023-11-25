@@ -53,7 +53,7 @@ impl Default for RowId {
 ///
 /// todo in c++ this is templated on an integer type which reduced
 /// memory usage depending on string lengths
-fn damerau_damerau_levenshtein_distance_zhao<Iter1, Iter2, Elem1, Elem2>(
+fn distance_zhao<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     len1: usize,
     s2: Iter2,
@@ -124,7 +124,7 @@ where
     }
 }
 
-fn damerau_damerau_levenshtein_distance_impl<Iter1, Iter2, Elem1, Elem2>(
+fn distance_impl<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     len1: usize,
     s2: Iter2,
@@ -142,13 +142,7 @@ where
     }
 
     let affix = remove_common_affix(s1, len1, s2, len2);
-    damerau_damerau_levenshtein_distance_zhao(
-        affix.s1,
-        affix.len1,
-        affix.s2,
-        affix.len2,
-        score_cutoff,
-    )
+    distance_zhao(affix.s1, affix.len1, affix.s2, affix.len2, score_cutoff)
 }
 
 pub(crate) struct DamerauLevenshtein;
@@ -173,13 +167,7 @@ impl MetricUsize for DamerauLevenshtein {
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
-        damerau_damerau_levenshtein_distance_impl(
-            s1,
-            len1,
-            s2,
-            len2,
-            score_cutoff.unwrap_or(usize::MAX),
-        )
+        distance_impl(s1, len1, s2, len2, score_cutoff.unwrap_or(usize::MAX))
     }
 }
 

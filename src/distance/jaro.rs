@@ -40,7 +40,7 @@ struct SearchBoundMask {
     first_mask: u64,
 }
 
-fn jaro_calculate_similarity(
+fn calculate_similarity(
     p_len: usize,
     t_len: usize,
     common_chars: usize,
@@ -56,7 +56,7 @@ fn jaro_calculate_similarity(
 }
 
 // filter matches below score_cutoff based on string lengths
-fn jaro_length_filter(p_len: usize, t_len: usize, score_cutoff: f64) -> bool {
+fn length_filter(p_len: usize, t_len: usize, score_cutoff: f64) -> bool {
     if t_len == 0 || p_len == 0 {
         return false;
     }
@@ -68,12 +68,7 @@ fn jaro_length_filter(p_len: usize, t_len: usize, score_cutoff: f64) -> bool {
 }
 
 // filter matches below score_cutoff based on string lengths and common characters
-fn jaro_common_char_filter(
-    p_len: usize,
-    t_len: usize,
-    common_chars: usize,
-    score_cutoff: f64,
-) -> bool {
+fn common_char_filter(p_len: usize, t_len: usize, common_chars: usize, score_cutoff: f64) -> bool {
     if common_chars == 0 {
         return false;
     }
@@ -354,7 +349,7 @@ where
     transpositions
 }
 
-pub(crate) fn jaro_similarity_without_pm<Iter1, Iter2, Elem1, Elem2>(
+pub(crate) fn similarity_without_pm<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     mut len1: usize,
     s2: Iter2,
@@ -379,7 +374,7 @@ where
     }
 
     // filter out based on the length difference between the two strings
-    if !jaro_length_filter(len1_orig, len2_orig, score_cutoff) {
+    if !length_filter(len1_orig, len2_orig, score_cutoff) {
         return if score_cutoff > 0.0 { None } else { Some(0.0) };
     }
 
@@ -431,7 +426,7 @@ where
 
         common_chars += flagged.count_common_chars();
 
-        if !jaro_common_char_filter(len1_orig, len2_orig, common_chars, score_cutoff) {
+        if !common_char_filter(len1_orig, len2_orig, common_chars, score_cutoff) {
             return if score_cutoff > 0.0 { None } else { Some(0.0) };
         }
 
@@ -445,14 +440,14 @@ where
         let flagged_chars = flagged.count_common_chars();
         common_chars += flagged_chars;
 
-        if !jaro_common_char_filter(len1_orig, len2_orig, common_chars, score_cutoff) {
+        if !common_char_filter(len1_orig, len2_orig, common_chars, score_cutoff) {
             return if score_cutoff > 0.0 { None } else { Some(0.0) };
         }
 
         transpositions = count_transpositions_block(&pm, s2_iter, len2, &flagged, flagged_chars);
     }
 
-    let sim = jaro_calculate_similarity(len1_orig, len2_orig, common_chars, transpositions);
+    let sim = calculate_similarity(len1_orig, len2_orig, common_chars, transpositions);
     if sim >= score_cutoff {
         Some(sim)
     } else {
@@ -460,7 +455,7 @@ where
     }
 }
 
-pub(crate) fn jaro_similarity_with_pm<Iter1, Iter2, Elem1, Elem2>(
+pub(crate) fn similarity_with_pm<Iter1, Iter2, Elem1, Elem2>(
     pm: &BlockPatternMatchVector,
     s1: Iter1,
     mut len1: usize,
@@ -486,7 +481,7 @@ where
     }
 
     // filter out based on the length difference between the two strings
-    if !jaro_length_filter(len1_orig, len2_orig, score_cutoff) {
+    if !length_filter(len1_orig, len2_orig, score_cutoff) {
         return if score_cutoff > 0.0 { None } else { Some(0.0) };
     }
 
@@ -523,7 +518,7 @@ where
 
         common_chars += flagged.count_common_chars();
 
-        if !jaro_common_char_filter(len1_orig, len2_orig, common_chars, score_cutoff) {
+        if !common_char_filter(len1_orig, len2_orig, common_chars, score_cutoff) {
             return if score_cutoff > 0.0 { None } else { Some(0.0) };
         }
 
@@ -534,14 +529,14 @@ where
         let flagged_chars = flagged.count_common_chars();
         common_chars += flagged_chars;
 
-        if !jaro_common_char_filter(len1_orig, len2_orig, common_chars, score_cutoff) {
+        if !common_char_filter(len1_orig, len2_orig, common_chars, score_cutoff) {
             return if score_cutoff > 0.0 { None } else { Some(0.0) };
         }
 
         transpositions = count_transpositions_block(pm, s2_iter, len2, &flagged, flagged_chars);
     }
 
-    let sim = jaro_calculate_similarity(len1_orig, len2_orig, common_chars, transpositions);
+    let sim = calculate_similarity(len1_orig, len2_orig, common_chars, transpositions);
     if sim >= score_cutoff {
         Some(sim)
     } else {
@@ -571,7 +566,7 @@ impl Metricf64 for Jaro {
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
-        jaro_similarity_without_pm(s1, len1, s2, len2, score_cutoff.unwrap_or(1.0))
+        similarity_without_pm(s1, len1, s2, len2, score_cutoff.unwrap_or(1.0))
     }
 }
 
@@ -712,7 +707,7 @@ impl<CharT> Metricf64 for CachedJaro<CharT> {
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
-        jaro_similarity_with_pm(&self.pm, s1, len1, s2, len2, score_cutoff.unwrap_or(1.0))
+        similarity_with_pm(&self.pm, s1, len1, s2, len2, score_cutoff.unwrap_or(1.0))
     }
 }
 
@@ -981,7 +976,7 @@ mod tests {
     }
 
     #[test]
-    fn test_jaro_flag_chars() {
+    fn test_flag_chars() {
         let names = [
             "james",
             "robert",

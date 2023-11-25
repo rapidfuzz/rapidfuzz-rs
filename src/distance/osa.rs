@@ -11,7 +11,7 @@ use std::mem;
 /// The algorithm used is described @cite `hyrro_2002` and has a time complexity
 /// of O(N). Comments and variable names in the implementation follow the
 /// paper. This implementation is used internally when the strings are short enough
-fn osa_hyrroe2003<PmVec, Iter1, Iter2, Elem1, Elem2>(
+fn hyrroe2003<PmVec, Iter1, Iter2, Elem1, Elem2>(
     pm: &PmVec,
     _s1: Iter1,
     len1: usize,
@@ -88,7 +88,7 @@ impl Default for OsaRow {
     }
 }
 
-fn osa_hyrroe2003_block<Iter1, Iter2, Elem1, Elem2>(
+fn hyrroe2003_block<Iter1, Iter2, Elem1, Elem2>(
     pm: &BlockPatternMatchVector,
     _s1: Iter1,
     len1: usize,
@@ -212,7 +212,7 @@ impl MetricUsize for Osa {
                 extended_ascii: [0; 256],
             };
             pm.insert(affix.s1.clone());
-            osa_hyrroe2003(
+            hyrroe2003(
                 &pm,
                 affix.s1,
                 affix.len1,
@@ -223,7 +223,7 @@ impl MetricUsize for Osa {
         } else {
             let mut pm = BlockPatternMatchVector::new(affix.len1);
             pm.insert(affix.s1.clone());
-            osa_hyrroe2003_block(
+            hyrroe2003_block(
                 &pm,
                 affix.s1,
                 affix.len1,
@@ -379,9 +379,9 @@ impl<CharT> MetricUsize for CachedOsa<CharT> {
         } else if len2 == 0 {
             self.s1.len()
         } else if self.s1.len() <= 64 {
-            osa_hyrroe2003(&self.pm, s1, len1, s2, len2, score_cutoff)?
+            hyrroe2003(&self.pm, s1, len1, s2, len2, score_cutoff)?
         } else {
-            osa_hyrroe2003_block(&self.pm, s1, len1, s2, len2, score_cutoff)?
+            hyrroe2003_block(&self.pm, s1, len1, s2, len2, score_cutoff)?
         };
 
         if dist <= score_cutoff {
@@ -559,7 +559,7 @@ mod tests {
     }
 
     #[test]
-    fn osa_simple() {
+    fn simple() {
         assert_eq!(Some(0), _test_distance_ascii("", "", None, None));
 
         assert_eq!(Some(4), _test_distance_ascii("aaaa", "", None, None));

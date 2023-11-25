@@ -74,7 +74,7 @@ static LCS_SEQ_MBLEVEN2018_MATRIX: [[u8; 6]; 14] = [
     [0x55, 0x00, 0x00, 0x00, 0x00, 0x00], // len_diff 4
 ];
 
-fn lcs_seq_mbleven2018<Iter1, Iter2, Elem1, Elem2>(
+fn mbleven2018<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     len1: usize,
     s2: Iter2,
@@ -91,7 +91,7 @@ where
     debug_assert!(len2 != 0);
 
     if len1 < len2 {
-        return lcs_seq_mbleven2018(s2, len2, s1, len1, score_cutoff);
+        return mbleven2018(s2, len2, s1, len1, score_cutoff);
     }
 
     let len_diff = len1 - len2;
@@ -393,7 +393,7 @@ where
     }
 }
 
-pub(crate) fn lcs_seq_similarity_with_pm<PmVec, Iter1, Iter2, Elem1, Elem2>(
+pub(crate) fn similarity_with_pm<PmVec, Iter1, Iter2, Elem1, Elem2>(
     pm: &PmVec,
     s1: Iter1,
     len1: usize,
@@ -435,7 +435,7 @@ where
     let affix = remove_common_affix(s1, len1, s2, len2);
     let mut lcs_sim = affix.prefix_len + affix.suffix_len;
     if len1 != 0 && len2 != 0 {
-        lcs_sim += lcs_seq_mbleven2018(
+        lcs_sim += mbleven2018(
             affix.s1,
             affix.len1,
             affix.s2,
@@ -451,7 +451,7 @@ where
     }
 }
 
-fn lcs_seq_similarity_without_pm<Iter1, Iter2, Elem1, Elem2>(
+fn similarity_without_pm<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     len1: usize,
     s2: Iter2,
@@ -466,7 +466,7 @@ where
 {
     // Swapping the strings so the second string is shorter
     if len1 < len2 {
-        return lcs_seq_similarity_without_pm(s2, len2, s1, len1, score_cutoff);
+        return similarity_without_pm(s2, len2, s1, len1, score_cutoff);
     }
 
     if score_cutoff > len1 || score_cutoff > len2 {
@@ -498,8 +498,7 @@ where
             0
         };
         if max_misses < 5 {
-            lcs_sim +=
-                lcs_seq_mbleven2018(affix.s1, affix.len1, affix.s2, affix.len2, adjusted_cutoff)?;
+            lcs_sim += mbleven2018(affix.s1, affix.len1, affix.s2, affix.len2, adjusted_cutoff)?;
         } else {
             lcs_sim += longest_common_subsequence_without_pm(
                 affix.s1,
@@ -540,7 +539,7 @@ impl MetricUsize for LcsSeq {
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
-        lcs_seq_similarity_without_pm(s1, len1, s2, len2, score_cutoff.unwrap_or(0))
+        similarity_without_pm(s1, len1, s2, len2, score_cutoff.unwrap_or(0))
     }
 }
 
@@ -687,7 +686,7 @@ where
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
-        lcs_seq_similarity_with_pm(&self.pm, s1, len1, s2, len2, score_cutoff.unwrap_or(0))
+        similarity_with_pm(&self.pm, s1, len1, s2, len2, score_cutoff.unwrap_or(0))
     }
 }
 
@@ -828,7 +827,7 @@ mod tests {
         };
     }
 
-    fn test_lcs_seq_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
+    fn test_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
         s1_: Iter1,
         s2_: Iter2,
         score_cutoff: ScoreCutoff,
@@ -870,7 +869,7 @@ mod tests {
         res1
     }
 
-    fn test_lcs_seq_distance_ascii<ScoreCutoff, ScoreHint>(
+    fn test_distance_ascii<ScoreCutoff, ScoreHint>(
         s1: &str,
         s2: &str,
         score_cutoff: ScoreCutoff,
@@ -880,19 +879,19 @@ mod tests {
         ScoreCutoff: Into<Option<usize>> + Clone,
         ScoreHint: Into<Option<usize>> + Clone,
     {
-        let res1 = test_lcs_seq_distance(
+        let res1 = test_distance(
             s1.chars(),
             s2.chars(),
             score_cutoff.clone(),
             score_hint.clone(),
         );
-        let res2 = test_lcs_seq_distance(s1.bytes(), s2.bytes(), score_cutoff, score_hint);
+        let res2 = test_distance(s1.bytes(), s2.bytes(), score_cutoff, score_hint);
 
         assert_eq!(res1, res2);
         res1
     }
 
-    fn test_lcs_seq_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
+    fn test_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
         s1_: Iter1,
         s2_: Iter2,
         score_cutoff: ScoreCutoff,
@@ -934,7 +933,7 @@ mod tests {
         res1
     }
 
-    fn test_lcs_seq_similarity_ascii<ScoreCutoff, ScoreHint>(
+    fn test_similarity_ascii<ScoreCutoff, ScoreHint>(
         s1: &str,
         s2: &str,
         score_cutoff: ScoreCutoff,
@@ -944,19 +943,19 @@ mod tests {
         ScoreCutoff: Into<Option<usize>> + Clone,
         ScoreHint: Into<Option<usize>> + Clone,
     {
-        let res1 = test_lcs_seq_similarity(
+        let res1 = test_similarity(
             s1.chars(),
             s2.chars(),
             score_cutoff.clone(),
             score_hint.clone(),
         );
-        let res2 = test_lcs_seq_similarity(s1.bytes(), s2.bytes(), score_cutoff, score_hint);
+        let res2 = test_similarity(s1.bytes(), s2.bytes(), score_cutoff, score_hint);
 
         assert_eq!(res1, res2);
         res1
     }
 
-    fn test_lcs_seq_normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
+    fn test_normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
         s1_: Iter1,
         s2_: Iter2,
         score_cutoff: ScoreCutoff,
@@ -998,7 +997,7 @@ mod tests {
         res1
     }
 
-    fn test_lcs_seq_normalized_distance_ascii<ScoreCutoff, ScoreHint>(
+    fn test_normalized_distance_ascii<ScoreCutoff, ScoreHint>(
         s1: &str,
         s2: &str,
         score_cutoff: ScoreCutoff,
@@ -1008,20 +1007,19 @@ mod tests {
         ScoreCutoff: Into<Option<f64>> + Clone,
         ScoreHint: Into<Option<f64>> + Clone,
     {
-        let res1 = test_lcs_seq_normalized_distance(
+        let res1 = test_normalized_distance(
             s1.chars(),
             s2.chars(),
             score_cutoff.clone(),
             score_hint.clone(),
         );
-        let res2 =
-            test_lcs_seq_normalized_distance(s1.bytes(), s2.bytes(), score_cutoff, score_hint);
+        let res2 = test_normalized_distance(s1.bytes(), s2.bytes(), score_cutoff, score_hint);
 
         assert_delta!(res1, res2, 0.0001);
         res1
     }
 
-    fn test_lcs_seq_normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
+    fn test_normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
         s1_: Iter1,
         s2_: Iter2,
         score_cutoff: ScoreCutoff,
@@ -1063,7 +1061,7 @@ mod tests {
         res1
     }
 
-    fn test_lcs_seq_normalized_similarity_ascii<ScoreCutoff, ScoreHint>(
+    fn test_normalized_similarity_ascii<ScoreCutoff, ScoreHint>(
         s1: &str,
         s2: &str,
         score_cutoff: ScoreCutoff,
@@ -1073,59 +1071,46 @@ mod tests {
         ScoreCutoff: Into<Option<f64>> + Clone,
         ScoreHint: Into<Option<f64>> + Clone,
     {
-        let res1 = test_lcs_seq_normalized_similarity(
+        let res1 = test_normalized_similarity(
             s1.chars(),
             s2.chars(),
             score_cutoff.clone(),
             score_hint.clone(),
         );
-        let res2 =
-            test_lcs_seq_normalized_similarity(s1.bytes(), s2.bytes(), score_cutoff, score_hint);
+        let res2 = test_normalized_similarity(s1.bytes(), s2.bytes(), score_cutoff, score_hint);
 
         assert_delta!(res1, res2, 0.0001);
         res1
     }
 
     #[test]
-    fn lcs_seq_similar() {
-        assert_eq!(
-            Some(0),
-            test_lcs_seq_distance_ascii("aaaa", "aaaa", None, None)
-        );
-        assert_eq!(
-            Some(4),
-            test_lcs_seq_similarity_ascii("aaaa", "aaaa", None, None)
-        );
+    fn similar() {
+        assert_eq!(Some(0), test_distance_ascii("aaaa", "aaaa", None, None));
+        assert_eq!(Some(4), test_similarity_ascii("aaaa", "aaaa", None, None));
         assert_delta!(
             Some(0.0),
-            test_lcs_seq_normalized_distance_ascii("aaaa", "aaaa", None, None),
+            test_normalized_distance_ascii("aaaa", "aaaa", None, None),
             0.0001
         );
         assert_delta!(
             Some(1.0),
-            test_lcs_seq_normalized_similarity_ascii("aaaa", "aaaa", None, None),
+            test_normalized_similarity_ascii("aaaa", "aaaa", None, None),
             0.0001
         );
     }
 
     #[test]
-    fn lcs_seq_completely_different() {
-        assert_eq!(
-            Some(4),
-            test_lcs_seq_distance_ascii("aaaa", "bbbb", None, None)
-        );
-        assert_eq!(
-            Some(0),
-            test_lcs_seq_similarity_ascii("aaaa", "bbbb", None, None)
-        );
+    fn completely_different() {
+        assert_eq!(Some(4), test_distance_ascii("aaaa", "bbbb", None, None));
+        assert_eq!(Some(0), test_similarity_ascii("aaaa", "bbbb", None, None));
         assert_delta!(
             Some(1.0),
-            test_lcs_seq_normalized_distance_ascii("aaaa", "bbbb", None, None),
+            test_normalized_distance_ascii("aaaa", "bbbb", None, None),
             0.0001
         );
         assert_delta!(
             Some(0.0),
-            test_lcs_seq_normalized_similarity_ascii("aaaa", "bbbb", None, None),
+            test_normalized_similarity_ascii("aaaa", "bbbb", None, None),
             0.0001
         );
     }
@@ -1136,35 +1121,35 @@ mod tests {
         let mut a = "South Korea";
         let mut b = "North Korea";
 
-        assert_eq!(Some(9), test_lcs_seq_similarity_ascii(a, b, None, None));
-        assert_eq!(Some(9), test_lcs_seq_similarity_ascii(a, b, 9, None));
-        assert_eq!(None, test_lcs_seq_similarity_ascii(a, b, 10, None));
+        assert_eq!(Some(9), test_similarity_ascii(a, b, None, None));
+        assert_eq!(Some(9), test_similarity_ascii(a, b, 9, None));
+        assert_eq!(None, test_similarity_ascii(a, b, 10, None));
 
-        assert_eq!(Some(2), test_lcs_seq_distance_ascii(a, b, None, None));
-        assert_eq!(Some(2), test_lcs_seq_distance_ascii(a, b, 4, None));
-        assert_eq!(Some(2), test_lcs_seq_distance_ascii(a, b, 3, None));
-        assert_eq!(Some(2), test_lcs_seq_distance_ascii(a, b, 2, None));
-        assert_eq!(None, test_lcs_seq_distance_ascii(a, b, 1, None));
-        assert_eq!(None, test_lcs_seq_distance_ascii(a, b, 0, None));
+        assert_eq!(Some(2), test_distance_ascii(a, b, None, None));
+        assert_eq!(Some(2), test_distance_ascii(a, b, 4, None));
+        assert_eq!(Some(2), test_distance_ascii(a, b, 3, None));
+        assert_eq!(Some(2), test_distance_ascii(a, b, 2, None));
+        assert_eq!(None, test_distance_ascii(a, b, 1, None));
+        assert_eq!(None, test_distance_ascii(a, b, 0, None));
 
         a = "aabc";
         b = "cccd";
-        assert_eq!(Some(1), test_lcs_seq_similarity_ascii(a, b, None, None));
-        assert_eq!(Some(1), test_lcs_seq_similarity_ascii(a, b, 1, None));
-        assert_eq!(None, test_lcs_seq_similarity_ascii(a, b, 2, None));
+        assert_eq!(Some(1), test_similarity_ascii(a, b, None, None));
+        assert_eq!(Some(1), test_similarity_ascii(a, b, 1, None));
+        assert_eq!(None, test_similarity_ascii(a, b, 2, None));
 
-        assert_eq!(Some(3), test_lcs_seq_distance_ascii(a, b, None, None));
-        assert_eq!(Some(3), test_lcs_seq_distance_ascii(a, b, 4, None));
-        assert_eq!(Some(3), test_lcs_seq_distance_ascii(a, b, 3, None));
-        assert_eq!(None, test_lcs_seq_distance_ascii(a, b, 2, None));
-        assert_eq!(None, test_lcs_seq_distance_ascii(a, b, 1, None));
-        assert_eq!(None, test_lcs_seq_distance_ascii(a, b, 0, None));
+        assert_eq!(Some(3), test_distance_ascii(a, b, None, None));
+        assert_eq!(Some(3), test_distance_ascii(a, b, 4, None));
+        assert_eq!(Some(3), test_distance_ascii(a, b, 3, None));
+        assert_eq!(None, test_distance_ascii(a, b, 2, None));
+        assert_eq!(None, test_distance_ascii(a, b, 1, None));
+        assert_eq!(None, test_distance_ascii(a, b, 0, None));
     }
 
     #[test]
     fn test_cached() {
         let a = "001";
         let b = "220";
-        assert_eq!(Some(1), test_lcs_seq_similarity_ascii(a, b, None, None));
+        assert_eq!(Some(1), test_similarity_ascii(a, b, None, None));
     }
 }

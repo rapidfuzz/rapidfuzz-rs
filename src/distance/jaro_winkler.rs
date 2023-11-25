@@ -2,9 +2,9 @@ use crate::details::common::HashableChar;
 use crate::details::distance::Metricf64;
 use crate::details::pattern_match_vector::BlockPatternMatchVector;
 
-use crate::distance::jaro::{jaro_similarity_with_pm, jaro_similarity_without_pm};
+use crate::distance::jaro;
 
-fn jaro_winkler_similarity_without_pm<Iter1, Iter2, Elem1, Elem2>(
+fn similarity_without_pm<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     len1: usize,
     s2: Iter2,
@@ -35,7 +35,7 @@ where
         }
     }
 
-    let mut sim = jaro_similarity_without_pm(s1, len1, s2, len2, jaro_score_cutoff)?;
+    let mut sim = jaro::similarity_without_pm(s1, len1, s2, len2, jaro_score_cutoff)?;
     if sim > 0.7 {
         sim += prefix as f64 * prefix_weight / (1.0 - sim);
     }
@@ -47,7 +47,7 @@ where
     }
 }
 
-fn jaro_winkler_similarity_with_pm<Iter1, Iter2, Elem1, Elem2>(
+fn similarity_with_pm<Iter1, Iter2, Elem1, Elem2>(
     pm: &BlockPatternMatchVector,
     s1: Iter1,
     len1: usize,
@@ -79,7 +79,7 @@ where
         }
     }
 
-    let mut sim = jaro_similarity_with_pm(pm, s1, len1, s2, len2, jaro_score_cutoff)?;
+    let mut sim = jaro::similarity_with_pm(pm, s1, len1, s2, len2, jaro_score_cutoff)?;
     if sim > 0.7 {
         sim += prefix as f64 * prefix_weight / (1.0 - sim);
     }
@@ -115,7 +115,7 @@ impl Metricf64 for JaroWinkler {
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
-        jaro_winkler_similarity_without_pm(
+        similarity_without_pm(
             s1,
             len1,
             s2,
@@ -284,7 +284,7 @@ impl<CharT> Metricf64 for CachedJaroWinkler<CharT> {
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
-        jaro_winkler_similarity_with_pm(
+        similarity_with_pm(
             &self.pm,
             s1,
             len1,

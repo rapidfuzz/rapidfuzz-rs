@@ -6,7 +6,7 @@ use crate::details::matrix::ShiftedBitMatrix;
 use crate::details::pattern_match_vector::{
     BitVectorInterface, BitvectorHashmap, BlockPatternMatchVector, PatternMatchVector,
 };
-use crate::distance::indel::{indel_distance_with_pm, Indel};
+use crate::distance::indel;
 use std::cmp::{max, min};
 use std::mem;
 
@@ -89,7 +89,7 @@ impl Default for LevenshteinResult<0, 1> {
     }
 }
 
-fn generalized_levenshtein_wagner_fischer<Iter1, Iter2, Elem1, Elem2>(
+fn generalized_wagner_fischer<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     len1: usize,
     s2: Iter2,
@@ -148,7 +148,7 @@ where
  * @brief calculates the maximum possible Levenshtein distance based on
  * string lengths and weights
  */
-fn _levenshtein_maximum(len1: usize, len2: usize, weights: &WeightTable) -> usize {
+fn _maximum(len1: usize, len2: usize, weights: &WeightTable) -> usize {
     let max_dist = len1 * weights.delete_cost + len2 * weights.insert_cost;
 
     if len1 >= len2 {
@@ -164,14 +164,14 @@ fn _levenshtein_maximum(len1: usize, len2: usize, weights: &WeightTable) -> usiz
     }
 }
 
-fn _levenshtein_min_distance(len1: usize, len2: usize, weights: &WeightTable) -> usize {
+fn _min_distance(len1: usize, len2: usize, weights: &WeightTable) -> usize {
     max(
         (len1 as isize - len2 as isize) * weights.delete_cost as isize,
         (len2 as isize - len1 as isize) * weights.insert_cost as isize,
     ) as usize
 }
 
-fn generalized_levenshtein_distance<Iter1, Iter2, Elem1, Elem2>(
+fn generalized_distance<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     len1: usize,
     s2: Iter2,
@@ -185,7 +185,7 @@ where
     Elem1: PartialEq<Elem2> + HashableChar,
     Elem2: PartialEq<Elem1> + HashableChar,
 {
-    let min_edits = _levenshtein_min_distance(len1, len2, weights);
+    let min_edits = _min_distance(len1, len2, weights);
     if min_edits > score_cutoff {
         return None;
     }
@@ -193,7 +193,7 @@ where
     // common affix does not effect Levenshtein distance
     let affix = remove_common_affix(s1, len1, s2, len2);
 
-    generalized_levenshtein_wagner_fischer(
+    generalized_wagner_fischer(
         affix.s1,
         affix.len1,
         affix.s2,
@@ -231,7 +231,7 @@ static LEVENSHTEIN_MBLEVEN2018_MATRIX: [[u8; 7]; 9] = [
     [0x15, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // len_diff 3
 ];
 
-fn levenshtein_mbleven2018<Iter1, Iter2, Elem1, Elem2>(
+fn mbleven2018<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     len1: usize,
     s2: Iter2,
@@ -250,7 +250,7 @@ where
     // this is used below, but would break if common affix is not removed
 
     if len1 < len2 {
-        return levenshtein_mbleven2018(s2, len2, s1, len1, score_cutoff);
+        return mbleven2018(s2, len2, s1, len1, score_cutoff);
     }
 
     let len_diff = len1 - len2;
@@ -331,7 +331,7 @@ where
 /// The algorithm used is described @cite `hyrro_2002` and has a time complexity
 /// of O(N). Comments and variable names in the implementation follow the
 /// paper. This implementation is used internally when the strings are short enough
-fn levenshtein_hyrroe2003<
+fn hyrroe2003<
     const RECORD_MATRIX: usize,
     const RECORD_BIT_ROW: usize,
     PmVec,
@@ -413,7 +413,7 @@ where
     res
 }
 
-fn levenshtein_hyrroe2003_small_band_with_pm<PmVec, Iter1, Iter2, Elem1, Elem2>(
+fn hyrroe2003_small_band_with_pm<PmVec, Iter1, Iter2, Elem1, Elem2>(
     pm: &PmVec,
     _s1: Iter1,
     len1: usize,
@@ -527,13 +527,7 @@ where
     }
 }
 
-fn levenshtein_hyrroe2003_small_band_without_pm<
-    const RECORD_MATRIX: usize,
-    Iter1,
-    Iter2,
-    Elem1,
-    Elem2,
->(
+fn hyrroe2003_small_band_without_pm<const RECORD_MATRIX: usize, Iter1, Iter2, Elem1, Elem2>(
     mut s1: Iter1,
     len1: usize,
     mut s2: Iter2,
@@ -684,7 +678,7 @@ where
 }
 
 #[allow(clippy::too_many_lines)]
-fn levenshtein_hyrroe2003_block<
+fn hyrroe2003_block<
     const RECORD_MATRIX: usize,
     const RECORD_BIT_ROW: usize,
     Iter1,
@@ -943,7 +937,7 @@ where
     res
 }
 
-fn uniform_levenshtein_distance_with_pm<Iter1, Iter2, Elem1, Elem2>(
+fn uniform_distance_with_pm<Iter1, Iter2, Elem1, Elem2>(
     pm: &BlockPatternMatchVector,
     s1: Iter1,
     len1: usize,
@@ -984,35 +978,20 @@ where
         let mut full_band = min(len1, 2 * score_cutoff + 1);
 
         if len1 <= 64 {
-            let res: LevenshteinResult<0, 0> =
-                levenshtein_hyrroe2003(pm, s1, len1, s2, len2, score_cutoff);
+            let res: LevenshteinResult<0, 0> = hyrroe2003(pm, s1, len1, s2, len2, score_cutoff);
             return res.dist;
         } else if full_band <= 64 {
-            return levenshtein_hyrroe2003_small_band_with_pm(pm, s1, len1, s2, len2, score_cutoff);
+            return hyrroe2003_small_band_with_pm(pm, s1, len1, s2, len2, score_cutoff);
         }
 
         while score_hint < score_cutoff {
             full_band = min(len1, 2 * score_hint + 1);
 
             let score = if full_band <= 64 {
-                levenshtein_hyrroe2003_small_band_with_pm(
-                    pm,
-                    s1.clone(),
-                    len1,
-                    s2.clone(),
-                    len2,
-                    score_hint,
-                )
+                hyrroe2003_small_band_with_pm(pm, s1.clone(), len1, s2.clone(), len2, score_hint)
             } else {
-                let res: LevenshteinResult<0, 0> = levenshtein_hyrroe2003_block(
-                    pm,
-                    s1.clone(),
-                    len1,
-                    s2.clone(),
-                    len2,
-                    score_hint,
-                    -1,
-                );
+                let res: LevenshteinResult<0, 0> =
+                    hyrroe2003_block(pm, s1.clone(), len1, s2.clone(), len2, score_hint, -1);
                 res.dist
             };
 
@@ -1027,7 +1006,7 @@ where
         }
 
         let res: LevenshteinResult<0, 0> =
-            levenshtein_hyrroe2003_block(pm, s1, len1, s2, len2, score_cutoff, -1);
+            hyrroe2003_block(pm, s1, len1, s2, len2, score_cutoff, -1);
         return res.dist;
     }
 
@@ -1038,10 +1017,10 @@ where
         return Some(affix.len1 + affix.len2);
     }
 
-    levenshtein_mbleven2018(affix.s1, affix.len1, affix.s2, affix.len2, score_cutoff)
+    mbleven2018(affix.s1, affix.len1, affix.s2, affix.len2, score_cutoff)
 }
 
-fn uniform_levenshtein_distance_without_pm<Iter1, Iter2, Elem1, Elem2>(
+fn uniform_distance_without_pm<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     len1: usize,
     s2: Iter2,
@@ -1056,14 +1035,7 @@ where
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
 {
     if len1 < len2 {
-        return uniform_levenshtein_distance_without_pm(
-            s2,
-            len2,
-            s1,
-            len1,
-            score_cutoff,
-            score_hint,
-        );
+        return uniform_distance_without_pm(s2, len2, s1, len1, score_cutoff, score_hint);
     }
 
     score_cutoff = min(score_cutoff, max(len1, len2));
@@ -1087,7 +1059,7 @@ where
     }
 
     if score_cutoff < 4 {
-        return levenshtein_mbleven2018(affix.s1, affix.len1, affix.s2, affix.len2, score_cutoff);
+        return mbleven2018(affix.s1, affix.len1, affix.s2, affix.len2, score_cutoff);
     }
 
     // todo could safe up to 25% even without score_cutoff when ignoring irrelevant paths
@@ -1106,7 +1078,7 @@ where
         };
         pm.insert(affix.s2.clone());
 
-        let res: LevenshteinResult<0, 0> = levenshtein_hyrroe2003(
+        let res: LevenshteinResult<0, 0> = hyrroe2003(
             &pm,
             affix.s2,
             affix.len2,
@@ -1116,7 +1088,7 @@ where
         );
         res.dist
     } else if full_band <= 64 {
-        let res: LevenshteinResult<0, 0> = levenshtein_hyrroe2003_small_band_without_pm(
+        let res: LevenshteinResult<0, 0> = hyrroe2003_small_band_without_pm(
             affix.s1,
             affix.len1,
             affix.s2,
@@ -1131,7 +1103,7 @@ where
             full_band = min(affix.len1, 2 * score_hint + 1);
 
             let score = if full_band <= 64 {
-                levenshtein_hyrroe2003_small_band_with_pm(
+                hyrroe2003_small_band_with_pm(
                     &pm,
                     affix.s1.clone(),
                     affix.len1,
@@ -1140,7 +1112,7 @@ where
                     score_hint,
                 )
             } else {
-                let res: LevenshteinResult<0, 0> = levenshtein_hyrroe2003_block(
+                let res: LevenshteinResult<0, 0> = hyrroe2003_block(
                     &pm,
                     affix.s1.clone(),
                     affix.len1,
@@ -1162,7 +1134,7 @@ where
             score_hint *= 2;
         }
 
-        let res: LevenshteinResult<0, 0> = levenshtein_hyrroe2003_block(
+        let res: LevenshteinResult<0, 0> = hyrroe2003_block(
             &pm,
             affix.s1.clone(),
             affix.len1,
@@ -1175,7 +1147,7 @@ where
     }
 }
 
-fn _levenshtein_distance_without_pm<Iter1, Iter2, Elem1, Elem2>(
+fn _distance_without_pm<Iter1, Iter2, Elem1, Elem2>(
     s1: Iter1,
     len1: usize,
     s2: Iter2,
@@ -1192,7 +1164,7 @@ where
 {
     // for very short sequences the bitparallel algorithm is not worth it
     if len1 * len2 < 90 {
-        return generalized_levenshtein_distance(s1, len1, s2, len2, weights, score_cutoff);
+        return generalized_distance(s1, len1, s2, len2, weights, score_cutoff);
     }
 
     if weights.insert_cost == weights.delete_cost {
@@ -1206,14 +1178,8 @@ where
             // score_cutoff can make use of the common divisor of the three weights
             let new_score_cutoff = ceil_div_usize(score_cutoff, weights.insert_cost);
             let new_score_hint = ceil_div_usize(score_hint, weights.insert_cost);
-            let mut dist = uniform_levenshtein_distance_without_pm(
-                s1,
-                len1,
-                s2,
-                len2,
-                new_score_cutoff,
-                new_score_hint,
-            )?;
+            let mut dist =
+                uniform_distance_without_pm(s1, len1, s2, len2, new_score_cutoff, new_score_hint)?;
             dist *= weights.insert_cost;
             if dist <= score_cutoff {
                 return Some(dist);
@@ -1228,7 +1194,7 @@ where
             // max can make use of the common divisor of the three weights
             let new_score_cutoff = ceil_div_usize(score_cutoff, weights.insert_cost);
             let new_score_hint = ceil_div_usize(score_hint, weights.insert_cost);
-            let mut dist = Indel {}._distance(
+            let mut dist = indel::Indel {}._distance(
                 s1,
                 len1,
                 s2,
@@ -1244,11 +1210,11 @@ where
         }
     }
 
-    generalized_levenshtein_distance(s1, len1, s2, len2, weights, score_cutoff)
+    generalized_distance(s1, len1, s2, len2, weights, score_cutoff)
 }
 
 #[allow(clippy::too_many_arguments)]
-fn _levenshtein_distance_with_pm<Iter1, Iter2, Elem1, Elem2>(
+fn _distance_with_pm<Iter1, Iter2, Elem1, Elem2>(
     pm: &BlockPatternMatchVector,
     s1: Iter1,
     len1: usize,
@@ -1275,15 +1241,8 @@ where
             // score_cutoff can make use of the common divisor of the three weights
             let new_score_cutoff = ceil_div_usize(score_cutoff, weights.insert_cost);
             let new_score_hint = ceil_div_usize(score_hint, weights.insert_cost);
-            let mut dist = uniform_levenshtein_distance_with_pm(
-                pm,
-                s1,
-                len1,
-                s2,
-                len2,
-                new_score_cutoff,
-                new_score_hint,
-            )?;
+            let mut dist =
+                uniform_distance_with_pm(pm, s1, len1, s2, len2, new_score_cutoff, new_score_hint)?;
             dist *= weights.insert_cost;
             if dist <= score_cutoff {
                 return Some(dist);
@@ -1297,7 +1256,7 @@ where
         else if weights.replace_cost >= weights.insert_cost + weights.delete_cost {
             // max can make use of the common divisor of the three weights
             let new_score_cutoff = ceil_div_usize(score_cutoff, weights.insert_cost);
-            let mut dist = indel_distance_with_pm(pm, s1, len1, s2, len2, new_score_cutoff)?;
+            let mut dist = indel::distance_with_pm(pm, s1, len1, s2, len2, new_score_cutoff)?;
             dist *= weights.insert_cost;
             if dist <= score_cutoff {
                 return Some(dist);
@@ -1306,7 +1265,7 @@ where
         }
     }
 
-    generalized_levenshtein_distance(s1, len1, s2, len2, weights, score_cutoff)
+    generalized_distance(s1, len1, s2, len2, weights, score_cutoff)
 }
 
 struct Levenshtein {
@@ -1320,7 +1279,7 @@ impl MetricUsize for Levenshtein {
             delete_cost: 1,
             replace_cost: 1,
         });
-        _levenshtein_maximum(len1, len2, &weights)
+        _maximum(len1, len2, &weights)
     }
 
     fn _distance<Iter1, Iter2, Elem1, Elem2>(
@@ -1343,7 +1302,7 @@ impl MetricUsize for Levenshtein {
             delete_cost: 1,
             replace_cost: 1,
         });
-        _levenshtein_distance_without_pm(
+        _distance_without_pm(
             s1,
             len1,
             s2,
@@ -1479,7 +1438,7 @@ pub struct CachedLevenshtein<Elem1> {
 
 impl<CharT> MetricUsize for CachedLevenshtein<CharT> {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
-        _levenshtein_maximum(len1, len2, &self.weights)
+        _maximum(len1, len2, &self.weights)
     }
 
     fn _distance<Iter1, Iter2, Elem1, Elem2>(
@@ -1497,7 +1456,7 @@ impl<CharT> MetricUsize for CachedLevenshtein<CharT> {
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
-        _levenshtein_distance_with_pm(
+        _distance_with_pm(
             &self.pm,
             s1,
             len1,
@@ -1803,7 +1762,7 @@ mod tests {
 
     /// levenshtein calculates empty sequence
     #[test]
-    fn levenshtein_empty() {
+    fn empty() {
         assert_eq!(
             Some(0),
             _test_distance_ascii(EMPTY, EMPTY, None, None, None)
@@ -1814,7 +1773,7 @@ mod tests {
 
     /// levenshtein calculates correct distances
     #[test]
-    fn levenshtein_simple() {
+    fn simple() {
         assert_eq!(Some(0), _test_distance_ascii(TEST, TEST, None, None, None));
         assert_eq!(
             Some(1),
@@ -1862,7 +1821,7 @@ mod tests {
 
     /// weighted levenshtein calculates correct distances
     #[test]
-    fn levenshtein_weighted_simple() {
+    fn weighted_simple() {
         let weights = WeightTable {
             insert_cost: 1,
             delete_cost: 1,
