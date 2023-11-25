@@ -203,14 +203,7 @@ impl MetricUsize for IndividualComparator {
                 None
             }
         } else if affix.len1 <= 64 {
-            // rust fails to elide the copy when returning the array
-            // from PatternMatchVector::new so manually inline it
-            //let block = PatternMatchVector::new(s2_iter.clone());
-            let mut pm = PatternMatchVector {
-                map_unsigned: BitvectorHashmap::default(),
-                map_signed: BitvectorHashmap::default(),
-                extended_ascii: [0; 256],
-            };
+            let mut pm = PatternMatchVector::default();
             pm.insert(affix.s1.clone());
             hyrroe2003(
                 &pm,

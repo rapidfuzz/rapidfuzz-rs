@@ -47,7 +47,7 @@ fn benchmark(c: &mut Criterion) {
 
         let cached = distance::jaro_winkler::BatchComparator::new(s1.bytes(), None);
         group.bench_with_input(
-            BenchmarkId::new("cached_rapidfuzz", i),
+            BenchmarkId::new("rapidfuzz (BatchComparator)", i),
             &(&cached, &s2),
             |b, val| {
                 b.iter(|| {
@@ -87,7 +87,7 @@ fn benchmark(c: &mut Criterion) {
 
         let cached = distance::osa::BatchComparator::new(s1.chars());
         group.bench_with_input(
-            BenchmarkId::new("cached_rapidfuzz", i),
+            BenchmarkId::new("rapidfuzz (BatchComparator)", i),
             &(&cached, &s2),
             |b, val| {
                 b.iter(|| {
@@ -133,7 +133,7 @@ fn benchmark(c: &mut Criterion) {
 
         let cached = distance::levenshtein::BatchComparator::new(s1.bytes(), None);
         group.bench_with_input(
-            BenchmarkId::new("cached_rapidfuzz", i),
+            BenchmarkId::new("rapidfuzz (BatchComparator)", i),
             &(&cached, &s2),
             |b, val| {
                 b.iter(|| {
@@ -141,6 +141,31 @@ fn benchmark(c: &mut Criterion) {
                 })
             },
         );
+    }
+
+    group.finish();
+
+    group = c.benchmark_group("Generic Levenshtein");
+
+    for i in lens.clone() {
+        let s1 = generate(i);
+        let s2 = generate(i);
+
+        group.bench_with_input(BenchmarkId::new("rapidfuzz", i), &(&s1, &s2), |b, val| {
+            b.iter(|| {
+                black_box(distance::levenshtein::distance(
+                    val.0.bytes(),
+                    val.1.bytes(),
+                    Some(distance::levenshtein::WeightTable {
+                        insertion_cost: 1,
+                        deletion_cost: 2,
+                        substitution_cost: 3,
+                    }),
+                    None,
+                    None,
+                ));
+            })
+        });
     }
 
     group.finish();

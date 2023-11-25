@@ -3,7 +3,7 @@ use crate::details::distance::MetricUsize;
 use crate::details::intrinsics::{carrying_add, ceil_div_usize};
 use crate::details::matrix::ShiftedBitMatrix;
 use crate::details::pattern_match_vector::{
-    BitVectorInterface, BitvectorHashmap, BlockPatternMatchVector, PatternMatchVector,
+    BitVectorInterface, BlockPatternMatchVector, PatternMatchVector,
 };
 use std::cmp::{max, min};
 
@@ -374,14 +374,7 @@ where
     if len1 == 0 {
         Some(0)
     } else if len1 <= 64 {
-        // rust fails to elide the copy when returning the array
-        // from PatternMatchVector::new so manually inline it
-        //let block = PatternMatchVector::new(s2_iter.clone());
-        let mut pm = PatternMatchVector {
-            map_unsigned: BitvectorHashmap::default(),
-            map_signed: BitvectorHashmap::default(),
-            extended_ascii: [0; 256],
-        };
+        let mut pm = PatternMatchVector::default();
         pm.insert(s1.clone());
         longest_common_subsequence_with_pm(&pm, s1, len1, s2, len2, score_cutoff)
     } else {

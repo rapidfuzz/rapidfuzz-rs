@@ -2,7 +2,7 @@ use crate::details::common::{find_common_prefix, HashableChar};
 use crate::details::distance::Metricf64;
 use crate::details::intrinsics::{bit_mask_lsb_u64, blsi_u64, blsr_u64, ceil_div_usize};
 use crate::details::pattern_match_vector::{
-    BitVectorInterface, BitvectorHashmap, BlockPatternMatchVector, PatternMatchVector,
+    BitVectorInterface, BlockPatternMatchVector, PatternMatchVector,
 };
 use crate::Hash;
 use std::cmp::min;
@@ -412,16 +412,8 @@ where
     if len1 == 0 || len2 == 0 {
         // already has correct number of common chars and transpositions
     } else if len1 <= 64 && len2 <= 64 {
-        // rust fails to elide the copy when returning the array
-        // from PatternMatchVector::new so manually inline it
-        //let block = PatternMatchVector::new(s2_iter.clone());
-        let mut pm = PatternMatchVector {
-            map_unsigned: BitvectorHashmap::default(),
-            map_signed: BitvectorHashmap::default(),
-            extended_ascii: [0; 256],
-        };
+        let mut pm = PatternMatchVector::default();
         pm.insert(s1_iter);
-
         let flagged = flag_similar_characters_word(&pm, len1, s2_iter.clone(), len2, bound);
 
         common_chars += flagged.count_common_chars();

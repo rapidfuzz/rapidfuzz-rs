@@ -4,7 +4,7 @@ use crate::details::growing_hashmap::{GrowingHashmap, HybridGrowingHashmap};
 use crate::details::intrinsics::{ceil_div_usize, shr64};
 use crate::details::matrix::ShiftedBitMatrix;
 use crate::details::pattern_match_vector::{
-    BitVectorInterface, BitvectorHashmap, BlockPatternMatchVector, PatternMatchVector,
+    BitVectorInterface, BlockPatternMatchVector, PatternMatchVector,
 };
 use crate::distance::indel;
 use std::cmp::{max, min};
@@ -975,6 +975,7 @@ where
 
     // do this first, since we can not remove any affix in encoded form
     // todo actually we could at least remove the common prefix and just shift the band
+    // todo for short strings this is likely a performance regression
     if score_cutoff >= 4 {
         // todo could safe up to 25% even without score_cutoff when ignoring irrelevant paths
         // in the upper and lower corner
@@ -1070,14 +1071,7 @@ where
 
     /* when the short strings has less then 65 elements Hyyrös' algorithm can be used */
     if affix.len2 <= 64 {
-        // rust fails to elide the copy when returning the array
-        // from PatternMatchVector::new so manually inline it
-        //let block = PatternMatchVector::new(s2_iter.clone());
-        let mut pm = PatternMatchVector {
-            map_unsigned: BitvectorHashmap::default(),
-            map_signed: BitvectorHashmap::default(),
-            extended_ascii: [0; 256],
-        };
+        let mut pm = PatternMatchVector::default();
         pm.insert(affix.s2.clone());
 
         let res: DistanceResult<0, 0> = hyrroe2003(
@@ -1316,6 +1310,17 @@ impl MetricUsize for IndividualComparator {
     }
 }
 
+/// Levenshtein distance
+///
+/// Calculates the Levenshtein distance.
+///
+/// # Examples
+///
+/// ```
+/// use rapidfuzz::distance::levenshtein;
+///
+/// assert_eq!(Some(3), levenshtein::distance("CA".chars(), "ABC".chars(), None, None, None));
+/// ```
 pub fn distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -1345,6 +1350,22 @@ where
     )
 }
 
+/// Levenshtein similarity in the range [max, 0]
+///
+/// This is calculated as `maximum - `[`distance`]. Where maximum is defined as
+/// ```notrust
+/// if len1 >= len2:
+///     maximum = min(
+///         len1 * deletion_cost + len2 * insertion_cost,
+///         len2 * substitution_cost + (len1 - len2) * deletion_cost
+///     )
+/// else:
+///     maximum = min(
+///         len1 * deletion_cost + len2 * insertion_cost,
+///         len1 * substitution_cost + (len2 - len1) * insertion_cost,
+///     )
+/// ```
+///
 pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -1374,6 +1395,21 @@ where
     )
 }
 
+/// Normalized Levenshtein distance in the range [1.0, 0.0]
+///
+/// This is calculated as [`distance`]` / maximum`. Where maximum is defined as
+/// ```notrust
+/// if len1 >= len2:
+///     maximum = min(
+///         len1 * deletion_cost + len2 * insertion_cost,
+///         len2 * substitution_cost + (len1 - len2) * deletion_cost
+///     )
+/// else:
+///     maximum = min(
+///         len1 * deletion_cost + len2 * insertion_cost,
+///         len1 * substitution_cost + (len2 - len1) * insertion_cost,
+///     )
+/// ```
 pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -1403,6 +1439,10 @@ where
     )
 }
 
+/// Normalized Levenshtein similarity in the range [0.0, 1.0]
+///
+/// This is calculated as `1.0 - `[`normalized_distance`].
+///
 pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -1432,6 +1472,16 @@ where
     )
 }
 
+/// `One x Many` comparisions using the Levenshtein distance
+///
+/// # Examples
+///
+/// ```
+/// use rapidfuzz::distance::levenshtein;
+///
+/// let scorer = levenshtein::BatchComparator::new("CA".chars(), None);
+/// assert_eq!(Some(3), scorer.distance("ABC".chars(), None, None));
+/// ```
 pub struct BatchComparator<Elem1> {
     s1: Vec<Elem1>,
     pm: BlockPatternMatchVector,
