@@ -232,5 +232,3 @@ where
         similarity(self.s1.iter().copied(), s2, score_cutoff, score_hint)
     }
 }
-
-// todo _or versions
