@@ -10,19 +10,24 @@ use crate::distance::indel;
 use std::cmp::{max, min};
 use std::mem;
 
+/// Weight table to specify the costs of edit operations in the Levenshtein distance
 #[derive(Clone, Copy)]
 pub struct WeightTable {
-    pub insert_cost: usize,
-    pub delete_cost: usize,
-    pub replace_cost: usize,
+    /// cost of insertions
+    pub insertion_cost: usize,
+    /// cost of deletions
+    pub deletion_cost: usize,
+    /// cost of substitutions
+    pub substitution_cost: usize,
 }
 
 impl Default for WeightTable {
+    /// creates a uniform weight table where each operation has a cost of 1
     fn default() -> Self {
         Self {
-            insert_cost: 1,
-            delete_cost: 1,
-            replace_cost: 1,
+            insertion_cost: 1,
+            deletion_cost: 1,
+            substitution_cost: 1,
         }
     }
 }
@@ -104,7 +109,7 @@ where
     Elem2: PartialEq<Elem1>,
 {
     let cache_size = len1 + 1;
-    let mut cache: Vec<usize> = (0..cache_size).map(|x| x * weights.delete_cost).collect();
+    let mut cache: Vec<usize> = (0..cache_size).map(|x| x * weights.deletion_cost).collect();
 
     for ch2 in s2 {
         let mut cache_iter = cache.iter_mut().peekable();
@@ -112,20 +117,20 @@ where
             .next()
             .expect("cache always has at least one element");
         let mut temp = *cur_cache;
-        *cur_cache += weights.insert_cost;
+        *cur_cache += weights.insertion_cost;
 
         for ch1 in s1.clone() {
             if ch1 != ch2 {
                 temp = min(
-                    *cur_cache + weights.delete_cost,
-                    temp + weights.replace_cost,
+                    *cur_cache + weights.deletion_cost,
+                    temp + weights.substitution_cost,
                 );
                 temp = min(
                     temp,
                     **cache_iter
                         .peek()
                         .expect("cache has len1 + 1 elements, so this should always exist")
-                        + weights.insert_cost,
+                        + weights.insertion_cost,
                 );
             }
 
@@ -144,30 +149,28 @@ where
     }
 }
 
-/**
- * @brief calculates the maximum possible Levenshtein distance based on
- * string lengths and weights
- */
+/// calculates the maximum possible Levenshtein distance based on
+/// string lengths and weights
 fn _maximum(len1: usize, len2: usize, weights: &WeightTable) -> usize {
-    let max_dist = len1 * weights.delete_cost + len2 * weights.insert_cost;
+    let max_dist = len1 * weights.deletion_cost + len2 * weights.insertion_cost;
 
     if len1 >= len2 {
         min(
             max_dist,
-            len2 * weights.replace_cost + (len1 - len2) * weights.delete_cost,
+            len2 * weights.substitution_cost + (len1 - len2) * weights.deletion_cost,
         )
     } else {
         min(
             max_dist,
-            len1 * weights.replace_cost + (len2 - len1) * weights.insert_cost,
+            len1 * weights.substitution_cost + (len2 - len1) * weights.insertion_cost,
         )
     }
 }
 
 fn _min_distance(len1: usize, len2: usize, weights: &WeightTable) -> usize {
     max(
-        (len1 as isize - len2 as isize) * weights.delete_cost as isize,
-        (len2 as isize - len1 as isize) * weights.insert_cost as isize,
+        (len1 as isize - len2 as isize) * weights.deletion_cost as isize,
+        (len2 as isize - len1 as isize) * weights.insertion_cost as isize,
     ) as usize
 }
 
@@ -1166,33 +1169,33 @@ where
         return generalized_distance(s1, len1, s2, len2, weights, score_cutoff);
     }
 
-    if weights.insert_cost == weights.delete_cost {
+    if weights.insertion_cost == weights.deletion_cost {
         /* when insertions + deletions operations are free there can not be any edit distance */
-        if weights.insert_cost == 0 {
+        if weights.insertion_cost == 0 {
             return Some(0);
         }
 
         /* uniform Levenshtein multiplied with the common factor */
-        if weights.insert_cost == weights.replace_cost {
+        if weights.insertion_cost == weights.substitution_cost {
             // score_cutoff can make use of the common divisor of the three weights
-            let new_score_cutoff = ceil_div_usize(score_cutoff, weights.insert_cost);
-            let new_score_hint = ceil_div_usize(score_hint, weights.insert_cost);
+            let new_score_cutoff = ceil_div_usize(score_cutoff, weights.insertion_cost);
+            let new_score_hint = ceil_div_usize(score_hint, weights.insertion_cost);
             let mut dist =
                 uniform_distance_without_pm(s1, len1, s2, len2, new_score_cutoff, new_score_hint)?;
-            dist *= weights.insert_cost;
+            dist *= weights.insertion_cost;
             if dist <= score_cutoff {
                 return Some(dist);
             }
             return None;
         }
         /*
-         * when replace_cost >= insert_cost + delete_cost no substitutions are performed
+         * when substitution_cost >= insertion_cost + deletion_cost no substitutions are performed
          * therefore this can be implemented as InDel distance multiplied with the common factor
          */
-        else if weights.replace_cost >= weights.insert_cost + weights.delete_cost {
+        else if weights.substitution_cost >= weights.insertion_cost + weights.deletion_cost {
             // max can make use of the common divisor of the three weights
-            let new_score_cutoff = ceil_div_usize(score_cutoff, weights.insert_cost);
-            let new_score_hint = ceil_div_usize(score_hint, weights.insert_cost);
+            let new_score_cutoff = ceil_div_usize(score_cutoff, weights.insertion_cost);
+            let new_score_hint = ceil_div_usize(score_hint, weights.insertion_cost);
             let mut dist = indel::IndividualComparator {}._distance(
                 s1,
                 len1,
@@ -1201,7 +1204,7 @@ where
                 Some(new_score_cutoff),
                 Some(new_score_hint),
             )?;
-            dist *= weights.insert_cost;
+            dist *= weights.insertion_cost;
             if dist <= score_cutoff {
                 return Some(dist);
             }
@@ -1229,34 +1232,34 @@ where
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
 {
-    if weights.insert_cost == weights.delete_cost {
+    if weights.insertion_cost == weights.deletion_cost {
         /* when insertions + deletions operations are free there can not be any edit distance */
-        if weights.insert_cost == 0 {
+        if weights.insertion_cost == 0 {
             return Some(0);
         }
 
         /* uniform Levenshtein multiplied with the common factor */
-        if weights.insert_cost == weights.replace_cost {
+        if weights.insertion_cost == weights.substitution_cost {
             // score_cutoff can make use of the common divisor of the three weights
-            let new_score_cutoff = ceil_div_usize(score_cutoff, weights.insert_cost);
-            let new_score_hint = ceil_div_usize(score_hint, weights.insert_cost);
+            let new_score_cutoff = ceil_div_usize(score_cutoff, weights.insertion_cost);
+            let new_score_hint = ceil_div_usize(score_hint, weights.insertion_cost);
             let mut dist =
                 uniform_distance_with_pm(pm, s1, len1, s2, len2, new_score_cutoff, new_score_hint)?;
-            dist *= weights.insert_cost;
+            dist *= weights.insertion_cost;
             if dist <= score_cutoff {
                 return Some(dist);
             }
             return None;
         }
         /*
-         * when replace_cost >= insert_cost + delete_cost no substitutions are performed
+         * when substitution_cost >= insertion_cost + deletion_cost no substitutions are performed
          * therefore this can be implemented as InDel distance multiplied with the common factor
          */
-        else if weights.replace_cost >= weights.insert_cost + weights.delete_cost {
+        else if weights.substitution_cost >= weights.insertion_cost + weights.deletion_cost {
             // max can make use of the common divisor of the three weights
-            let new_score_cutoff = ceil_div_usize(score_cutoff, weights.insert_cost);
+            let new_score_cutoff = ceil_div_usize(score_cutoff, weights.insertion_cost);
             let mut dist = indel::distance_with_pm(pm, s1, len1, s2, len2, new_score_cutoff)?;
-            dist *= weights.insert_cost;
+            dist *= weights.insertion_cost;
             if dist <= score_cutoff {
                 return Some(dist);
             }
@@ -1274,9 +1277,9 @@ struct IndividualComparator {
 impl MetricUsize for IndividualComparator {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
         let weights = self.weights.unwrap_or(WeightTable {
-            insert_cost: 1,
-            delete_cost: 1,
-            replace_cost: 1,
+            insertion_cost: 1,
+            deletion_cost: 1,
+            substitution_cost: 1,
         });
         _maximum(len1, len2, &weights)
     }
@@ -1297,9 +1300,9 @@ impl MetricUsize for IndividualComparator {
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
         let weights = self.weights.unwrap_or(WeightTable {
-            insert_cost: 1,
-            delete_cost: 1,
-            replace_cost: 1,
+            insertion_cost: 1,
+            deletion_cost: 1,
+            substitution_cost: 1,
         });
         _distance_without_pm(
             s1,
@@ -1481,9 +1484,9 @@ where
         let s1: Vec<Elem1> = s1_iter.clone().collect();
 
         let weights = weights_.unwrap_or(WeightTable {
-            insert_cost: 1,
-            delete_cost: 1,
-            replace_cost: 1,
+            insertion_cost: 1,
+            deletion_cost: 1,
+            substitution_cost: 1,
         });
 
         let mut pm = BlockPatternMatchVector::new(s1.len());
@@ -1822,9 +1825,9 @@ mod tests {
     #[test]
     fn weighted_simple() {
         let weights = WeightTable {
-            insert_cost: 1,
-            delete_cost: 1,
-            replace_cost: 2,
+            insertion_cost: 1,
+            deletion_cost: 1,
+            substitution_cost: 2,
         };
         assert_eq!(
             Some(0),
@@ -1888,9 +1891,9 @@ mod tests {
         assert_eq!(None, _test_distance_ascii(a, b, None, 0, None));
 
         let weights = WeightTable {
-            insert_cost: 1,
-            delete_cost: 1,
-            replace_cost: 2,
+            insertion_cost: 1,
+            deletion_cost: 1,
+            substitution_cost: 2,
         };
         assert_eq!(
             Some(4),

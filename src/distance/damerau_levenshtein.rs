@@ -1,10 +1,30 @@
 //! Damerau-Levenshtein distance
 //!
-//! Similar to [`Levenshtein`], the Damerau-Levenshtein distance is the minimum of operations
-//! needed to transfrom one string into the other. An Operation is defined as an insertion, deletion,
-//! substitution of a single character or transposition of two adjacent characters.
+//! The Damerau-Levenshtein distance measures the minimum number of operations required to
+//! transform one string into another, considering four types of elementary edits:
+//! `insertions`, `deletions`, `substitutions`, and `transpositions of adjacent characters`.
+//! A transposition involves swapping two adjacent characters.
+//! It does respect triangle inequality, and is thus a metric distance.
 //!
-//! Opposed to the [`Optimal String Alignment`] it allows editing a substring more than once.
+//! It's often used in applications where transpositions are common. An example for this would
+//! be typing erros involving adjacent characters.
+//!
+//! # Differences from Levenshtein distance
+//!
+//! The Damerau-Levenshtein distance includes transpositions as an additional operation,
+//! which allows for the swapping of adjacent characters.
+//! The [`Levenshtein`] distance considers insertions, deletions, and substitutions only.
+//! The Levenshtein distance is computationally less intensive than the Damerau-Levenshtein distance algorithm,
+//! as it involves a simpler set of edit operations.
+//!
+//! # Differences from Optimal String Alignment (OSA) distance
+//!
+//! While both the Damerau-Levenshtein and [`OSA`] distance include transpositions,
+//! they differ in the treatment of transpositions. OSA treats any transposition as a
+//! single operation, regardless of whether the transposed characters are adjacent or not.
+//! In contrast, the Damerau-Levenshtein distance specifically allows transpositions of adjacent
+//! characters.
+//!
 //! An example where this leads to different results are the strings `CA` and `ÀBC`
 //!
 //! ```
@@ -15,14 +35,14 @@
 //! assert_eq!(Some(3), osa::distance("CA".chars(), "ABC".chars(), None, None));
 //! ```
 //!
-//! It does respect triangle inequality, and is thus a metric distance.
+//! The handling of transpositions in the OSA distance is simpler, which makes it computationally less intensive.
 //!
 //! [`Levenshtein`]: ../levenshtein/index.html
-//! [`Optimal String Alignment`]: ../osa/index.html
+//! [`OSA`]: ../osa/index.html
 //!
 //! # Performance
 //!
-//! The implementation has a runtime complexity of `O(N*M)` and a memory usage of `O(N)`.
+//! The implementation has a runtime complexity of `O(N*M)` and a memory usage of `O(N+M)`.
 //! It's based on the paper
 //! `Linear space string correction algorithm using the Damerau-Levenshtein distance`
 //! from Chunchun Zhao and Sartaj Sahni
@@ -306,7 +326,7 @@ where
     )
 }
 
-/// Cached damerau levenshtein distance for `One x Many` comparisions
+/// `One x Many` comparisions using the Damerau-Levenshtein distance
 ///
 /// # Examples
 ///
@@ -334,6 +354,7 @@ where
         }
     }
 
+    /// Normalized distance calculated similar to [`normalized_distance`]
     pub fn normalized_distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
@@ -351,6 +372,7 @@ where
         normalized_distance(self.s1.iter().copied(), s2, score_cutoff, score_hint)
     }
 
+    /// Normalized similarity calculated similar to [`normalized_similarity`]
     pub fn normalized_similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
@@ -368,6 +390,7 @@ where
         normalized_similarity(self.s1.iter().copied(), s2, score_cutoff, score_hint)
     }
 
+    /// Distance calculated similar to [`distance`]
     pub fn distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
@@ -385,6 +408,7 @@ where
         distance(self.s1.iter().copied(), s2, score_cutoff, score_hint)
     }
 
+    /// Similarity calculated similar to [`similarity`]
     pub fn similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
