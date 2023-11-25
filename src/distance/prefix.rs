@@ -16,7 +16,7 @@ impl SimilarityMetricUsize for Prefix {
         _len2: usize,
         score_cutoff: usize,
         _score_hint: usize,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter1: Iterator<Item = Elem1> + Clone,
         Iter2: Iterator<Item = Elem2> + Clone,
@@ -25,9 +25,9 @@ impl SimilarityMetricUsize for Prefix {
     {
         let dist = find_common_prefix(s1, s2);
         if dist >= score_cutoff {
-            dist
+            Some(dist)
         } else {
-            0
+            None
         }
     }
 }
@@ -37,7 +37,7 @@ pub fn distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s2: Iter2,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> usize
+) -> Option<usize>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -65,7 +65,7 @@ pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s2: Iter2,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> usize
+) -> Option<usize>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -93,7 +93,7 @@ pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s2: Iter2,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> f64
+) -> Option<f64>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -121,7 +121,7 @@ pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>
     s2: Iter2,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> f64
+) -> Option<f64>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -168,7 +168,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -185,7 +185,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -202,7 +202,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -219,7 +219,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,

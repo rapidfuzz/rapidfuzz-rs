@@ -14,14 +14,14 @@ struct ResultMatrix {
 
 struct LcsSeqResult<const RECORD_MATRIX: usize> {
     record_matrix: [ResultMatrix; RECORD_MATRIX],
-    sim: usize,
+    sim: Option<usize>,
 }
 
 impl Default for LcsSeqResult<0> {
     fn default() -> Self {
         Self {
             record_matrix: [],
-            sim: 0,
+            sim: None,
         }
     }
 }
@@ -30,7 +30,7 @@ impl Default for LcsSeqResult<1> {
     fn default() -> Self {
         Self {
             record_matrix: [ResultMatrix::default()],
-            sim: 0,
+            sim: None,
         }
     }
 }
@@ -80,7 +80,7 @@ fn lcs_seq_mbleven2018<Iter1, Iter2, Elem1, Elem2>(
     s2: Iter2,
     len2: usize,
     score_cutoff: usize,
-) -> usize
+) -> Option<usize>
 where
     Iter1: Iterator<Item = Elem1> + Clone,
     Iter2: Iterator<Item = Elem2> + Clone,
@@ -136,9 +136,9 @@ where
     }
 
     if max_len >= score_cutoff {
-        max_len
+        Some(max_len)
     } else {
-        0
+        None
     }
 }
 
@@ -197,15 +197,11 @@ where
         }
     }
 
-    res.sim = 0;
+    let mut sim = 0_usize;
     for x in s {
-        res.sim += (!x).count_ones() as usize;
+        sim += (!x).count_ones() as usize;
     }
-
-    if res.sim < score_cutoff {
-        res.sim = 0;
-    }
-
+    res.sim = if sim >= score_cutoff { Some(sim) } else { None };
     res
 }
 
@@ -280,15 +276,11 @@ where
         }
     }
 
-    res.sim = 0;
+    let mut sim = 0_usize;
     for x in s {
-        res.sim += (!x).count_ones() as usize;
+        sim += (!x).count_ones() as usize;
     }
-
-    if res.sim < score_cutoff {
-        res.sim = 0;
-    }
-
+    res.sim = if sim >= score_cutoff { Some(sim) } else { None };
     res
 }
 
@@ -299,7 +291,7 @@ fn longest_common_subsequence_with_pm<PmVec, Iter1, Iter2, Elem1, Elem2>(
     s2: Iter2,
     len2: usize,
     score_cutoff: usize,
-) -> usize
+) -> Option<usize>
 where
     Iter1: Iterator<Item = Elem1> + Clone,
     Iter2: Iterator<Item = Elem2> + Clone,
@@ -320,7 +312,13 @@ where
     }
 
     match ceil_div_usize(len1, word_size) {
-        0 => 0,
+        0 => {
+            if 0 == score_cutoff {
+                Some(0)
+            } else {
+                None
+            }
+        }
         1 => {
             let func = lcs_unroll::<1, 0, PmVec, Iter1, Iter2, Elem1, Elem2>;
             func(pm, s1, len1, s2, len2, score_cutoff).sim
@@ -366,7 +364,7 @@ fn longest_common_subsequence_without_pm<Iter1, Iter2, Elem1, Elem2>(
     s2: Iter2,
     len2: usize,
     score_cutoff: usize,
-) -> usize
+) -> Option<usize>
 where
     Iter1: Iterator<Item = Elem1> + Clone,
     Iter2: Iterator<Item = Elem2> + Clone,
@@ -374,7 +372,7 @@ where
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
 {
     if len1 == 0 {
-        0
+        Some(0)
     } else if len1 <= 64 {
         // rust fails to elide the copy when returning the array
         // from PatternMatchVector::new so manually inline it
@@ -402,7 +400,7 @@ pub(crate) fn lcs_seq_similarity_with_pm<PmVec, Iter1, Iter2, Elem1, Elem2>(
     s2: Iter2,
     len2: usize,
     score_cutoff: usize,
-) -> usize
+) -> Option<usize>
 where
     Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
     Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -411,17 +409,21 @@ where
     PmVec: BitVectorInterface,
 {
     if score_cutoff > len1 || score_cutoff > len2 {
-        return 0;
+        return None;
     }
 
     let max_misses = len1 + len2 - 2 * score_cutoff;
     // no edits are allowed
     if max_misses == 0 || (max_misses == 1 && len1 == len2) {
-        return if s1.into_iter().eq(s2) { len1 } else { 0 };
+        return if s1.into_iter().eq(s2) {
+            Some(len1)
+        } else {
+            None
+        };
     }
 
     if max_misses < len1.abs_diff(len2) {
-        return 0;
+        return None;
     }
 
     // do this first, since we can not remove any affix in encoded form
@@ -439,13 +441,13 @@ where
             affix.s2,
             affix.len2,
             score_cutoff - lcs_sim,
-        );
+        )?;
     }
 
     if lcs_sim >= score_cutoff {
-        lcs_sim
+        Some(lcs_sim)
     } else {
-        0
+        None
     }
 }
 
@@ -455,7 +457,7 @@ fn lcs_seq_similarity_without_pm<Iter1, Iter2, Elem1, Elem2>(
     s2: Iter2,
     len2: usize,
     score_cutoff: usize,
-) -> usize
+) -> Option<usize>
 where
     Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
     Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -468,17 +470,21 @@ where
     }
 
     if score_cutoff > len1 || score_cutoff > len2 {
-        return 0;
+        return None;
     }
 
     let max_misses = len1 + len2 - 2 * score_cutoff;
     // no edits are allowed
     if max_misses == 0 || (max_misses == 1 && len1 == len2) {
-        return if s1.into_iter().eq(s2) { len1 } else { 0 };
+        return if s1.into_iter().eq(s2) {
+            Some(len1)
+        } else {
+            None
+        };
     }
 
     if max_misses < len1.abs_diff(len2) {
-        return 0;
+        return None;
     }
 
     // remove common affix and count it as part of the LCS
@@ -493,7 +499,7 @@ where
         };
         if max_misses < 5 {
             lcs_sim +=
-                lcs_seq_mbleven2018(affix.s1, affix.len1, affix.s2, affix.len2, adjusted_cutoff);
+                lcs_seq_mbleven2018(affix.s1, affix.len1, affix.s2, affix.len2, adjusted_cutoff)?;
         } else {
             lcs_sim += longest_common_subsequence_without_pm(
                 affix.s1,
@@ -501,14 +507,14 @@ where
                 affix.s2,
                 affix.len2,
                 adjusted_cutoff,
-            );
+            )?;
         }
     }
 
     if lcs_sim >= score_cutoff {
-        lcs_sim
+        Some(lcs_sim)
     } else {
-        0
+        None
     }
 }
 
@@ -527,7 +533,7 @@ impl SimilarityMetricUsize for LcsSeq {
         len2: usize,
         score_cutoff: usize,
         _score_hint: usize,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -543,7 +549,7 @@ pub fn distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s2: Iter2,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> usize
+) -> Option<usize>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -571,7 +577,7 @@ pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s2: Iter2,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> usize
+) -> Option<usize>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -599,7 +605,7 @@ pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s2: Iter2,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> f64
+) -> Option<f64>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -627,7 +633,7 @@ pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>
     s2: Iter2,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> f64
+) -> Option<f64>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -674,7 +680,7 @@ where
         len2: usize,
         score_cutoff: usize,
         _score_hint: usize,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -708,7 +714,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -733,7 +739,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -758,7 +764,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -783,7 +789,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -810,8 +816,14 @@ mod tests {
 
     macro_rules! assert_delta {
         ($x:expr, $y:expr, $d:expr) => {
-            if ($x - $y).abs() > $d {
-                panic!();
+            match ($x, $y) {
+                (None, None) => {}
+                (Some(val1), Some(val2)) => {
+                    if (val1 - val2).abs() > $d {
+                        panic!("{:?} != {:?}", $x, $y);
+                    }
+                }
+                (_, _) => panic!("{:?} != {:?}", $x, $y),
             }
         };
     }
@@ -821,7 +833,7 @@ mod tests {
         s2_: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter1: IntoIterator<Item = Elem1>,
         Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -863,7 +875,7 @@ mod tests {
         s2: &str,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> usize
+    ) -> Option<usize>
     where
         ScoreCutoff: Into<Option<usize>> + Clone,
         ScoreHint: Into<Option<usize>> + Clone,
@@ -885,7 +897,7 @@ mod tests {
         s2_: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter1: IntoIterator<Item = Elem1>,
         Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -927,7 +939,7 @@ mod tests {
         s2: &str,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> usize
+    ) -> Option<usize>
     where
         ScoreCutoff: Into<Option<usize>> + Clone,
         ScoreHint: Into<Option<usize>> + Clone,
@@ -949,7 +961,7 @@ mod tests {
         s2_: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter1: IntoIterator<Item = Elem1>,
         Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -991,7 +1003,7 @@ mod tests {
         s2: &str,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         ScoreCutoff: Into<Option<f64>> + Clone,
         ScoreHint: Into<Option<f64>> + Clone,
@@ -1014,7 +1026,7 @@ mod tests {
         s2_: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter1: IntoIterator<Item = Elem1>,
         Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -1056,7 +1068,7 @@ mod tests {
         s2: &str,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         ScoreCutoff: Into<Option<f64>> + Clone,
         ScoreHint: Into<Option<f64>> + Clone,
@@ -1076,15 +1088,21 @@ mod tests {
 
     #[test]
     fn lcs_seq_similar() {
-        assert_eq!(0, test_lcs_seq_distance_ascii("aaaa", "aaaa", None, None));
-        assert_eq!(4, test_lcs_seq_similarity_ascii("aaaa", "aaaa", None, None));
+        assert_eq!(
+            Some(0),
+            test_lcs_seq_distance_ascii("aaaa", "aaaa", None, None)
+        );
+        assert_eq!(
+            Some(4),
+            test_lcs_seq_similarity_ascii("aaaa", "aaaa", None, None)
+        );
         assert_delta!(
-            0.0,
+            Some(0.0),
             test_lcs_seq_normalized_distance_ascii("aaaa", "aaaa", None, None),
             0.0001
         );
         assert_delta!(
-            1.0,
+            Some(1.0),
             test_lcs_seq_normalized_similarity_ascii("aaaa", "aaaa", None, None),
             0.0001
         );
@@ -1092,15 +1110,21 @@ mod tests {
 
     #[test]
     fn lcs_seq_completely_different() {
-        assert_eq!(4, test_lcs_seq_distance_ascii("aaaa", "bbbb", None, None));
-        assert_eq!(0, test_lcs_seq_similarity_ascii("aaaa", "bbbb", None, None));
+        assert_eq!(
+            Some(4),
+            test_lcs_seq_distance_ascii("aaaa", "bbbb", None, None)
+        );
+        assert_eq!(
+            Some(0),
+            test_lcs_seq_similarity_ascii("aaaa", "bbbb", None, None)
+        );
         assert_delta!(
-            1.0,
+            Some(1.0),
             test_lcs_seq_normalized_distance_ascii("aaaa", "bbbb", None, None),
             0.0001
         );
         assert_delta!(
-            0.0,
+            Some(0.0),
             test_lcs_seq_normalized_similarity_ascii("aaaa", "bbbb", None, None),
             0.0001
         );
@@ -1112,35 +1136,35 @@ mod tests {
         let mut a = "South Korea";
         let mut b = "North Korea";
 
-        assert_eq!(9, test_lcs_seq_similarity_ascii(a, b, None, None));
-        assert_eq!(9, test_lcs_seq_similarity_ascii(a, b, 9, None));
-        assert_eq!(0, test_lcs_seq_similarity_ascii(a, b, 10, None));
+        assert_eq!(Some(9), test_lcs_seq_similarity_ascii(a, b, None, None));
+        assert_eq!(Some(9), test_lcs_seq_similarity_ascii(a, b, 9, None));
+        assert_eq!(None, test_lcs_seq_similarity_ascii(a, b, 10, None));
 
-        assert_eq!(2, test_lcs_seq_distance_ascii(a, b, None, None));
-        assert_eq!(2, test_lcs_seq_distance_ascii(a, b, 4, None));
-        assert_eq!(2, test_lcs_seq_distance_ascii(a, b, 3, None));
-        assert_eq!(2, test_lcs_seq_distance_ascii(a, b, 2, None));
-        assert_eq!(2, test_lcs_seq_distance_ascii(a, b, 1, None));
-        assert_eq!(1, test_lcs_seq_distance_ascii(a, b, 0, None));
+        assert_eq!(Some(2), test_lcs_seq_distance_ascii(a, b, None, None));
+        assert_eq!(Some(2), test_lcs_seq_distance_ascii(a, b, 4, None));
+        assert_eq!(Some(2), test_lcs_seq_distance_ascii(a, b, 3, None));
+        assert_eq!(Some(2), test_lcs_seq_distance_ascii(a, b, 2, None));
+        assert_eq!(None, test_lcs_seq_distance_ascii(a, b, 1, None));
+        assert_eq!(None, test_lcs_seq_distance_ascii(a, b, 0, None));
 
         a = "aabc";
         b = "cccd";
-        assert_eq!(1, test_lcs_seq_similarity_ascii(a, b, None, None));
-        assert_eq!(1, test_lcs_seq_similarity_ascii(a, b, 1, None));
-        assert_eq!(0, test_lcs_seq_similarity_ascii(a, b, 2, None));
+        assert_eq!(Some(1), test_lcs_seq_similarity_ascii(a, b, None, None));
+        assert_eq!(Some(1), test_lcs_seq_similarity_ascii(a, b, 1, None));
+        assert_eq!(None, test_lcs_seq_similarity_ascii(a, b, 2, None));
 
-        assert_eq!(3, test_lcs_seq_distance_ascii(a, b, None, None));
-        assert_eq!(3, test_lcs_seq_distance_ascii(a, b, 4, None));
-        assert_eq!(3, test_lcs_seq_distance_ascii(a, b, 3, None));
-        assert_eq!(3, test_lcs_seq_distance_ascii(a, b, 2, None));
-        assert_eq!(2, test_lcs_seq_distance_ascii(a, b, 1, None));
-        assert_eq!(1, test_lcs_seq_distance_ascii(a, b, 0, None));
+        assert_eq!(Some(3), test_lcs_seq_distance_ascii(a, b, None, None));
+        assert_eq!(Some(3), test_lcs_seq_distance_ascii(a, b, 4, None));
+        assert_eq!(Some(3), test_lcs_seq_distance_ascii(a, b, 3, None));
+        assert_eq!(None, test_lcs_seq_distance_ascii(a, b, 2, None));
+        assert_eq!(None, test_lcs_seq_distance_ascii(a, b, 1, None));
+        assert_eq!(None, test_lcs_seq_distance_ascii(a, b, 0, None));
     }
 
     #[test]
     fn test_cached() {
         let a = "001";
         let b = "220";
-        assert_eq!(1, test_lcs_seq_similarity_ascii(a, b, None, None));
+        assert_eq!(Some(1), test_lcs_seq_similarity_ascii(a, b, None, None));
     }
 }

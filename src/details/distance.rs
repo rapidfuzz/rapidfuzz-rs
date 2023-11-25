@@ -11,7 +11,7 @@ pub trait DistanceMetricUsize {
         len2: usize,
         score_cutoff: usize,
         score_hint: usize,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -26,7 +26,7 @@ pub trait DistanceMetricUsize {
         len2: usize,
         score_cutoff: usize,
         mut score_hint: usize,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -35,18 +35,18 @@ pub trait DistanceMetricUsize {
     {
         let maximum = self.maximum(len1, len2);
         if score_cutoff > maximum {
-            return 0;
+            return None;
         }
 
         score_hint = score_hint.min(score_cutoff);
         let cutoff_distance = maximum - score_cutoff;
         let hint_distance = maximum - score_hint;
-        let dist = self._distance(s1, len1, s2, len2, cutoff_distance, hint_distance);
+        let dist = self._distance(s1, len1, s2, len2, cutoff_distance, hint_distance)?;
         let sim = maximum - dist;
         if sim >= score_cutoff {
-            sim
+            Some(sim)
         } else {
-            0
+            None
         }
     }
 }
@@ -62,7 +62,7 @@ pub trait SimilarityMetricUsize {
         len2: usize,
         score_cutoff: usize,
         score_hint: usize,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -82,13 +82,13 @@ pub trait SimilarityMetricUsize {
             0
         };
 
-        let sim = self._similarity(s1, len1, s2, len2, cutoff_similarity, hint_similarity);
+        let sim = self._similarity(s1, len1, s2, len2, cutoff_similarity, hint_similarity)?;
         let dist = maximum - sim;
 
         if dist <= score_cutoff {
-            dist
+            Some(dist)
         } else {
-            score_cutoff + 1
+            None
         }
     }
 
@@ -100,7 +100,7 @@ pub trait SimilarityMetricUsize {
         len2: usize,
         score_cutoff: usize,
         score_hint: usize,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -117,7 +117,7 @@ pub trait NormalizedMetricUsize {
         len2: usize,
         score_cutoff: f64,
         score_hint: f64,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -131,7 +131,7 @@ pub trait NormalizedMetricUsize {
         len2: usize,
         score_cutoff: f64,
         score_hint: f64,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -148,7 +148,7 @@ impl<T: DistanceMetricUsize> NormalizedMetricUsize for T {
         len2: usize,
         score_cutoff: f64,
         score_hint: f64,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -160,16 +160,16 @@ impl<T: DistanceMetricUsize> NormalizedMetricUsize for T {
         let cutoff_distance = (maximum as f64 * score_cutoff).ceil() as usize;
         let hint_distance = (maximum as f64 * score_hint).ceil() as usize;
 
-        let dist = self._distance(s1, len1, s2, len2, cutoff_distance, hint_distance);
+        let dist = self._distance(s1, len1, s2, len2, cutoff_distance, hint_distance)?;
         let norm_dist = if maximum == 0 {
             0.0
         } else {
             dist as f64 / maximum as f64
         };
         if norm_dist <= score_cutoff {
-            norm_dist
+            Some(norm_dist)
         } else {
-            1.0
+            None
         }
     }
 
@@ -181,7 +181,7 @@ impl<T: DistanceMetricUsize> NormalizedMetricUsize for T {
         len2: usize,
         score_cutoff: f64,
         score_hint: f64,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -191,13 +191,13 @@ impl<T: DistanceMetricUsize> NormalizedMetricUsize for T {
         let cutoff_score = norm_sim_to_norm_dist(score_cutoff);
         let hint_score = norm_sim_to_norm_dist(score_hint);
 
-        let norm_dist = self._normalized_distance(s1, len1, s2, len2, cutoff_score, hint_score);
+        let norm_dist = self._normalized_distance(s1, len1, s2, len2, cutoff_score, hint_score)?;
         let norm_sim = 1.0 - norm_dist;
 
         if norm_sim >= score_cutoff {
-            norm_sim
+            Some(norm_sim)
         } else {
-            0.0
+            None
         }
     }
 }
@@ -213,7 +213,7 @@ pub trait NormalizedMetricUsize2 {
         len2: usize,
         score_cutoff: f64,
         score_hint: f64,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -227,7 +227,7 @@ pub trait NormalizedMetricUsize2 {
         len2: usize,
         score_cutoff: f64,
         score_hint: f64,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -244,7 +244,7 @@ impl<T: SimilarityMetricUsize> NormalizedMetricUsize2 for T {
         len2: usize,
         score_cutoff: f64,
         score_hint: f64,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -256,16 +256,16 @@ impl<T: SimilarityMetricUsize> NormalizedMetricUsize2 for T {
         let cutoff_distance = (maximum as f64 * score_cutoff).ceil() as usize;
         let hint_distance = (maximum as f64 * score_hint).ceil() as usize;
 
-        let dist = self._distance(s1, len1, s2, len2, cutoff_distance, hint_distance);
+        let dist = self._distance(s1, len1, s2, len2, cutoff_distance, hint_distance)?;
         let norm_dist = if maximum == 0 {
             0.0
         } else {
             dist as f64 / maximum as f64
         };
         if norm_dist <= score_cutoff {
-            norm_dist
+            Some(norm_dist)
         } else {
-            1.0
+            None
         }
     }
 
@@ -277,7 +277,7 @@ impl<T: SimilarityMetricUsize> NormalizedMetricUsize2 for T {
         len2: usize,
         score_cutoff: f64,
         score_hint: f64,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -287,13 +287,13 @@ impl<T: SimilarityMetricUsize> NormalizedMetricUsize2 for T {
         let cutoff_score = norm_sim_to_norm_dist(score_cutoff);
         let hint_score = norm_sim_to_norm_dist(score_hint);
 
-        let norm_dist = self._normalized_distance(s1, len1, s2, len2, cutoff_score, hint_score);
+        let norm_dist = self._normalized_distance(s1, len1, s2, len2, cutoff_score, hint_score)?;
         let norm_sim = 1.0 - norm_dist;
 
         if norm_sim >= score_cutoff {
-            norm_sim
+            Some(norm_sim)
         } else {
-            0.0
+            None
         }
     }
 }

@@ -18,7 +18,7 @@ fn osa_hyrroe2003<PmVec, Iter1, Iter2, Elem1, Elem2>(
     s2: Iter2,
     _len2: usize,
     score_cutoff: usize,
-) -> usize
+) -> Option<usize>
 where
     Iter1: Iterator<Item = Elem1>,
     Iter2: Iterator<Item = Elem2>,
@@ -63,9 +63,9 @@ where
     }
 
     if curr_dist <= score_cutoff {
-        curr_dist
+        Some(curr_dist)
     } else {
-        score_cutoff + 1
+        None
     }
 }
 
@@ -95,7 +95,7 @@ fn osa_hyrroe2003_block<Iter1, Iter2, Elem1, Elem2>(
     s2: Iter2,
     _len2: usize,
     score_cutoff: usize,
-) -> usize
+) -> Option<usize>
 where
     Iter1: Iterator<Item = Elem1>,
     Iter2: Iterator<Item = Elem2>,
@@ -160,9 +160,9 @@ where
     }
 
     if curr_dist <= score_cutoff {
-        curr_dist
+        Some(curr_dist)
     } else {
-        score_cutoff + 1
+        None
     }
 }
 
@@ -181,7 +181,7 @@ impl DistanceMetricUsize for Osa {
         len2: usize,
         score_cutoff: usize,
         score_hint: usize,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -196,9 +196,9 @@ impl DistanceMetricUsize for Osa {
 
         if affix.len1 == 0 {
             if affix.len2 <= score_cutoff {
-                affix.len2
+                Some(affix.len2)
             } else {
-                score_cutoff + 1
+                None
             }
         } else if affix.len1 <= 64 {
             // rust fails to elide the copy when returning the array
@@ -238,7 +238,7 @@ pub fn distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s2: Iter2,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> usize
+) -> Option<usize>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -266,7 +266,7 @@ pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s2: Iter2,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> usize
+) -> Option<usize>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -294,7 +294,7 @@ pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s2: Iter2,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> f64
+) -> Option<f64>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -322,7 +322,7 @@ pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>
     s2: Iter2,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> f64
+) -> Option<f64>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -363,7 +363,7 @@ impl<CharT> DistanceMetricUsize for CachedOsa<CharT> {
         len2: usize,
         score_cutoff: usize,
         _score_hint: usize,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -375,15 +375,15 @@ impl<CharT> DistanceMetricUsize for CachedOsa<CharT> {
         } else if len2 == 0 {
             self.s1.len()
         } else if self.s1.len() <= 64 {
-            osa_hyrroe2003(&self.pm, s1, len1, s2, len2, score_cutoff)
+            osa_hyrroe2003(&self.pm, s1, len1, s2, len2, score_cutoff)?
         } else {
-            osa_hyrroe2003_block(&self.pm, s1, len1, s2, len2, score_cutoff)
+            osa_hyrroe2003_block(&self.pm, s1, len1, s2, len2, score_cutoff)?
         };
 
         if dist <= score_cutoff {
-            dist
+            Some(dist)
         } else {
-            score_cutoff + 1
+            None
         }
     }
 }
@@ -411,7 +411,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -436,7 +436,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -461,7 +461,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -486,7 +486,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -516,7 +516,7 @@ mod tests {
         s2_: Iter2,
         score_cutoff: Option<usize>,
         score_hint: Option<usize>,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter1: IntoIterator<Item = Elem1>,
         Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -546,7 +546,7 @@ mod tests {
         s2: &str,
         score_cutoff: Option<usize>,
         score_hint: Option<usize>,
-    ) -> usize {
+    ) -> Option<usize> {
         let res1 = _test_distance(s1.chars(), s2.chars(), score_cutoff, score_hint);
         let res2 = _test_distance(s1.bytes(), s2.bytes(), score_cutoff, score_hint);
 
@@ -556,19 +556,17 @@ mod tests {
 
     #[test]
     fn osa_simple() {
-        assert_eq!(0, _test_distance_ascii("", "", None, None));
+        assert_eq!(Some(0), _test_distance_ascii("", "", None, None));
 
-        assert_eq!(4, _test_distance_ascii("aaaa", "", None, None));
-        assert_eq!(4, _test_distance_ascii("aaaa", "", None, None));
-        assert_eq!(2, _test_distance_ascii("aaaa", "", Some(1), None));
-        assert_eq!(2, _test_distance_ascii("aaaa", "", Some(1), None));
+        assert_eq!(Some(4), _test_distance_ascii("aaaa", "", None, None));
+        assert_eq!(None, _test_distance_ascii("aaaa", "", Some(1), None));
 
-        assert_eq!(3, _test_distance_ascii("CA", "ABC", None, None));
-        assert_eq!(1, _test_distance_ascii("CA", "AC", None, None));
+        assert_eq!(Some(3), _test_distance_ascii("CA", "ABC", None, None));
+        assert_eq!(Some(1), _test_distance_ascii("CA", "AC", None, None));
 
         let filler = "a".repeat(64);
         let s1 = "a".to_string() + &filler + "CA" + &filler + "a";
         let s2 = "b".to_string() + &filler + "AC" + &filler + "b";
-        assert_eq!(3, _test_distance_ascii(&s1, &s2, None, None));
+        assert_eq!(Some(3), _test_distance_ascii(&s1, &s2, None, None));
     }
 }

@@ -56,7 +56,7 @@ struct ResultRow {
 struct LevenshteinResult<const RECORD_MATRIX: usize, const RECORD_BIT_ROW: usize> {
     record_matrix: [ResultMatrix; RECORD_MATRIX],
     bit_row: [ResultRow; RECORD_BIT_ROW],
-    dist: usize,
+    dist: Option<usize>,
 }
 
 impl Default for LevenshteinResult<0, 0> {
@@ -64,7 +64,7 @@ impl Default for LevenshteinResult<0, 0> {
         Self {
             record_matrix: [],
             bit_row: [],
-            dist: 0,
+            dist: None,
         }
     }
 }
@@ -74,7 +74,7 @@ impl Default for LevenshteinResult<1, 0> {
         Self {
             record_matrix: [ResultMatrix::default()],
             bit_row: [],
-            dist: 0,
+            dist: None,
         }
     }
 }
@@ -84,7 +84,7 @@ impl Default for LevenshteinResult<0, 1> {
         Self {
             record_matrix: [],
             bit_row: [ResultRow::default()],
-            dist: 0,
+            dist: None,
         }
     }
 }
@@ -96,7 +96,7 @@ fn generalized_levenshtein_wagner_fischer<Iter1, Iter2, Elem1, Elem2>(
     _len2: usize,
     weights: &WeightTable,
     score_cutoff: usize,
-) -> usize
+) -> Option<usize>
 where
     Iter1: Iterator<Item = Elem1> + Clone,
     Iter2: Iterator<Item = Elem2> + Clone,
@@ -138,9 +138,9 @@ where
 
     let dist = *cache.last().expect("cache always has at least one element");
     if dist <= score_cutoff {
-        dist
+        Some(dist)
     } else {
-        score_cutoff + 1
+        None
     }
 }
 
@@ -178,7 +178,7 @@ fn generalized_levenshtein_distance<Iter1, Iter2, Elem1, Elem2>(
     len2: usize,
     weights: &WeightTable,
     score_cutoff: usize,
-) -> usize
+) -> Option<usize>
 where
     Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
     Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -187,7 +187,7 @@ where
 {
     let min_edits = _levenshtein_min_distance(len1, len2, weights);
     if min_edits > score_cutoff {
-        return score_cutoff + 1;
+        return None;
     }
 
     // common affix does not effect Levenshtein distance
@@ -237,7 +237,7 @@ fn levenshtein_mbleven2018<Iter1, Iter2, Elem1, Elem2>(
     s2: Iter2,
     len2: usize,
     score_cutoff: usize,
-) -> usize
+) -> Option<usize>
 where
     Iter1: Iterator<Item = Elem1> + Clone,
     Iter2: Iterator<Item = Elem2> + Clone,
@@ -246,6 +246,8 @@ where
 {
     debug_assert!(len1 != 0);
     debug_assert!(len2 != 0);
+    // todo add assert that first + last character are different
+    // this is used below, but would break if common affix is not removed
 
     if len1 < len2 {
         return levenshtein_mbleven2018(s2, len2, s1, len1, score_cutoff);
@@ -254,7 +256,11 @@ where
     let len_diff = len1 - len2;
 
     if score_cutoff == 1 {
-        return score_cutoff + usize::from(len_diff == 1 || len1 != 1);
+        return if len_diff == 1 || len1 != 1 {
+            None
+        } else {
+            Some(1)
+        };
     }
 
     let ops_index = (score_cutoff + score_cutoff * score_cutoff) / 2 + len_diff - 1;
@@ -313,9 +319,9 @@ where
     }
 
     if dist <= score_cutoff {
-        dist
+        Some(dist)
     } else {
-        score_cutoff + 1
+        None
     }
 }
 
@@ -355,10 +361,8 @@ where
     let mut vp: u64 = !0_u64;
     let mut vn: u64 = 0;
 
-    let mut res = LevenshteinResult::<RECORD_MATRIX, RECORD_BIT_ROW> {
-        dist: len1,
-        ..Default::default()
-    };
+    let mut dist = len1;
+    let mut res = LevenshteinResult::<RECORD_MATRIX, RECORD_BIT_ROW>::default();
     if RECORD_MATRIX == 1 {
         res.record_matrix[0].vp = ShiftedBitMatrix::<u64>::new(len2, 1, !0_u64);
         res.record_matrix[0].vn = ShiftedBitMatrix::<u64>::new(len2, 1, 0);
@@ -376,8 +380,8 @@ where
         let mut hn = d0 & vp;
 
         // Step 3: Computing the value D[m,j]
-        res.dist += usize::from(hp & mask != 0);
-        res.dist -= usize::from(hn & mask != 0);
+        dist += usize::from(hp & mask != 0);
+        dist -= usize::from(hn & mask != 0);
 
         // Step 4: Computing Vp and VN
         hp = (hp << 1) | 1;
@@ -392,9 +396,11 @@ where
         }
     }
 
-    if res.dist > score_cutoff {
-        res.dist = score_cutoff + 1;
-    }
+    res.dist = if dist <= score_cutoff {
+        Some(dist)
+    } else {
+        None
+    };
 
     if RECORD_BIT_ROW == 1 {
         res.bit_row[0].first_block = 0;
@@ -414,7 +420,7 @@ fn levenshtein_hyrroe2003_small_band_with_pm<PmVec, Iter1, Iter2, Elem1, Elem2>(
     mut s2: Iter2,
     len2: usize,
     score_cutoff: usize,
-) -> usize
+) -> Option<usize>
 where
     Iter1: Iterator<Item = Elem1>,
     Iter2: Iterator<Item = Elem2>,
@@ -464,7 +470,7 @@ where
             curr_dist += usize::from(d0 & diagonal_mask == 0);
 
             if curr_dist > break_score {
-                return score_cutoff + 1;
+                return None;
             }
 
             // Step 4: Computing Vp and VN
@@ -504,7 +510,7 @@ where
         horizontal_mask >>= 1;
 
         if curr_dist > break_score {
-            return score_cutoff + 1;
+            return None;
         }
 
         // Step 4: Computing Vp and VN
@@ -515,9 +521,9 @@ where
     }
 
     if curr_dist <= score_cutoff {
-        curr_dist
+        Some(curr_dist)
     } else {
-        score_cutoff + 1
+        None
     }
 }
 
@@ -549,10 +555,8 @@ where
     let mut vp: u64 = !0_u64 << (64 - score_cutoff - 1);
     let mut vn: u64 = 0;
 
-    let mut res = LevenshteinResult::<RECORD_MATRIX, 0> {
-        dist: score_cutoff,
-        ..Default::default()
-    };
+    let mut dist = score_cutoff;
+    let mut res = LevenshteinResult::<RECORD_MATRIX, 0>::default();
     if RECORD_MATRIX == 1 {
         res.record_matrix[0].vp = ShiftedBitMatrix::<u64>::new(len2, 1, !0_u64);
         res.record_matrix[0].vn = ShiftedBitMatrix::<u64>::new(len2, 1, 0);
@@ -613,10 +617,10 @@ where
         let hn = d0 & vp;
 
         // Step 3: Computing the value D[m,j]
-        res.dist += usize::from(d0 & diagonal_mask == 0);
+        dist += usize::from(d0 & diagonal_mask == 0);
 
-        if res.dist > break_score {
-            res.dist = score_cutoff + 1;
+        if dist > break_score {
+            res.dist = None;
             return res;
         }
 
@@ -651,12 +655,12 @@ where
         let hn = d0 & vp;
 
         // Step 3: Computing the value D[m,j]
-        res.dist += usize::from(hp & horizontal_mask != 0);
-        res.dist -= usize::from(hn & horizontal_mask != 0);
+        dist += usize::from(hp & horizontal_mask != 0);
+        dist -= usize::from(hn & horizontal_mask != 0);
         horizontal_mask >>= 1;
 
-        if res.dist > break_score {
-            res.dist = score_cutoff + 1;
+        if dist > break_score {
+            res.dist = None;
             return res;
         }
 
@@ -671,9 +675,11 @@ where
         i += 1;
     }
 
-    if res.dist > score_cutoff {
-        res.dist = score_cutoff + 1;
-    }
+    res.dist = if dist <= score_cutoff {
+        Some(dist)
+    } else {
+        None
+    };
     res
 }
 
@@ -703,7 +709,7 @@ where
 {
     let mut res: LevenshteinResult<RECORD_MATRIX, RECORD_BIT_ROW> = LevenshteinResult::default();
     if score_cutoff < len1.abs_diff(len2) {
-        res.dist = score_cutoff + 1;
+        res.dist = None;
         return res;
     }
 
@@ -899,7 +905,7 @@ where
 
         // distance is larger than max, so band stops to exist
         if last_block < first_block {
-            res.dist = score_cutoff + 1;
+            res.dist = None;
             return res;
         }
 
@@ -922,16 +928,18 @@ where
             res.bit_row[0].first_block = first_block;
             res.bit_row[0].last_block = last_block;
             mem::swap(&mut res.bit_row[0].vecs, &mut vecs);
-            // unknown so make sure it is <= score_cutoff
-            res.dist = 0;
+            // unknown so set to None
+            res.dist = None;
             return res;
         }
     }
 
-    res.dist = scores[words - 1];
-    if res.dist > score_cutoff {
-        res.dist = score_cutoff + 1;
-    }
+    let dist = scores[words - 1];
+    res.dist = if dist <= score_cutoff {
+        Some(dist)
+    } else {
+        None
+    };
     res
 }
 
@@ -943,7 +951,7 @@ fn uniform_levenshtein_distance_with_pm<Iter1, Iter2, Elem1, Elem2>(
     len2: usize,
     mut score_cutoff: usize,
     mut score_hint: usize,
-) -> usize
+) -> Option<usize>
 where
     Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
     Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -956,16 +964,16 @@ where
 
     // when no differences are allowed a direct comparision is sufficient
     if score_cutoff == 0 {
-        return usize::from(!s1.into_iter().eq(s2));
+        return if s1.into_iter().eq(s2) { Some(0) } else { None };
     }
 
     if score_cutoff < len1.abs_diff(len2) {
-        return score_cutoff + 1;
+        return None;
     }
 
     // important to catch, since this causes block to be empty -> raises exception on access
     if len1 == 0 || len2 == 0 {
-        return len1 + len2;
+        return Some(len1 + len2);
     }
 
     // do this first, since we can not remove any affix in encoded form
@@ -1008,7 +1016,7 @@ where
                 res.dist
             };
 
-            if score <= score_hint {
+            if score.is_some() {
                 return score;
             }
 
@@ -1027,7 +1035,7 @@ where
     let affix = remove_common_affix(s1, len1, s2, len2);
 
     if affix.len1 == 0 || affix.len2 == 0 {
-        return affix.len1 + affix.len2;
+        return Some(affix.len1 + affix.len2);
     }
 
     levenshtein_mbleven2018(affix.s1, affix.len1, affix.s2, affix.len2, score_cutoff)
@@ -1040,7 +1048,7 @@ fn uniform_levenshtein_distance_without_pm<Iter1, Iter2, Elem1, Elem2>(
     len2: usize,
     mut score_cutoff: usize,
     mut score_hint: usize,
-) -> usize
+) -> Option<usize>
 where
     Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
     Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -1063,11 +1071,11 @@ where
 
     // when no differences are allowed a direct comparision is sufficient
     if score_cutoff == 0 {
-        return usize::from(!s1.into_iter().eq(s2));
+        return if s1.into_iter().eq(s2) { Some(0) } else { None };
     }
 
     if score_cutoff < len1.abs_diff(len2) {
-        return score_cutoff + 1;
+        return None;
     }
 
     // common affix does not effect Levenshtein distance
@@ -1075,7 +1083,7 @@ where
     let affix = remove_common_affix(s1, len1, s2, len2);
 
     if affix.len1 == 0 || affix.len2 == 0 {
-        return affix.len1 + affix.len2;
+        return Some(affix.len1 + affix.len2);
     }
 
     if score_cutoff < 4 {
@@ -1144,7 +1152,7 @@ where
                 res.dist
             };
 
-            if score <= score_hint {
+            if score.is_some() {
                 return score;
             }
 
@@ -1175,7 +1183,7 @@ fn _levenshtein_distance_without_pm<Iter1, Iter2, Elem1, Elem2>(
     weights: &WeightTable,
     score_cutoff: usize,
     score_hint: usize,
-) -> usize
+) -> Option<usize>
 where
     Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
     Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -1190,7 +1198,7 @@ where
     if weights.insert_cost == weights.delete_cost {
         /* when insertions + deletions operations are free there can not be any edit distance */
         if weights.insert_cost == 0 {
-            return 0;
+            return Some(0);
         }
 
         /* uniform Levenshtein multiplied with the common factor */
@@ -1205,12 +1213,12 @@ where
                 len2,
                 new_score_cutoff,
                 new_score_hint,
-            );
+            )?;
             dist *= weights.insert_cost;
             if dist <= score_cutoff {
-                return dist;
+                return Some(dist);
             }
-            return score_cutoff + 1;
+            return None;
         }
         /*
          * when replace_cost >= insert_cost + delete_cost no substitutions are performed
@@ -1220,12 +1228,13 @@ where
             // max can make use of the common divisor of the three weights
             let new_score_cutoff = ceil_div_usize(score_cutoff, weights.insert_cost);
             let new_score_hint = ceil_div_usize(score_hint, weights.insert_cost);
-            let mut dist = Indel {}._distance(s1, len1, s2, len2, new_score_cutoff, new_score_hint);
+            let mut dist =
+                Indel {}._distance(s1, len1, s2, len2, new_score_cutoff, new_score_hint)?;
             dist *= weights.insert_cost;
             if dist <= score_cutoff {
-                return dist;
+                return Some(dist);
             }
-            return score_cutoff + 1;
+            return None;
         }
     }
 
@@ -1242,7 +1251,7 @@ fn _levenshtein_distance_with_pm<Iter1, Iter2, Elem1, Elem2>(
     weights: &WeightTable,
     score_cutoff: usize,
     score_hint: usize,
-) -> usize
+) -> Option<usize>
 where
     Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
     Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -1252,7 +1261,7 @@ where
     if weights.insert_cost == weights.delete_cost {
         /* when insertions + deletions operations are free there can not be any edit distance */
         if weights.insert_cost == 0 {
-            return 0;
+            return Some(0);
         }
 
         /* uniform Levenshtein multiplied with the common factor */
@@ -1268,12 +1277,12 @@ where
                 len2,
                 new_score_cutoff,
                 new_score_hint,
-            );
+            )?;
             dist *= weights.insert_cost;
             if dist <= score_cutoff {
-                return dist;
+                return Some(dist);
             }
-            return score_cutoff + 1;
+            return None;
         }
         /*
          * when replace_cost >= insert_cost + delete_cost no substitutions are performed
@@ -1282,12 +1291,12 @@ where
         else if weights.replace_cost >= weights.insert_cost + weights.delete_cost {
             // max can make use of the common divisor of the three weights
             let new_score_cutoff = ceil_div_usize(score_cutoff, weights.insert_cost);
-            let mut dist = indel_distance_with_pm(pm, s1, len1, s2, len2, new_score_cutoff);
+            let mut dist = indel_distance_with_pm(pm, s1, len1, s2, len2, new_score_cutoff)?;
             dist *= weights.insert_cost;
             if dist <= score_cutoff {
-                return dist;
+                return Some(dist);
             }
-            return score_cutoff + 1;
+            return None;
         }
     }
 
@@ -1316,7 +1325,7 @@ impl DistanceMetricUsize for Levenshtein {
         len2: usize,
         score_cutoff: usize,
         score_hint: usize,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -1338,7 +1347,7 @@ pub fn distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     weights: Option<WeightTable>,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> usize
+) -> Option<usize>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -1367,7 +1376,7 @@ pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     weights: Option<WeightTable>,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> usize
+) -> Option<usize>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -1396,7 +1405,7 @@ pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     weights: Option<WeightTable>,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> f64
+) -> Option<f64>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -1425,7 +1434,7 @@ pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>
     weights: Option<WeightTable>,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> f64
+) -> Option<f64>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -1467,7 +1476,7 @@ impl<CharT> DistanceMetricUsize for CachedLevenshtein<CharT> {
         len2: usize,
         score_cutoff: usize,
         score_hint: usize,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -1516,7 +1525,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -1541,7 +1550,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -1566,7 +1575,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -1591,7 +1600,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -1627,8 +1636,14 @@ mod tests {
 
     macro_rules! assert_delta {
         ($x:expr, $y:expr, $d:expr) => {
-            if ($x - $y).abs() > $d {
-                panic!();
+            match ($x, $y) {
+                (None, None) => {}
+                (Some(val1), Some(val2)) => {
+                    if (val1 - val2).abs() > $d {
+                        panic!("{:?} != {:?}", $x, $y);
+                    }
+                }
+                (_, _) => panic!("{:?} != {:?}", $x, $y),
             }
         };
     }
@@ -1639,7 +1654,7 @@ mod tests {
         weights: Option<WeightTable>,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter1: IntoIterator<Item = Elem1>,
         Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -1684,7 +1699,7 @@ mod tests {
         weights: Option<WeightTable>,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> usize
+    ) -> Option<usize>
     where
         ScoreCutoff: Into<Option<usize>> + Clone,
         ScoreHint: Into<Option<usize>> + Clone,
@@ -1708,7 +1723,7 @@ mod tests {
         weights: Option<WeightTable>,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter1: IntoIterator<Item = Elem1>,
         Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -1753,7 +1768,7 @@ mod tests {
         weights: Option<WeightTable>,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         ScoreCutoff: Into<Option<f64>> + Clone,
         ScoreHint: Into<Option<f64>> + Clone,
@@ -1775,45 +1790,57 @@ mod tests {
     /// levenshtein calculates empty sequence
     #[test]
     fn levenshtein_empty() {
-        assert_eq!(0, _test_distance_ascii(EMPTY, EMPTY, None, None, None));
-        assert_eq!(4, _test_distance_ascii(TEST, EMPTY, None, None, None));
-        assert_eq!(4, _test_distance_ascii(EMPTY, TEST, None, None, None));
+        assert_eq!(
+            Some(0),
+            _test_distance_ascii(EMPTY, EMPTY, None, None, None)
+        );
+        assert_eq!(Some(4), _test_distance_ascii(TEST, EMPTY, None, None, None));
+        assert_eq!(Some(4), _test_distance_ascii(EMPTY, TEST, None, None, None));
     }
 
     /// levenshtein calculates correct distances
     #[test]
     fn levenshtein_simple() {
-        assert_eq!(0, _test_distance_ascii(TEST, TEST, None, None, None));
-        assert_eq!(1, _test_distance_ascii(TEST, NO_SUFFIX, None, None, None));
-        assert_eq!(1, _test_distance_ascii(TEST, NO_SUFFIX2, None, None, None));
+        assert_eq!(Some(0), _test_distance_ascii(TEST, TEST, None, None, None));
         assert_eq!(
-            2,
+            Some(1),
+            _test_distance_ascii(TEST, NO_SUFFIX, None, None, None)
+        );
+        assert_eq!(
+            Some(1),
+            _test_distance_ascii(TEST, NO_SUFFIX2, None, None, None)
+        );
+        assert_eq!(
+            Some(2),
             _test_distance_ascii(SWAPPED1, SWAPPED2, None, None, None)
         );
-        assert_eq!(4, _test_distance_ascii(TEST, REPLACE_ALL, None, None, None));
+        assert_eq!(
+            Some(4),
+            _test_distance_ascii(TEST, REPLACE_ALL, None, None, None)
+        );
 
         assert_delta!(
-            1.0,
+            Some(1.0),
             _test_normalized_similarity_ascii(TEST, TEST, None, None, None),
             0.0001
         );
         assert_delta!(
-            0.75,
+            Some(0.75),
             _test_normalized_similarity_ascii(TEST, NO_SUFFIX, None, None, None),
             0.0001
         );
         assert_delta!(
-            0.75,
+            Some(0.75),
             _test_normalized_similarity_ascii(TEST, NO_SUFFIX2, None, None, None),
             0.0001
         );
         assert_delta!(
-            0.5,
+            Some(0.5),
             _test_normalized_similarity_ascii(SWAPPED1, SWAPPED2, None, None, None),
             0.0001
         );
         assert_delta!(
-            0.0,
+            Some(0.0),
             _test_normalized_similarity_ascii(TEST, REPLACE_ALL, None, None, None),
             0.0001
         );
@@ -1828,48 +1855,48 @@ mod tests {
             replace_cost: 2,
         };
         assert_eq!(
-            0,
+            Some(0),
             _test_distance_ascii(TEST, TEST, Some(weights), None, None)
         );
         assert_eq!(
-            1,
+            Some(1),
             _test_distance_ascii(TEST, NO_SUFFIX, Some(weights), None, None)
         );
         assert_eq!(
-            2,
+            Some(2),
             _test_distance_ascii(SWAPPED1, SWAPPED2, Some(weights), None, None)
         );
         assert_eq!(
-            2,
+            Some(2),
             _test_distance_ascii(TEST, NO_SUFFIX2, Some(weights), None, None)
         );
         assert_eq!(
-            8,
+            Some(8),
             _test_distance_ascii(TEST, REPLACE_ALL, Some(weights), None, None)
         );
 
         assert_delta!(
-            1.0,
+            Some(1.0),
             _test_normalized_similarity_ascii(TEST, TEST, Some(weights), None, None),
             0.0001
         );
         assert_delta!(
-            0.8571,
+            Some(0.8571),
             _test_normalized_similarity_ascii(TEST, NO_SUFFIX, Some(weights), None, None),
             0.0001
         );
         assert_delta!(
-            0.75,
+            Some(0.75),
             _test_normalized_similarity_ascii(SWAPPED1, SWAPPED2, Some(weights), None, None),
             0.0001
         );
         assert_delta!(
-            0.75,
+            Some(0.75),
             _test_normalized_similarity_ascii(TEST, NO_SUFFIX2, Some(weights), None, None),
             0.0001
         );
         assert_delta!(
-            0.0,
+            Some(0.0),
             _test_normalized_similarity_ascii(TEST, REPLACE_ALL, Some(weights), None, None),
             0.0001
         );
@@ -1881,42 +1908,48 @@ mod tests {
         let mut a = "South Korea";
         let mut b = "North Korea";
 
-        assert_eq!(2, _test_distance_ascii(a, b, None, None, None));
-        assert_eq!(2, _test_distance_ascii(a, b, None, 4, None));
-        assert_eq!(2, _test_distance_ascii(a, b, None, 3, None));
-        assert_eq!(2, _test_distance_ascii(a, b, None, 2, None));
-        assert_eq!(2, _test_distance_ascii(a, b, None, 1, None));
-        assert_eq!(1, _test_distance_ascii(a, b, None, 0, None));
+        assert_eq!(Some(2), _test_distance_ascii(a, b, None, None, None));
+        assert_eq!(Some(2), _test_distance_ascii(a, b, None, 4, None));
+        assert_eq!(Some(2), _test_distance_ascii(a, b, None, 3, None));
+        assert_eq!(Some(2), _test_distance_ascii(a, b, None, 2, None));
+        assert_eq!(None, _test_distance_ascii(a, b, None, 1, None));
+        assert_eq!(None, _test_distance_ascii(a, b, None, 0, None));
 
         let weights = WeightTable {
             insert_cost: 1,
             delete_cost: 1,
             replace_cost: 2,
         };
-        assert_eq!(4, _test_distance_ascii(a, b, Some(weights), None, None));
-        assert_eq!(4, _test_distance_ascii(a, b, Some(weights), 4, None));
-        assert_eq!(4, _test_distance_ascii(a, b, Some(weights), 3, None));
-        assert_eq!(3, _test_distance_ascii(a, b, Some(weights), 2, None));
-        assert_eq!(2, _test_distance_ascii(a, b, Some(weights), 1, None));
-        assert_eq!(1, _test_distance_ascii(a, b, Some(weights), 0, None));
+        assert_eq!(
+            Some(4),
+            _test_distance_ascii(a, b, Some(weights), None, None)
+        );
+        assert_eq!(Some(4), _test_distance_ascii(a, b, Some(weights), 4, None));
+        assert_eq!(None, _test_distance_ascii(a, b, Some(weights), 3, None));
+        assert_eq!(None, _test_distance_ascii(a, b, Some(weights), 2, None));
+        assert_eq!(None, _test_distance_ascii(a, b, Some(weights), 1, None));
+        assert_eq!(None, _test_distance_ascii(a, b, Some(weights), 0, None));
 
         a = "aabc";
         b = "cccd";
-        assert_eq!(4, _test_distance_ascii(a, b, None, None, None));
-        assert_eq!(4, _test_distance_ascii(a, b, None, 4, None));
-        assert_eq!(4, _test_distance_ascii(a, b, None, 3, None));
-        assert_eq!(3, _test_distance_ascii(a, b, None, 2, None));
-        assert_eq!(2, _test_distance_ascii(a, b, None, 1, None));
-        assert_eq!(1, _test_distance_ascii(a, b, None, 0, None));
+        assert_eq!(Some(4), _test_distance_ascii(a, b, None, None, None));
+        assert_eq!(Some(4), _test_distance_ascii(a, b, None, 4, None));
+        assert_eq!(None, _test_distance_ascii(a, b, None, 3, None));
+        assert_eq!(None, _test_distance_ascii(a, b, None, 2, None));
+        assert_eq!(None, _test_distance_ascii(a, b, None, 1, None));
+        assert_eq!(None, _test_distance_ascii(a, b, None, 0, None));
 
-        assert_eq!(6, _test_distance_ascii(a, b, Some(weights), None, None));
-        assert_eq!(6, _test_distance_ascii(a, b, Some(weights), 6, None));
-        assert_eq!(6, _test_distance_ascii(a, b, Some(weights), 5, None));
-        assert_eq!(5, _test_distance_ascii(a, b, Some(weights), 4, None));
-        assert_eq!(4, _test_distance_ascii(a, b, Some(weights), 3, None));
-        assert_eq!(3, _test_distance_ascii(a, b, Some(weights), 2, None));
-        assert_eq!(2, _test_distance_ascii(a, b, Some(weights), 1, None));
-        assert_eq!(1, _test_distance_ascii(a, b, Some(weights), 0, None));
+        assert_eq!(
+            Some(6),
+            _test_distance_ascii(a, b, Some(weights), None, None)
+        );
+        assert_eq!(Some(6), _test_distance_ascii(a, b, Some(weights), 6, None));
+        assert_eq!(None, _test_distance_ascii(a, b, Some(weights), 5, None));
+        assert_eq!(None, _test_distance_ascii(a, b, Some(weights), 4, None));
+        assert_eq!(None, _test_distance_ascii(a, b, Some(weights), 3, None));
+        assert_eq!(None, _test_distance_ascii(a, b, Some(weights), 2, None));
+        assert_eq!(None, _test_distance_ascii(a, b, Some(weights), 1, None));
+        assert_eq!(None, _test_distance_ascii(a, b, Some(weights), 0, None));
     }
 
     /// test banded implementation
@@ -1924,48 +1957,48 @@ mod tests {
     fn test_banded() {
         let mut s1 = "kkkkbbbbfkkkkkkibfkkkafakkfekgkkkkkkkkkkbdbbddddddddddafkkkekkkhkk";
         let mut s2 = "khddddddddkkkkdgkdikkccccckcckkkekkkkdddddddddddafkkhckkkkkdckkkcc";
-        assert_eq!(36, _test_distance_ascii(s1, s2, None, None, None));
-        assert_eq!(32, _test_distance_ascii(s1, s2, None, 31, None));
+        assert_eq!(Some(36), _test_distance_ascii(s1, s2, None, None, None));
+        assert_eq!(None, _test_distance_ascii(s1, s2, None, 31, None));
 
         s1 = "ccddcddddddddddddddddddddddddddddddddddddddddddddddddddddaaaaaaaaaaa";
         s2 = "aaaaaaaaaaaaaadddddddddbddddddddddddddddddddddddddddddddddbddddddddd";
-        assert_eq!(26, _test_distance_ascii(s1, s2, None, None, None));
-        assert_eq!(26, _test_distance_ascii(s1, s2, None, 31, None));
+        assert_eq!(Some(26), _test_distance_ascii(s1, s2, None, None, None));
+        assert_eq!(Some(26), _test_distance_ascii(s1, s2, None, 31, None));
 
         s1 = "accccccccccaaaaaaaccccccccccccccccccccccccccccccacccccccccccccccccccccccccccccc\
              ccccccccccccccccccccaaaaaaaaaaaaacccccccccccccccccccccc";
         s2 = "ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\
              ccccccccccccccccccccccccccccccccccccbcccb";
-        assert_eq!(24, _test_distance_ascii(s1, s2, None, None, None));
-        assert_eq!(24, _test_distance_ascii(s1, s2, None, 25, None));
+        assert_eq!(Some(24), _test_distance_ascii(s1, s2, None, None, None));
+        assert_eq!(Some(24), _test_distance_ascii(s1, s2, None, 25, None));
 
         s1 = "miiiiiiiiiiliiiiiiibghiiaaaaaaaaaaaaaaacccfccccedddaaaaaaaaaaaaaaaaaaaaaaaaaaaa\
               aaaaaaaaaaaaa";
         s2 = "aaaaaaajaaaaaaaabghiiaaaaaaaaaaaaaaacccfccccedddaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\
               aajjdim";
-        assert_eq!(27, _test_distance_ascii(s1, s2, None, None, None));
-        assert_eq!(27, _test_distance_ascii(s1, s2, None, 27, None));
+        assert_eq!(Some(27), _test_distance_ascii(s1, s2, None, None, None));
+        assert_eq!(Some(27), _test_distance_ascii(s1, s2, None, 27, None));
 
         s1 = "lllllfllllllllllllllllllllllllllllllllllllllllllllllllglllllilldcaaaaaaaaaaaaaa\
               aaaaadbbllllllllllhllllllllllllllllllllllllllgl";
         s2 = "aaaaaaaaaaaaaadbbllllllllllllllelllllllllllllllllllllllllllllllglllllilldcaaaaa\
               aaaaaaaaaaaaaadbbllllllllllllllellllllllllllllhlllllllllill";
-        assert_eq!(23, _test_distance_ascii(s1, s2, None, None, None));
-        assert_eq!(23, _test_distance_ascii(s1, s2, None, 27, None));
-        assert_eq!(23, _test_distance_ascii(s1, s2, None, 28, None));
+        assert_eq!(Some(23), _test_distance_ascii(s1, s2, None, None, None));
+        assert_eq!(Some(23), _test_distance_ascii(s1, s2, None, 27, None));
+        assert_eq!(Some(23), _test_distance_ascii(s1, s2, None, 28, None));
 
         s1 = "llccacaaaaaaaaaccccccccccccccccddffaccccaccecccggggclallhcccccljif";
         s2 = "bddcbllllllbcccccccccccccccccddffccccccccebcccggggclbllhcccccljifbddcccccc";
-        assert_eq!(27, _test_distance_ascii(s1, s2, None, None, None));
-        assert_eq!(27, _test_distance_ascii(s1, s2, None, 27, None));
-        assert_eq!(27, _test_distance_ascii(s1, s2, None, 28, None));
+        assert_eq!(Some(27), _test_distance_ascii(s1, s2, None, None, None));
+        assert_eq!(Some(27), _test_distance_ascii(s1, s2, None, 27, None));
+        assert_eq!(Some(27), _test_distance_ascii(s1, s2, None, 28, None));
     }
 
     #[test]
     fn test_blockwise() {
         let s1 = "a".repeat(128);
         let s2 = "b".repeat(128);
-        assert_eq!(128, _test_distance_ascii(&s1, &s2, None, None, None));
+        assert_eq!(Some(128), _test_distance_ascii(&s1, &s2, None, None, None));
     }
 
     #[test]
@@ -1974,15 +2007,15 @@ mod tests {
         assert_eq!(107244, OCR_EXAMPLE2.iter().count());
 
         assert_eq!(
-            5278,
+            Some(5278),
             distance(OCR_EXAMPLE1.iter(), OCR_EXAMPLE2.iter(), None, None, None)
         );
         assert_eq!(
-            2501,
+            None,
             distance(OCR_EXAMPLE1.iter(), OCR_EXAMPLE2.iter(), None, 2500, None)
         );
         assert_eq!(
-            5278,
+            Some(5278),
             distance(OCR_EXAMPLE1.iter(), OCR_EXAMPLE2.iter(), None, None, 0)
         );
     }

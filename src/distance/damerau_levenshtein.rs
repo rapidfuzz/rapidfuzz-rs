@@ -11,8 +11,8 @@
 //! use rapidfuzz::distance::damerau_levenshtein;
 //! use rapidfuzz::distance::osa;
 //!
-//! assert_eq!(2, damerau_levenshtein::distance("CA".chars(), "ABC".chars(), None, None));
-//! assert_eq!(3, osa::distance("CA".chars(), "ABC".chars(), None, None));
+//! assert_eq!(Some(2), damerau_levenshtein::distance("CA".chars(), "ABC".chars(), None, None));
+//! assert_eq!(Some(3), osa::distance("CA".chars(), "ABC".chars(), None, None));
 //! ```
 //!
 //! It does respect triangle inequality, and is thus a metric distance.
@@ -59,7 +59,7 @@ fn damerau_damerau_levenshtein_distance_zhao<Iter1, Iter2, Elem1, Elem2>(
     s2: Iter2,
     len2: usize,
     score_cutoff: usize,
-) -> usize
+) -> Option<usize>
 where
     Iter1: Iterator<Item = Elem1>,
     Iter2: Iterator<Item = Elem2> + Clone,
@@ -117,10 +117,10 @@ where
 
     let dist = r[len2 + 1] as usize;
 
-    if dist < score_cutoff {
-        dist
+    if dist <= score_cutoff {
+        Some(dist)
     } else {
-        score_cutoff + 1
+        None
     }
 }
 
@@ -130,7 +130,7 @@ fn damerau_damerau_levenshtein_distance_impl<Iter1, Iter2, Elem1, Elem2>(
     s2: Iter2,
     len2: usize,
     score_cutoff: usize,
-) -> usize
+) -> Option<usize>
 where
     Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
     Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -138,7 +138,7 @@ where
     Elem2: PartialEq<Elem1> + HashableChar,
 {
     if score_cutoff < len1.abs_diff(len2) {
-        return score_cutoff + 1;
+        return None;
     }
 
     let affix = remove_common_affix(s1, len1, s2, len2);
@@ -166,7 +166,7 @@ impl DistanceMetricUsize for DamerauLevenshtein {
         len2: usize,
         score_cutoff: usize,
         _score_hint: usize,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
         Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
@@ -186,14 +186,14 @@ impl DistanceMetricUsize for DamerauLevenshtein {
 /// ```
 /// use rapidfuzz::distance::damerau_levenshtein;
 ///
-/// assert_eq!(2, damerau_levenshtein::distance("CA".chars(), "ABC".chars(), None, None));
+/// assert_eq!(Some(2), damerau_levenshtein::distance("CA".chars(), "ABC".chars(), None, None));
 /// ```
 pub fn distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> usize
+) -> Option<usize>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -225,7 +225,7 @@ pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s2: Iter2,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> usize
+) -> Option<usize>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -257,7 +257,7 @@ pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s2: Iter2,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> f64
+) -> Option<f64>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -289,7 +289,7 @@ pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>
     s2: Iter2,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> f64
+) -> Option<f64>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -320,7 +320,7 @@ where
 /// use rapidfuzz::distance::damerau_levenshtein;
 ///
 /// let scorer = damerau_levenshtein::CachedDamerauLevenshtein::new("CA".chars());
-/// assert_eq!(2, scorer.distance("ABC".chars(), None, None));
+/// assert_eq!(Some(2), scorer.distance("ABC".chars(), None, None));
 /// ```
 pub struct CachedDamerauLevenshtein<Elem1> {
     s1: Vec<Elem1>,
@@ -345,7 +345,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -362,7 +362,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -379,7 +379,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -396,7 +396,7 @@ where
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -423,8 +423,14 @@ mod tests {
 
     macro_rules! assert_delta {
         ($x:expr, $y:expr, $d:expr) => {
-            if ($x - $y).abs() > $d {
-                panic!();
+            match ($x, $y) {
+                (None, None) => {}
+                (Some(val1), Some(val2)) => {
+                    if (val1 - val2).abs() > $d {
+                        panic!("{:?} != {:?}", $x, $y);
+                    }
+                }
+                (_, _) => panic!("{:?} != {:?}", $x, $y),
             }
         };
     }
@@ -434,7 +440,7 @@ mod tests {
         s2_: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter1: IntoIterator<Item = Elem1>,
         Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -476,7 +482,7 @@ mod tests {
         s2: &str,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> usize
+    ) -> Option<usize>
     where
         ScoreCutoff: Into<Option<usize>> + Clone,
         ScoreHint: Into<Option<usize>> + Clone,
@@ -498,7 +504,7 @@ mod tests {
         s2_: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         Iter1: IntoIterator<Item = Elem1>,
         Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -540,7 +546,7 @@ mod tests {
         s2: &str,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> f64
+    ) -> Option<f64>
     where
         ScoreCutoff: Into<Option<f64>> + Clone,
         ScoreHint: Into<Option<f64>> + Clone,
@@ -560,43 +566,46 @@ mod tests {
     /// levenshtein calculates empty sequence
     #[test]
     fn damerau_levenshtein_empty() {
-        assert_eq!(0, _test_distance_ascii(EMPTY, EMPTY, None, None));
-        assert_eq!(4, _test_distance_ascii(TEST, EMPTY, None, None));
-        assert_eq!(4, _test_distance_ascii(EMPTY, TEST, None, None));
+        assert_eq!(Some(0), _test_distance_ascii(EMPTY, EMPTY, None, None));
+        assert_eq!(Some(4), _test_distance_ascii(TEST, EMPTY, None, None));
+        assert_eq!(Some(4), _test_distance_ascii(EMPTY, TEST, None, None));
     }
 
     /// levenshtein calculates correct distances
     #[test]
     fn damerau_levenshtein_simple() {
-        assert_eq!(0, _test_distance_ascii(TEST, TEST, None, None));
-        assert_eq!(1, _test_distance_ascii(TEST, NO_SUFFIX, None, None));
-        assert_eq!(1, _test_distance_ascii(TEST, NO_SUFFIX2, None, None));
-        assert_eq!(1, _test_distance_ascii(SWAPPED1, SWAPPED2, None, None));
-        assert_eq!(4, _test_distance_ascii(TEST, REPLACE_ALL, None, None));
-        assert_eq!(2, _test_distance_ascii("CA", "ABC", None, None));
+        assert_eq!(Some(0), _test_distance_ascii(TEST, TEST, None, None));
+        assert_eq!(Some(1), _test_distance_ascii(TEST, NO_SUFFIX, None, None));
+        assert_eq!(Some(1), _test_distance_ascii(TEST, NO_SUFFIX2, None, None));
+        assert_eq!(
+            Some(1),
+            _test_distance_ascii(SWAPPED1, SWAPPED2, None, None)
+        );
+        assert_eq!(Some(4), _test_distance_ascii(TEST, REPLACE_ALL, None, None));
+        assert_eq!(Some(2), _test_distance_ascii("CA", "ABC", None, None));
 
         assert_delta!(
-            1.0,
+            Some(1.0),
             _test_normalized_similarity_ascii(TEST, TEST, None, None),
             0.0001
         );
         assert_delta!(
-            0.75,
+            Some(0.75),
             _test_normalized_similarity_ascii(TEST, NO_SUFFIX, None, None),
             0.0001
         );
         assert_delta!(
-            0.75,
+            Some(0.75),
             _test_normalized_similarity_ascii(TEST, NO_SUFFIX2, None, None),
             0.0001
         );
         assert_delta!(
-            0.75,
+            Some(0.75),
             _test_normalized_similarity_ascii(SWAPPED1, SWAPPED2, None, None),
             0.0001
         );
         assert_delta!(
-            0.0,
+            Some(0.0),
             _test_normalized_similarity_ascii(TEST, REPLACE_ALL, None, None),
             0.0001
         );

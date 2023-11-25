@@ -25,7 +25,7 @@ fn hamming_impl<Iter1, Iter2, Elem1, Elem2>(
     mut s1: Iter1,
     mut s2: Iter2,
     score_cutoff: usize,
-) -> usize
+) -> Option<usize>
 where
     Iter1: Iterator<Item = Elem1>,
     Iter2: Iterator<Item = Elem2>,
@@ -42,9 +42,9 @@ where
             }
             (None, None) => {
                 if dist <= score_cutoff {
-                    return dist;
+                    return Some(dist);
                 }
-                return score_cutoff + 1;
+                return None;
             }
             _ => {
                 dist += 1;
@@ -68,7 +68,7 @@ impl DistanceMetricUsize for Hamming {
         _len2: usize,
         score_cutoff: usize,
         _score_hint: usize,
-    ) -> usize
+    ) -> Option<usize>
     where
         Iter1: Iterator<Item = Elem1>,
         Iter2: Iterator<Item = Elem2>,
@@ -85,7 +85,7 @@ pub fn distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     pad: bool,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> Result<usize, HammingError>
+) -> Result<Option<usize>, HammingError>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -121,7 +121,7 @@ pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     pad: bool,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> Result<usize, HammingError>
+) -> Result<Option<usize>, HammingError>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -157,7 +157,7 @@ pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     pad: bool,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> Result<f64, HammingError>
+) -> Result<Option<f64>, HammingError>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -187,13 +187,16 @@ where
     ))
 }
 
+// todo this api is a bit of an outlier, since it is the only one returning an
+// error. Should the return just be Result and store score < score_cutoff as error as well?
+// having to unwrap both seems like a pain
 pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
     pad: bool,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
-) -> Result<f64, HammingError>
+) -> Result<Option<f64>, HammingError>
 where
     Iter1: IntoIterator<Item = Elem1>,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -250,7 +253,7 @@ where
         pad: bool,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> Result<usize, HammingError>
+    ) -> Result<Option<usize>, HammingError>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -268,7 +271,7 @@ where
         pad: bool,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> Result<usize, HammingError>
+    ) -> Result<Option<usize>, HammingError>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -286,7 +289,7 @@ where
         pad: bool,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> Result<f64, HammingError>
+    ) -> Result<Option<f64>, HammingError>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -304,7 +307,7 @@ where
         pad: bool,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
-    ) -> Result<f64, HammingError>
+    ) -> Result<Option<f64>, HammingError>
     where
         Iter2: IntoIterator<Item = Elem2>,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
@@ -323,7 +326,7 @@ mod tests {
 
     fn assert_hamming_dist(dist: usize, str1: &str, str2: &str) {
         assert_eq!(
-            Ok(dist),
+            Ok(Some(dist)),
             distance(str1.chars(), str2.chars(), false, None, None)
         );
     }
@@ -340,7 +343,10 @@ mod tests {
 
     #[test]
     fn hamming_numbers() {
-        assert_eq!(Ok(1), distance([1, 2, 4], [1, 2, 3], false, None, None));
+        assert_eq!(
+            Ok(Some(1)),
+            distance([1, 2, 4], [1, 2, 3], false, None, None)
+        );
     }
 
     #[test]
@@ -361,7 +367,7 @@ mod tests {
         );
 
         assert_eq!(
-            Ok(4),
+            Ok(Some(4)),
             distance("ham".chars(), "hamming".chars(), true, None, None)
         );
     }
