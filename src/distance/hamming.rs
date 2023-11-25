@@ -1,5 +1,5 @@
 use crate::details::common::HashableChar;
-use crate::details::distance::{DistanceMetricUsize, NormalizedMetricUsize};
+use crate::details::distance::MetricUsize;
 
 use std::error::Error;
 use std::fmt::{self, Display, Formatter};
@@ -55,7 +55,7 @@ where
 
 struct Hamming;
 
-impl DistanceMetricUsize for Hamming {
+impl MetricUsize for Hamming {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
         len1.max(len2)
     }

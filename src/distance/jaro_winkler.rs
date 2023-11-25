@@ -1,5 +1,5 @@
 use crate::details::common::HashableChar;
-use crate::details::distance::{NormalizedMetricf64, SimilarityMetricf64};
+use crate::details::distance::Metricf64;
 use crate::details::pattern_match_vector::BlockPatternMatchVector;
 
 use crate::distance::jaro::{jaro_similarity_with_pm, jaro_similarity_without_pm};
@@ -95,7 +95,7 @@ pub(crate) struct JaroWinkler {
     prefix_weight: Option<f64>,
 }
 
-impl SimilarityMetricf64 for JaroWinkler {
+impl Metricf64 for JaroWinkler {
     fn maximum(&self, _len1: usize, _len2: usize) -> f64 {
         1.0
     }
@@ -264,7 +264,7 @@ pub struct CachedJaroWinkler<Elem1> {
     prefix_weight: f64,
 }
 
-impl<CharT> SimilarityMetricf64 for CachedJaroWinkler<CharT> {
+impl<CharT> Metricf64 for CachedJaroWinkler<CharT> {
     fn maximum(&self, _len1: usize, _len2: usize) -> f64 {
         1.0
     }

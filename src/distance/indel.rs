@@ -1,11 +1,11 @@
 use crate::details::common::HashableChar;
-use crate::details::distance::{DistanceMetricUsize, NormalizedMetricUsize, SimilarityMetricUsize};
+use crate::details::distance::MetricUsize;
 use crate::details::pattern_match_vector::BlockPatternMatchVector;
 use crate::distance::lcs_seq::{lcs_seq_similarity_with_pm, CachedLcsSeq, LcsSeq};
 
 pub(crate) struct Indel;
 
-impl DistanceMetricUsize for Indel {
+impl MetricUsize for Indel {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
         len1 + len2
     }
@@ -199,7 +199,7 @@ where
     scorer: CachedLcsSeq<Elem1>,
 }
 
-impl<CharT> DistanceMetricUsize for CachedIndel<CharT>
+impl<CharT> MetricUsize for CachedIndel<CharT>
 where
     CharT: HashableChar + Clone,
 {

@@ -1,5 +1,5 @@
 use crate::details::common::{remove_common_affix, HashableChar};
-use crate::details::distance::{DistanceMetricUsize, NormalizedMetricUsize};
+use crate::details::distance::MetricUsize;
 use crate::details::growing_hashmap::{GrowingHashmap, HybridGrowingHashmap};
 use crate::details::intrinsics::{ceil_div_usize, shr64};
 use crate::details::matrix::ShiftedBitMatrix;
@@ -1313,7 +1313,7 @@ struct Levenshtein {
     weights: Option<WeightTable>,
 }
 
-impl DistanceMetricUsize for Levenshtein {
+impl MetricUsize for Levenshtein {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
         let weights = self.weights.unwrap_or(WeightTable {
             insert_cost: 1,
@@ -1477,7 +1477,7 @@ pub struct CachedLevenshtein<Elem1> {
     weights: WeightTable,
 }
 
-impl<CharT> DistanceMetricUsize for CachedLevenshtein<CharT> {
+impl<CharT> MetricUsize for CachedLevenshtein<CharT> {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
         _levenshtein_maximum(len1, len2, &self.weights)
     }

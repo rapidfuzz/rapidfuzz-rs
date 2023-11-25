@@ -1,9 +1,9 @@
 use crate::details::common::{find_common_suffix, HashableChar};
-use crate::details::distance::{NormalizedMetricUsize2, SimilarityMetricUsize};
+use crate::details::distance::MetricUsize;
 
 struct Postfix;
 
-impl SimilarityMetricUsize for Postfix {
+impl MetricUsize for Postfix {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
         len1.max(len2)
     }

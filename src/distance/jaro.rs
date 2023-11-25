@@ -1,5 +1,5 @@
 use crate::details::common::{find_common_prefix, HashableChar};
-use crate::details::distance::{NormalizedMetricf64, SimilarityMetricf64};
+use crate::details::distance::Metricf64;
 use crate::details::intrinsics::{bit_mask_lsb_u64, blsi_u64, blsr_u64, ceil_div_usize};
 use crate::details::pattern_match_vector::{
     BitVectorInterface, BitvectorHashmap, BlockPatternMatchVector, PatternMatchVector,
@@ -551,7 +551,7 @@ where
 
 pub(crate) struct Jaro;
 
-impl SimilarityMetricf64 for Jaro {
+impl Metricf64 for Jaro {
     fn maximum(&self, _len1: usize, _len2: usize) -> f64 {
         1.0
     }
@@ -692,7 +692,7 @@ pub struct CachedJaro<Elem1> {
     pm: BlockPatternMatchVector,
 }
 
-impl<CharT> SimilarityMetricf64 for CachedJaro<CharT> {
+impl<CharT> Metricf64 for CachedJaro<CharT> {
     fn maximum(&self, _len1: usize, _len2: usize) -> f64 {
         1.0
     }

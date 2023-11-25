@@ -1,5 +1,5 @@
 use crate::details::common::{remove_common_affix, HashableChar};
-use crate::details::distance::{DistanceMetricUsize, NormalizedMetricUsize};
+use crate::details::distance::MetricUsize;
 use crate::details::pattern_match_vector::{
     BitVectorInterface, BitvectorHashmap, BlockPatternMatchVector, PatternMatchVector,
 };
@@ -168,7 +168,7 @@ where
 
 pub(crate) struct Osa;
 
-impl DistanceMetricUsize for Osa {
+impl MetricUsize for Osa {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
         len1.max(len2)
     }
@@ -352,7 +352,7 @@ pub struct CachedOsa<Elem1> {
     pm: BlockPatternMatchVector,
 }
 
-impl<CharT> DistanceMetricUsize for CachedOsa<CharT> {
+impl<CharT> MetricUsize for CachedOsa<CharT> {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
         len1.max(len2)
     }

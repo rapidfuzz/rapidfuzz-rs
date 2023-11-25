@@ -1,5 +1,5 @@
 use crate::details::common::{remove_common_affix, HashableChar};
-use crate::details::distance::{NormalizedMetricUsize2, SimilarityMetricUsize};
+use crate::details::distance::MetricUsize;
 use crate::details::intrinsics::{carrying_add, ceil_div_usize};
 use crate::details::matrix::ShiftedBitMatrix;
 use crate::details::pattern_match_vector::{
@@ -520,7 +520,7 @@ where
 
 pub(crate) struct LcsSeq;
 
-impl SimilarityMetricUsize for LcsSeq {
+impl MetricUsize for LcsSeq {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
         max(len1, len2)
     }
@@ -664,7 +664,7 @@ where
     pub(crate) pm: BlockPatternMatchVector,
 }
 
-impl<CharT> SimilarityMetricUsize for CachedLcsSeq<CharT>
+impl<CharT> MetricUsize for CachedLcsSeq<CharT>
 where
     CharT: HashableChar + Clone,
 {

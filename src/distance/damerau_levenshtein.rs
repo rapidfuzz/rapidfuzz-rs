@@ -31,7 +31,7 @@
 //!
 
 use crate::details::common::{remove_common_affix, HashableChar};
-use crate::details::distance::{DistanceMetricUsize, NormalizedMetricUsize};
+use crate::details::distance::MetricUsize;
 use crate::details::growing_hashmap::{GrowingHashmap, HybridGrowingHashmap};
 use std::cmp::{max, min};
 use std::mem;
@@ -153,7 +153,7 @@ where
 
 pub(crate) struct DamerauLevenshtein;
 
-impl DistanceMetricUsize for DamerauLevenshtein {
+impl MetricUsize for DamerauLevenshtein {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
         max(len1, len2)
     }
