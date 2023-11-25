@@ -12,3 +12,5 @@ Cargo.lock
 
 lib
 .vscode/
+
+/.idea/

@@ -16,9 +16,9 @@
     <img src="https://img.shields.io/badge/-documentation-blue"
          alt="Documentation">
   </a>
-  <a href="https://github.com/maxbachmann/rapidfuzz-rs/blob/master/LICENSE">
-    <img src="https://img.shields.io/github/license/maxbachmann/rapidfuzz-rs"
-         alt="GitHub license">
+  <a href="https://img.shields.io/crates/l/rapidfuzz.svg">
+    <img src="https://img.shields.io/crates/l/rapidfuzz.svg"
+         alt="license">
   </a>
 </p>
 
