@@ -39,5 +39,10 @@ RapidFuzz is a general purpose string matching library. It provides blazingly fa
 ## Usage
 
 ## License
-Copyright 2023 - present [maxbachmann](https://github.com/maxbachmann). `RapidFuzz` is free and open-source software licensed under the [MIT License](https://github.com/maxbachmann/rapidfuzz-rs/blob/main/LICENSE).
+Licensed under either of [Apache License, Version
+2.0](https://github.com/maxbachmann/rapidfuzz-rs/blob/main/LICENSE-APACHE) or [MIT License](https://github.com/maxbachmann/rapidfuzz-rs/blob/main/LICENSE-MIT) at your option.
+
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in RapidFuzz by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.
 
