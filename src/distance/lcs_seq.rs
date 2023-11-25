@@ -531,8 +531,8 @@ impl SimilarityMetricUsize for LcsSeq {
         len1: usize,
         s2: Iter2,
         len2: usize,
-        score_cutoff: usize,
-        _score_hint: usize,
+        score_cutoff: Option<usize>,
+        _score_hint: Option<usize>,
     ) -> Option<usize>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
@@ -540,7 +540,7 @@ impl SimilarityMetricUsize for LcsSeq {
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
-        lcs_seq_similarity_without_pm(s1, len1, s2, len2, score_cutoff)
+        lcs_seq_similarity_without_pm(s1, len1, s2, len2, score_cutoff.unwrap_or(0))
     }
 }
 
@@ -567,8 +567,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(usize::MAX),
-        score_hint.into().unwrap_or(usize::MAX),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 
@@ -595,8 +595,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(0),
-        score_hint.into().unwrap_or(0),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 
@@ -623,8 +623,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(1.0),
-        score_hint.into().unwrap_or(1.0),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 
@@ -651,8 +651,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(0.0),
-        score_hint.into().unwrap_or(0.0),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 
@@ -678,8 +678,8 @@ where
         len1: usize,
         s2: Iter2,
         len2: usize,
-        score_cutoff: usize,
-        _score_hint: usize,
+        score_cutoff: Option<usize>,
+        _score_hint: Option<usize>,
     ) -> Option<usize>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
@@ -687,7 +687,7 @@ where
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
-        lcs_seq_similarity_with_pm(&self.pm, s1, len1, s2, len2, score_cutoff)
+        lcs_seq_similarity_with_pm(&self.pm, s1, len1, s2, len2, score_cutoff.unwrap_or(0))
     }
 }
 
@@ -729,8 +729,8 @@ where
             self.s1.len(),
             s2_iter.clone(),
             s2_iter.count(),
-            score_cutoff.into().unwrap_or(1.0),
-            score_hint.into().unwrap_or(1.0),
+            score_cutoff.into(),
+            score_hint.into(),
         )
     }
 
@@ -754,8 +754,8 @@ where
             self.s1.len(),
             s2_iter.clone(),
             s2_iter.count(),
-            score_cutoff.into().unwrap_or(0.0),
-            score_hint.into().unwrap_or(0.0),
+            score_cutoff.into(),
+            score_hint.into(),
         )
     }
 
@@ -779,8 +779,8 @@ where
             self.s1.len(),
             s2_iter.clone(),
             s2_iter.count(),
-            score_cutoff.into().unwrap_or(usize::MAX),
-            score_hint.into().unwrap_or(usize::MAX),
+            score_cutoff.into(),
+            score_hint.into(),
         )
     }
 
@@ -804,8 +804,8 @@ where
             self.s1.len(),
             s2_iter.clone(),
             s2_iter.count(),
-            score_cutoff.into().unwrap_or(0),
-            score_hint.into().unwrap_or(0),
+            score_cutoff.into(),
+            score_hint.into(),
         )
     }
 }

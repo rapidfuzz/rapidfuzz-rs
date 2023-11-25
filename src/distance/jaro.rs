@@ -562,8 +562,8 @@ impl SimilarityMetricf64 for Jaro {
         len1: usize,
         s2: Iter2,
         len2: usize,
-        score_cutoff: f64,
-        _score_hint: f64,
+        score_cutoff: Option<f64>,
+        _score_hint: Option<f64>,
     ) -> Option<f64>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
@@ -571,7 +571,7 @@ impl SimilarityMetricf64 for Jaro {
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
-        jaro_similarity_without_pm(s1, len1, s2, len2, score_cutoff)
+        jaro_similarity_without_pm(s1, len1, s2, len2, score_cutoff.unwrap_or(1.0))
     }
 }
 
@@ -598,8 +598,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(1.0),
-        score_hint.into().unwrap_or(1.0),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 
@@ -626,8 +626,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(0.0),
-        score_hint.into().unwrap_or(0.0),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 
@@ -654,8 +654,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(1.0),
-        score_hint.into().unwrap_or(1.0),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 
@@ -682,8 +682,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(0.0),
-        score_hint.into().unwrap_or(0.0),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 
@@ -703,8 +703,8 @@ impl<CharT> SimilarityMetricf64 for CachedJaro<CharT> {
         len1: usize,
         s2: Iter2,
         len2: usize,
-        score_cutoff: f64,
-        _score_hint: f64,
+        score_cutoff: Option<f64>,
+        _score_hint: Option<f64>,
     ) -> Option<f64>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
@@ -712,7 +712,7 @@ impl<CharT> SimilarityMetricf64 for CachedJaro<CharT> {
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
-        jaro_similarity_with_pm(&self.pm, s1, len1, s2, len2, score_cutoff)
+        jaro_similarity_with_pm(&self.pm, s1, len1, s2, len2, score_cutoff.unwrap_or(1.0))
     }
 }
 
@@ -754,8 +754,8 @@ where
             self.s1.len(),
             s2_iter.clone(),
             s2_iter.count(),
-            score_cutoff.into().unwrap_or(1.0),
-            score_hint.into().unwrap_or(1.0),
+            score_cutoff.into(),
+            score_hint.into(),
         )
     }
 
@@ -779,8 +779,8 @@ where
             self.s1.len(),
             s2_iter.clone(),
             s2_iter.count(),
-            score_cutoff.into().unwrap_or(0.0),
-            score_hint.into().unwrap_or(0.0),
+            score_cutoff.into(),
+            score_hint.into(),
         )
     }
 
@@ -804,8 +804,8 @@ where
             self.s1.len(),
             s2_iter.clone(),
             s2_iter.count(),
-            score_cutoff.into().unwrap_or(1.0),
-            score_hint.into().unwrap_or(1.0),
+            score_cutoff.into(),
+            score_hint.into(),
         )
     }
 
@@ -829,8 +829,8 @@ where
             self.s1.len(),
             s2_iter.clone(),
             s2_iter.count(),
-            score_cutoff.into().unwrap_or(0.0),
-            score_hint.into().unwrap_or(0.0),
+            score_cutoff.into(),
+            score_hint.into(),
         )
     }
 }

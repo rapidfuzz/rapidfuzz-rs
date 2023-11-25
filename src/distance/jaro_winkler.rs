@@ -106,8 +106,8 @@ impl SimilarityMetricf64 for JaroWinkler {
         len1: usize,
         s2: Iter2,
         len2: usize,
-        score_cutoff: f64,
-        _score_hint: f64,
+        score_cutoff: Option<f64>,
+        _score_hint: Option<f64>,
     ) -> Option<f64>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
@@ -120,7 +120,7 @@ impl SimilarityMetricf64 for JaroWinkler {
             len1,
             s2,
             len2,
-            score_cutoff,
+            score_cutoff.unwrap_or(1.0),
             self.prefix_weight.unwrap_or(0.1),
         )
     }
@@ -154,8 +154,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(1.0),
-        score_hint.into().unwrap_or(1.0),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 
@@ -187,8 +187,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(0.0),
-        score_hint.into().unwrap_or(0.0),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 
@@ -220,8 +220,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(1.0),
-        score_hint.into().unwrap_or(1.0),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 
@@ -253,8 +253,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(0.0),
-        score_hint.into().unwrap_or(0.0),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 
@@ -275,8 +275,8 @@ impl<CharT> SimilarityMetricf64 for CachedJaroWinkler<CharT> {
         len1: usize,
         s2: Iter2,
         len2: usize,
-        score_cutoff: f64,
-        _score_hint: f64,
+        score_cutoff: Option<f64>,
+        _score_hint: Option<f64>,
     ) -> Option<f64>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
@@ -291,7 +291,7 @@ impl<CharT> SimilarityMetricf64 for CachedJaroWinkler<CharT> {
             s2,
             len2,
             self.prefix_weight,
-            score_cutoff,
+            score_cutoff.unwrap_or(1.0),
         )
     }
 }
@@ -338,8 +338,8 @@ where
             self.s1.len(),
             s2_iter.clone(),
             s2_iter.count(),
-            score_cutoff.into().unwrap_or(1.0),
-            score_hint.into().unwrap_or(1.0),
+            score_cutoff.into(),
+            score_hint.into(),
         )
     }
 
@@ -363,8 +363,8 @@ where
             self.s1.len(),
             s2_iter.clone(),
             s2_iter.count(),
-            score_cutoff.into().unwrap_or(0.0),
-            score_hint.into().unwrap_or(0.0),
+            score_cutoff.into(),
+            score_hint.into(),
         )
     }
 
@@ -388,8 +388,8 @@ where
             self.s1.len(),
             s2_iter.clone(),
             s2_iter.count(),
-            score_cutoff.into().unwrap_or(1.0),
-            score_hint.into().unwrap_or(1.0),
+            score_cutoff.into(),
+            score_hint.into(),
         )
     }
 
@@ -413,8 +413,8 @@ where
             self.s1.len(),
             s2_iter.clone(),
             s2_iter.count(),
-            score_cutoff.into().unwrap_or(0.0),
-            score_hint.into().unwrap_or(0.0),
+            score_cutoff.into(),
+            score_hint.into(),
         )
     }
 }

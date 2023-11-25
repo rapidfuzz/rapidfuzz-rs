@@ -16,8 +16,8 @@ impl DistanceMetricUsize for Indel {
         len1: usize,
         s2: Iter2,
         len2: usize,
-        score_cutoff: usize,
-        score_hint: usize,
+        score_cutoff_: Option<usize>,
+        score_hint_: Option<usize>,
     ) -> Option<usize>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
@@ -25,6 +25,9 @@ impl DistanceMetricUsize for Indel {
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
+        let score_cutoff = score_cutoff_.unwrap_or(usize::MAX);
+        let score_hint = score_hint_.unwrap_or(usize::MAX);
+
         let maximum = self.maximum(len1, len2);
         let lcs_cutoff = if maximum / 2 >= score_cutoff {
             maximum / 2 - score_cutoff
@@ -36,7 +39,8 @@ impl DistanceMetricUsize for Indel {
         } else {
             0
         };
-        let lcs_sim = LcsSeq {}._similarity(s1, len1, s2, len2, lcs_cutoff, lcs_hint)?;
+        let lcs_sim =
+            LcsSeq {}._similarity(s1, len1, s2, len2, Some(lcs_cutoff), Some(lcs_hint))?;
         let dist = maximum - 2 * lcs_sim;
         if dist <= score_cutoff {
             Some(dist)
@@ -69,8 +73,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(usize::MAX),
-        score_hint.into().unwrap_or(usize::MAX),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 
@@ -97,8 +101,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(0),
-        score_hint.into().unwrap_or(0),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 
@@ -125,8 +129,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(1.0),
-        score_hint.into().unwrap_or(1.0),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 
@@ -153,8 +157,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(0.0),
-        score_hint.into().unwrap_or(0.0),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 
@@ -209,8 +213,8 @@ where
         len1: usize,
         s2: Iter2,
         len2: usize,
-        score_cutoff: usize,
-        score_hint: usize,
+        score_cutoff_: Option<usize>,
+        score_hint_: Option<usize>,
     ) -> Option<usize>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
@@ -218,6 +222,9 @@ where
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
+        let score_cutoff = score_cutoff_.unwrap_or(usize::MAX);
+        let score_hint = score_hint_.unwrap_or(usize::MAX);
+
         let maximum = self.maximum(len1, len2);
         let lcs_cutoff = if maximum / 2 >= score_cutoff {
             maximum / 2 - score_cutoff
@@ -229,9 +236,9 @@ where
         } else {
             0
         };
-        let lcs_sim = self
-            .scorer
-            ._similarity(s1, len1, s2, len2, lcs_cutoff, lcs_hint)?;
+        let lcs_sim =
+            self.scorer
+                ._similarity(s1, len1, s2, len2, Some(lcs_cutoff), Some(lcs_hint))?;
         let dist = maximum - 2 * lcs_sim;
         if dist <= score_cutoff {
             Some(dist)
@@ -275,8 +282,8 @@ where
             self.scorer.s1.len(),
             s2_iter.clone(),
             s2_iter.count(),
-            score_cutoff.into().unwrap_or(1.0),
-            score_hint.into().unwrap_or(1.0),
+            score_cutoff.into(),
+            score_hint.into(),
         )
     }
 
@@ -300,8 +307,8 @@ where
             self.scorer.s1.len(),
             s2_iter.clone(),
             s2_iter.count(),
-            score_cutoff.into().unwrap_or(0.0),
-            score_hint.into().unwrap_or(0.0),
+            score_cutoff.into(),
+            score_hint.into(),
         )
     }
 
@@ -325,8 +332,8 @@ where
             self.scorer.s1.len(),
             s2_iter.clone(),
             s2_iter.count(),
-            score_cutoff.into().unwrap_or(usize::MAX),
-            score_hint.into().unwrap_or(usize::MAX),
+            score_cutoff.into(),
+            score_hint.into(),
         )
     }
 
@@ -350,8 +357,8 @@ where
             self.scorer.s1.len(),
             s2_iter.clone(),
             s2_iter.count(),
-            score_cutoff.into().unwrap_or(0),
-            score_hint.into().unwrap_or(0),
+            score_cutoff.into(),
+            score_hint.into(),
         )
     }
 }

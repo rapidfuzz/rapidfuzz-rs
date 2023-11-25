@@ -14,8 +14,8 @@ impl SimilarityMetricUsize for Postfix {
         _len1: usize,
         s2: Iter2,
         _len2: usize,
-        score_cutoff: usize,
-        _score_hint: usize,
+        score_cutoff: Option<usize>,
+        _score_hint: Option<usize>,
     ) -> Option<usize>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
@@ -24,11 +24,12 @@ impl SimilarityMetricUsize for Postfix {
         Elem2: PartialEq<Elem1> + HashableChar,
     {
         let dist = find_common_suffix(s1, s2);
-        if dist >= score_cutoff {
-            Some(dist)
-        } else {
-            None
+        if let Some(cutoff) = score_cutoff {
+            if dist < cutoff {
+                return None;
+            }
         }
+        Some(dist)
     }
 }
 
@@ -55,8 +56,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(usize::MAX),
-        score_hint.into().unwrap_or(usize::MAX),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 
@@ -83,8 +84,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(0),
-        score_hint.into().unwrap_or(0),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 
@@ -111,8 +112,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(1.0),
-        score_hint.into().unwrap_or(1.0),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 
@@ -139,8 +140,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(0.0),
-        score_hint.into().unwrap_or(0.0),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 

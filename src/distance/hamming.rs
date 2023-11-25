@@ -66,8 +66,8 @@ impl DistanceMetricUsize for Hamming {
         _len1: usize,
         s2: Iter2,
         _len2: usize,
-        score_cutoff: usize,
-        _score_hint: usize,
+        score_cutoff: Option<usize>,
+        _score_hint: Option<usize>,
     ) -> Option<usize>
     where
         Iter1: Iterator<Item = Elem1>,
@@ -75,7 +75,7 @@ impl DistanceMetricUsize for Hamming {
         Elem1: PartialEq<Elem2> + HashableChar,
         Elem2: PartialEq<Elem1> + HashableChar,
     {
-        hamming_impl(s1, s2, score_cutoff)
+        hamming_impl(s1, s2, score_cutoff.unwrap_or(usize::MAX))
     }
 }
 
@@ -110,8 +110,8 @@ where
         len1,
         s2_iter,
         len2,
-        score_cutoff.into().unwrap_or(usize::MAX),
-        score_hint.into().unwrap_or(usize::MAX),
+        score_cutoff.into(),
+        score_hint.into(),
     ))
 }
 
@@ -146,8 +146,8 @@ where
         len1,
         s2_iter,
         len2,
-        score_cutoff.into().unwrap_or(0),
-        score_hint.into().unwrap_or(0),
+        score_cutoff.into(),
+        score_hint.into(),
     ))
 }
 
@@ -182,8 +182,8 @@ where
         len1,
         s2_iter,
         len2,
-        score_cutoff.into().unwrap_or(1.0),
-        score_hint.into().unwrap_or(1.0),
+        score_cutoff.into(),
+        score_hint.into(),
     ))
 }
 
@@ -221,8 +221,8 @@ where
         len1,
         s2_iter,
         len2,
-        score_cutoff.into().unwrap_or(0.0),
-        score_hint.into().unwrap_or(0.0),
+        score_cutoff.into(),
+        score_hint.into(),
     ))
 }
 

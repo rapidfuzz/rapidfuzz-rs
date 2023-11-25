@@ -179,8 +179,8 @@ impl DistanceMetricUsize for Osa {
         len1: usize,
         s2: Iter2,
         len2: usize,
-        score_cutoff: usize,
-        score_hint: usize,
+        score_cutoff_: Option<usize>,
+        score_hint: Option<usize>,
     ) -> Option<usize>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
@@ -189,8 +189,10 @@ impl DistanceMetricUsize for Osa {
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
         if len1 < len2 {
-            return self._distance(s2, len2, s1, len1, score_cutoff, score_hint);
+            return self._distance(s2, len2, s1, len1, score_cutoff_, score_hint);
         }
+
+        let score_cutoff = score_cutoff_.unwrap_or(usize::MAX);
 
         let affix = remove_common_affix(s1, len1, s2, len2);
 
@@ -256,8 +258,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(usize::MAX),
-        score_hint.into().unwrap_or(usize::MAX),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 
@@ -284,8 +286,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(0),
-        score_hint.into().unwrap_or(0),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 
@@ -312,8 +314,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(1.0),
-        score_hint.into().unwrap_or(1.0),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 
@@ -340,8 +342,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(0.0),
-        score_hint.into().unwrap_or(0.0),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 
@@ -361,8 +363,8 @@ impl<CharT> DistanceMetricUsize for CachedOsa<CharT> {
         len1: usize,
         s2: Iter2,
         len2: usize,
-        score_cutoff: usize,
-        _score_hint: usize,
+        score_cutoff_: Option<usize>,
+        _score_hint: Option<usize>,
     ) -> Option<usize>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
@@ -370,6 +372,8 @@ impl<CharT> DistanceMetricUsize for CachedOsa<CharT> {
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
+        let score_cutoff = score_cutoff_.unwrap_or(usize::MAX);
+
         let dist = if self.s1.is_empty() {
             len2
         } else if len2 == 0 {
@@ -426,8 +430,8 @@ where
             self.s1.len(),
             s2_iter.clone(),
             s2_iter.count(),
-            score_cutoff.into().unwrap_or(1.0),
-            score_hint.into().unwrap_or(1.0),
+            score_cutoff.into(),
+            score_hint.into(),
         )
     }
 
@@ -451,8 +455,8 @@ where
             self.s1.len(),
             s2_iter.clone(),
             s2_iter.count(),
-            score_cutoff.into().unwrap_or(0.0),
-            score_hint.into().unwrap_or(0.0),
+            score_cutoff.into(),
+            score_hint.into(),
         )
     }
 
@@ -476,8 +480,8 @@ where
             self.s1.len(),
             s2_iter.clone(),
             s2_iter.count(),
-            score_cutoff.into().unwrap_or(usize::MAX),
-            score_hint.into().unwrap_or(usize::MAX),
+            score_cutoff.into(),
+            score_hint.into(),
         )
     }
 
@@ -501,8 +505,8 @@ where
             self.s1.len(),
             s2_iter.clone(),
             s2_iter.count(),
-            score_cutoff.into().unwrap_or(0),
-            score_hint.into().unwrap_or(0),
+            score_cutoff.into(),
+            score_hint.into(),
         )
     }
 }

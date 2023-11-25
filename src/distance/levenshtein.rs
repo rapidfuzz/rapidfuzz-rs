@@ -1228,8 +1228,14 @@ where
             // max can make use of the common divisor of the three weights
             let new_score_cutoff = ceil_div_usize(score_cutoff, weights.insert_cost);
             let new_score_hint = ceil_div_usize(score_hint, weights.insert_cost);
-            let mut dist =
-                Indel {}._distance(s1, len1, s2, len2, new_score_cutoff, new_score_hint)?;
+            let mut dist = Indel {}._distance(
+                s1,
+                len1,
+                s2,
+                len2,
+                Some(new_score_cutoff),
+                Some(new_score_hint),
+            )?;
             dist *= weights.insert_cost;
             if dist <= score_cutoff {
                 return Some(dist);
@@ -1323,8 +1329,8 @@ impl DistanceMetricUsize for Levenshtein {
         len1: usize,
         s2: Iter2,
         len2: usize,
-        score_cutoff: usize,
-        score_hint: usize,
+        score_cutoff: Option<usize>,
+        score_hint: Option<usize>,
     ) -> Option<usize>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
@@ -1337,7 +1343,15 @@ impl DistanceMetricUsize for Levenshtein {
             delete_cost: 1,
             replace_cost: 1,
         });
-        _levenshtein_distance_without_pm(s1, len1, s2, len2, &weights, score_cutoff, score_hint)
+        _levenshtein_distance_without_pm(
+            s1,
+            len1,
+            s2,
+            len2,
+            &weights,
+            score_cutoff.unwrap_or(usize::MAX),
+            score_hint.unwrap_or(usize::MAX),
+        )
     }
 }
 
@@ -1365,8 +1379,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(usize::MAX),
-        score_hint.into().unwrap_or(usize::MAX),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 
@@ -1394,8 +1408,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(0),
-        score_hint.into().unwrap_or(0),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 
@@ -1423,8 +1437,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(1.0),
-        score_hint.into().unwrap_or(1.0),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 
@@ -1452,8 +1466,8 @@ where
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into().unwrap_or(0.0),
-        score_hint.into().unwrap_or(0.0),
+        score_cutoff.into(),
+        score_hint.into(),
     )
 }
 
@@ -1474,8 +1488,8 @@ impl<CharT> DistanceMetricUsize for CachedLevenshtein<CharT> {
         len1: usize,
         s2: Iter2,
         len2: usize,
-        score_cutoff: usize,
-        score_hint: usize,
+        score_cutoff: Option<usize>,
+        score_hint: Option<usize>,
     ) -> Option<usize>
     where
         Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
@@ -1490,8 +1504,8 @@ impl<CharT> DistanceMetricUsize for CachedLevenshtein<CharT> {
             s2,
             len2,
             &self.weights,
-            score_cutoff,
-            score_hint,
+            score_cutoff.unwrap_or(usize::MAX),
+            score_hint.unwrap_or(usize::MAX),
         )
     }
 }
@@ -1540,8 +1554,8 @@ where
             self.s1.len(),
             s2_iter.clone(),
             s2_iter.count(),
-            score_cutoff.into().unwrap_or(1.0),
-            score_hint.into().unwrap_or(1.0),
+            score_cutoff.into(),
+            score_hint.into(),
         )
     }
 
@@ -1565,8 +1579,8 @@ where
             self.s1.len(),
             s2_iter.clone(),
             s2_iter.count(),
-            score_cutoff.into().unwrap_or(0.0),
-            score_hint.into().unwrap_or(0.0),
+            score_cutoff.into(),
+            score_hint.into(),
         )
     }
 
@@ -1590,8 +1604,8 @@ where
             self.s1.len(),
             s2_iter.clone(),
             s2_iter.count(),
-            score_cutoff.into().unwrap_or(usize::MAX),
-            score_hint.into().unwrap_or(usize::MAX),
+            score_cutoff.into(),
+            score_hint.into(),
         )
     }
 
@@ -1615,8 +1629,8 @@ where
             self.s1.len(),
             s2_iter.clone(),
             s2_iter.count(),
-            score_cutoff.into().unwrap_or(0),
-            score_hint.into().unwrap_or(0),
+            score_cutoff.into(),
+            score_hint.into(),
         )
     }
 }
