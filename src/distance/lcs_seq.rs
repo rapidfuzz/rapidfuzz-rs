@@ -184,16 +184,16 @@ where
         // manually unroll, since I am unaware of how to perform automatic loop unrolling in rust
         for j in 0..(N / unroll_factor) {
             calc(j * unroll_factor);
-            calc((j + 1) * unroll_factor);
-            calc((j + 2) * unroll_factor);
+            calc(j * unroll_factor + 1);
+            calc(j * unroll_factor + 2);
         }
 
-        let j = N / unroll_factor;
+        let j = N / unroll_factor * unroll_factor;
         if N % unroll_factor == 2 {
-            calc(j * unroll_factor);
-            calc((j + 1) * unroll_factor);
+            calc(j);
+            calc(j + 1);
         } else if N % unroll_factor == 1 {
-            calc(j * unroll_factor);
+            calc(j);
         }
     }
 
