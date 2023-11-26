@@ -39,6 +39,7 @@ pub const fn blsi_u64(v: u64) -> u64 {
     v & v.wrapping_neg()
 }
 
+#[allow(dead_code)]
 pub const fn blsr_u64(v: u64) -> u64 {
     v & v.wrapping_sub(1)
 }

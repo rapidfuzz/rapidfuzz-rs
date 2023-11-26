@@ -1,6 +1,6 @@
 use crate::details::common::find_common_prefix;
 use crate::details::distance::Metricf64;
-use crate::details::intrinsics::{bit_mask_lsb_u64, blsi_u64, blsr_u64, ceil_div_usize};
+use crate::details::intrinsics::{bit_mask_lsb_u64, blsi_u64, ceil_div_usize};
 use crate::details::pattern_match_vector::{
     BitVectorInterface, BlockPatternMatchVector, PatternMatchVector,
 };
@@ -275,7 +275,7 @@ where
 
 fn count_transpositions_word<PmVec, Iter2, Elem2>(
     pm: &PmVec,
-    s2: Iter2,
+    mut s2: Iter2,
     _len2: usize,
     flagged: &FlaggedCharsWord,
 ) -> usize
@@ -286,17 +286,18 @@ where
 {
     let mut p_flag = flagged.p_flag;
     let mut t_flag = flagged.t_flag;
-    let mut transpositions = 0;
+    let mut transpositions = 0_usize;
     while t_flag != 0 {
         let pattern_flag_mask = blsi_u64(p_flag);
 
+        let s2_index = t_flag.trailing_zeros() as usize;
         let ch2 = s2
-            .clone()
-            .nth(t_flag.trailing_zeros() as usize)
+            .nth(s2_index)
             .expect("these can't be outside, since we set the flags based on available indexes");
+
         transpositions += usize::from((pm.get(0, ch2) & pattern_flag_mask) == 0);
 
-        t_flag = blsr_u64(t_flag);
+        t_flag = (t_flag >> 1) >> s2_index;
         p_flag ^= pattern_flag_mask;
     }
 
@@ -320,13 +321,16 @@ where
     let mut p_flag = flagged.p_flag[pattern_word];
 
     let mut transpositions = 0;
+    let mut s2_pos = 0_usize;
     while flagged_chars != 0 {
         while t_flag == 0 {
             text_word += 1;
-            s2.nth(64 - 1);
+            if s2_pos < 64 {
+                s2.nth(64 - 1 - s2_pos);
+            }
             t_flag = flagged.t_flag[text_word];
+            s2_pos = 0;
         }
-
         while t_flag != 0 {
             while p_flag == 0 {
                 pattern_word += 1;
@@ -334,14 +338,15 @@ where
             }
 
             let pattern_flag_mask = blsi_u64(p_flag);
-
-            let ch2 = s2.clone().nth(t_flag.trailing_zeros() as usize).expect(
+            let s2_index = t_flag.trailing_zeros() as usize;
+            let ch2 = s2.nth(s2_index).expect(
                 "these can't be outside, since we set the flags based on available indexes",
             );
+            s2_pos += s2_index + 1;
 
             transpositions += usize::from((pm.get(pattern_word, ch2) & pattern_flag_mask) == 0);
 
-            t_flag = blsr_u64(t_flag);
+            t_flag = (t_flag >> 1) >> s2_index;
             p_flag ^= pattern_flag_mask;
             flagged_chars -= 1;
         }
@@ -415,6 +420,7 @@ where
     } else if len1 <= 64 && len2 <= 64 {
         let mut pm = PatternMatchVector::default();
         pm.insert(s1_iter);
+
         let flagged = flag_similar_characters_word(&pm, len1, s2_iter.clone(), len2, bound);
 
         common_chars += flagged.count_common_chars();
