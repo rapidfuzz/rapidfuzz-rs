@@ -1,4 +1,4 @@
-use crate::details::common::{remove_common_affix, HashableChar};
+use crate::details::common::remove_common_affix;
 use crate::details::distance::MetricUsize;
 use crate::details::growing_hashmap::{GrowingHashmap, HybridGrowingHashmap};
 use crate::details::intrinsics::{ceil_div_usize, shr64};
@@ -7,6 +7,7 @@ use crate::details::pattern_match_vector::{
     BitVectorInterface, BlockPatternMatchVector, PatternMatchVector,
 };
 use crate::distance::indel;
+use crate::HashableChar;
 use std::cmp::{max, min};
 use std::mem;
 

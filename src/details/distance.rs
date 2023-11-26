@@ -1,4 +1,5 @@
-use crate::details::common::{norm_sim_to_norm_dist, HashableChar};
+use crate::details::common::norm_sim_to_norm_dist;
+use crate::HashableChar;
 
 pub trait MetricUsize {
     fn maximum(&self, len1: usize, len2: usize) -> usize;

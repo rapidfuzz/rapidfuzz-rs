@@ -1,4 +1,4 @@
-use crate::details::common::{Hash, HashableChar};
+use crate::{Hash, HashableChar};
 
 #[derive(Default, Clone)]
 struct GrowingHashmapMapElem<ValueType> {

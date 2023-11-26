@@ -1,6 +1,6 @@
-use crate::details::common::HashableChar;
 use crate::details::distance::Metricf64;
 use crate::details::pattern_match_vector::BlockPatternMatchVector;
+use crate::HashableChar;
 
 use crate::distance::jaro;
 

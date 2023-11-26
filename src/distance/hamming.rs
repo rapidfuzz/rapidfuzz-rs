@@ -1,5 +1,5 @@
-use crate::details::common::HashableChar;
 use crate::details::distance::MetricUsize;
+use crate::HashableChar;
 
 use std::error;
 use std::fmt::{self, Display, Formatter};

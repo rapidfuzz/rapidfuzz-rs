@@ -1,5 +1,6 @@
-use crate::details::common::{find_common_suffix, HashableChar};
+use crate::details::common::find_common_suffix;
 use crate::details::distance::MetricUsize;
+use crate::HashableChar;
 
 struct IndividualComparator;
 

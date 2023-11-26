@@ -1,18 +1,9 @@
+use crate::{Hash, HashableChar};
 use std::iter::{Skip, Take};
 
 pub fn norm_sim_to_norm_dist(score_cutoff: f64) -> f64 {
     let imprecision = 0.00001;
     (1.0 - score_cutoff + imprecision).min(1.0)
-}
-
-#[derive(Debug, Copy, Clone)]
-pub enum Hash {
-    UNSIGNED(u64),
-    SIGNED(i64),
-}
-
-pub trait HashableChar {
-    fn hash_char(&self) -> Hash;
 }
 
 macro_rules! impl_hashable_char {

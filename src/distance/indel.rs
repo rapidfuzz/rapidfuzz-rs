@@ -1,7 +1,7 @@
-use crate::details::common::HashableChar;
 use crate::details::distance::MetricUsize;
 use crate::details::pattern_match_vector::BlockPatternMatchVector;
 use crate::distance::lcs_seq;
+use crate::HashableChar;
 
 pub(crate) struct IndividualComparator;
 

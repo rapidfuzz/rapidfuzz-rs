@@ -1,10 +1,11 @@
-use crate::details::common::{find_common_prefix, HashableChar};
+use crate::details::common::find_common_prefix;
 use crate::details::distance::Metricf64;
 use crate::details::intrinsics::{bit_mask_lsb_u64, blsi_u64, blsr_u64, ceil_div_usize};
 use crate::details::pattern_match_vector::{
     BitVectorInterface, BlockPatternMatchVector, PatternMatchVector,
 };
 use crate::Hash;
+use crate::HashableChar;
 use std::cmp::min;
 
 struct FlaggedCharsWord {

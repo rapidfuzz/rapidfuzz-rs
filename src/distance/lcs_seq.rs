@@ -1,10 +1,11 @@
-use crate::details::common::{remove_common_affix, HashableChar};
+use crate::details::common::remove_common_affix;
 use crate::details::distance::MetricUsize;
 use crate::details::intrinsics::{carrying_add, ceil_div_usize};
 use crate::details::matrix::ShiftedBitMatrix;
 use crate::details::pattern_match_vector::{
     BitVectorInterface, BlockPatternMatchVector, PatternMatchVector,
 };
+use crate::HashableChar;
 use std::cmp::{max, min};
 
 #[derive(Default)]

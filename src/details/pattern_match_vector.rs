@@ -1,6 +1,6 @@
-use crate::details::common::{Hash, HashableChar};
 use crate::details::intrinsics::ceil_div_usize;
 use crate::details::matrix::BitMatrix;
+use crate::{Hash, HashableChar};
 
 #[derive(Clone, Copy, Default)]
 struct BitvectorHashmapMapElem {

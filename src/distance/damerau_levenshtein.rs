@@ -50,9 +50,10 @@
 //! ![benchmark results](https://raw.githubusercontent.com/maxbachmann/rapidfuzz-rs/main/doc/bench/damerau_levenshtein.svg)
 //!
 
-use crate::details::common::{remove_common_affix, HashableChar};
+use crate::details::common::remove_common_affix;
 use crate::details::distance::MetricUsize;
 use crate::details::growing_hashmap::{GrowingHashmap, HybridGrowingHashmap};
+use crate::HashableChar;
 use std::cmp::{max, min};
 use std::mem;
 
