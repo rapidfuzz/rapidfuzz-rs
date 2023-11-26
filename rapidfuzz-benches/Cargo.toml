@@ -1,0 +1,48 @@
+[package]
+name = "rapidfuzz-benches"
+version = "0.1.0"
+description = "In-tree benchmarks for the RapidFuzz project"
+authors = ["maxbachmann <oss@maxbachmann.de>"]
+edition = "2021"
+publish = false
+
+[dependencies]
+rapidfuzz = { path = "../" }
+
+[dev-dependencies]
+criterion = { version = "0.5.1", features = ["html_reports"] }
+rand = "0.8.5"
+strsim = "0.10.0"
+
+[[bench]]
+name = "bench_generic_levenshtein"
+harness = false
+
+[[bench]]
+name = "bench_jaro_winkler"
+harness = false
+
+[[bench]]
+name = "bench_jaro"
+harness = false
+
+[[bench]]
+name = "bench_levenshtein"
+harness = false
+
+[[bench]]
+name = "bench_osa"
+harness = false
+
+[[bench]]
+name = "bench_damerau_levenshtein"
+harness = false
+
+[[bench]]
+name = "bench_lcs_seq"
+harness = false
+
+[[bench]]
+name = "bench_indel"
+harness = false
+

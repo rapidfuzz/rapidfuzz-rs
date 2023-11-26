@@ -14,12 +14,3 @@ categories = ["text-processing"]
 
 [lib]
 name = "rapidfuzz"
-
-[dev-dependencies]
-criterion = { version = "0.4", features = ["html_reports"] }
-rand = "0.8.5"
-strsim = "0.10.0"
-
-[[bench]]
-name = "benches"
-harness = false
