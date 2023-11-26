@@ -681,7 +681,6 @@ where
     res
 }
 
-#[allow(clippy::too_many_lines)]
 fn hyrroe2003_block<
     const RECORD_MATRIX: usize,
     const RECORD_BIT_ROW: usize,
