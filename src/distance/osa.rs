@@ -1,7 +1,7 @@
 use crate::details::common::{remove_common_affix, HashableChar};
 use crate::details::distance::MetricUsize;
 use crate::details::pattern_match_vector::{
-    BitVectorInterface, BitvectorHashmap, BlockPatternMatchVector, PatternMatchVector,
+    BitVectorInterface, BlockPatternMatchVector, PatternMatchVector,
 };
 use std::mem;
 
