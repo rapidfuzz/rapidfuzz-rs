@@ -427,7 +427,7 @@ where
     // remove common affix and count it as part of the LCS
     let affix = remove_common_affix(s1, len1, s2, len2);
     let mut lcs_sim = affix.prefix_len + affix.suffix_len;
-    if len1 != 0 && len2 != 0 {
+    if affix.len1 != 0 && affix.len2 != 0 {
         lcs_sim += mbleven2018(
             affix.s1,
             affix.len1,
@@ -484,7 +484,7 @@ where
     let affix = remove_common_affix(s1, len1, s2, len2);
 
     let mut lcs_sim = affix.prefix_len + affix.suffix_len;
-    if len1 != 0 && len2 != 0 {
+    if affix.len1 != 0 && affix.len2 != 0 {
         let adjusted_cutoff = if score_cutoff >= lcs_sim {
             score_cutoff - lcs_sim
         } else {
@@ -1076,6 +1076,7 @@ mod tests {
 
     #[test]
     fn similar() {
+        assert_eq!(Some(0), test_distance_ascii("a", "a", None, None));
         assert_eq!(Some(0), test_distance_ascii("aaaa", "aaaa", None, None));
         assert_eq!(Some(4), test_similarity_ascii("aaaa", "aaaa", None, None));
         assert_delta!(
