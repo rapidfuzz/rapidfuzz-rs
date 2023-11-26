@@ -1322,10 +1322,10 @@ impl MetricUsize for IndividualComparator {
 ///
 /// assert_eq!(Some(3), levenshtein::distance("CA".chars(), "ABC".chars(), None, None, None));
 /// ```
-pub fn distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
+pub fn distance<Iter1, Iter2, Elem1, Elem2, Weights, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    weights: Option<WeightTable>,
+    weights: Weights,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
 ) -> Option<usize>
@@ -1336,12 +1336,16 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    Weights: Into<Option<WeightTable>>,
     ScoreCutoff: Into<Option<usize>>,
     ScoreHint: Into<Option<usize>>,
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    IndividualComparator { weights }._distance(
+    IndividualComparator {
+        weights: weights.into(),
+    }
+    ._distance(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -1367,10 +1371,10 @@ where
 ///     )
 /// ```
 ///
-pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
+pub fn similarity<Iter1, Iter2, Elem1, Elem2, Weights, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    weights: Option<WeightTable>,
+    weights: Weights,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
 ) -> Option<usize>
@@ -1381,12 +1385,16 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    Weights: Into<Option<WeightTable>>,
     ScoreCutoff: Into<Option<usize>>,
     ScoreHint: Into<Option<usize>>,
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    IndividualComparator { weights }._similarity(
+    IndividualComparator {
+        weights: weights.into(),
+    }
+    ._similarity(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -1411,10 +1419,10 @@ where
 ///         len1 * substitution_cost + (len2 - len1) * insertion_cost,
 ///     )
 /// ```
-pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
+pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, Weights, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    weights: Option<WeightTable>,
+    weights: Weights,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
 ) -> Option<f64>
@@ -1425,12 +1433,16 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    Weights: Into<Option<WeightTable>>,
     ScoreCutoff: Into<Option<f64>>,
     ScoreHint: Into<Option<f64>>,
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    IndividualComparator { weights }._normalized_distance(
+    IndividualComparator {
+        weights: weights.into(),
+    }
+    ._normalized_distance(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -1444,10 +1456,10 @@ where
 ///
 /// This is calculated as `1.0 - `[`normalized_distance`].
 ///
-pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
+pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, Weights, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
-    weights: Option<WeightTable>,
+    weights: Weights,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
 ) -> Option<f64>
@@ -1458,12 +1470,16 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Elem1: PartialEq<Elem2> + HashableChar + Copy,
     Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    Weights: Into<Option<WeightTable>>,
     ScoreCutoff: Into<Option<f64>>,
     ScoreHint: Into<Option<f64>>,
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    IndividualComparator { weights }._normalized_similarity(
+    IndividualComparator {
+        weights: weights.into(),
+    }
+    ._normalized_similarity(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
@@ -1526,15 +1542,16 @@ impl<Elem1> BatchComparator<Elem1>
 where
     Elem1: HashableChar + Clone,
 {
-    pub fn new<Iter1>(s1_: Iter1, weights_: Option<WeightTable>) -> Self
+    pub fn new<Iter1, Weights>(s1_: Iter1, weights_: Weights) -> Self
     where
         Iter1: IntoIterator<Item = Elem1>,
         Iter1::IntoIter: Clone,
+        Weights: Into<Option<WeightTable>>,
     {
         let s1_iter = s1_.into_iter();
         let s1: Vec<Elem1> = s1_iter.clone().collect();
 
-        let weights = weights_.unwrap_or(WeightTable {
+        let weights = weights_.into().unwrap_or(WeightTable {
             insertion_cost: 1,
             deletion_cost: 1,
             substitution_cost: 1,
