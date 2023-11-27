@@ -7,7 +7,7 @@
 //! It does respect triangle inequality, and is thus a metric distance.
 //!
 //! It's often used in applications where transpositions are common. An example for this would
-//! be typing erros involving adjacent characters.
+//! be typing errors involving adjacent characters.
 //!
 //! # Differences from Levenshtein distance
 //!
@@ -327,7 +327,7 @@ where
     )
 }
 
-/// `One x Many` comparisions using the Damerau-Levenshtein distance
+/// `One x Many` comparisons using the Damerau-Levenshtein distance
 ///
 /// # Examples
 ///

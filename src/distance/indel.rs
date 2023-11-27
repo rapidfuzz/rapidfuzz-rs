@@ -243,7 +243,7 @@ where
     }
 }
 
-/// `One x Many` comparisions using the Indel distance
+/// `One x Many` comparisons using the Indel distance
 ///
 /// # Examples
 ///

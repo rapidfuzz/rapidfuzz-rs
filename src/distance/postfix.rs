@@ -175,7 +175,7 @@ where
     )
 }
 
-/// `One x Many` comparisions using the Postfix similarity
+/// `One x Many` comparisons using the Postfix similarity
 ///
 /// # Examples
 ///

@@ -5,7 +5,7 @@
 //!
 //! - **Diverse String Metrics**: Offers a variety of string metrics
 //!   to suit different use cases. These range from the Levenshtein
-//!   distance for edit-based comparisions to the Jaro-Winkler similarity for
+//!   distance for edit-based comparisons to the Jaro-Winkler similarity for
 //!   more nuanced similarity assessments.
 //! - **Optimized for Speed**: The library is designed with performance in mind.
 //!   Each implementation is carefully designed to ensure optimal performance,
@@ -34,7 +34,7 @@
 //!     levenshtein::distance("kitten".chars(), "sitting".chars(), None, None, None)
 //! );
 //!
-//! // If you are sure the input strings are ascii only it's usually faster to operate on bytes
+//! // If you are sure the input strings are ASCII only it's usually faster to operate on bytes
 //! assert_eq!(
 //!     Some(3),
 //!     levenshtein::distance("kitten".bytes(), "sitting".bytes(), None, None, None)
@@ -106,7 +106,7 @@ pub enum Hash {
 ///   by the hashmap.
 /// - the hash function should be very fast. For primitive types it can just be the identity
 ///   function
-/// - the hashmaps are optimized for extended ascii, so values in the range 0-255 generally
+/// - the hashmaps are optimized for extended ASCII, so values in the range 0-255 generally
 ///   provide a better performance.
 ///
 /// # Example

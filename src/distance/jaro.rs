@@ -711,7 +711,7 @@ where
     )
 }
 
-/// `One x Many` comparisions using the Jaro similarity
+/// `One x Many` comparisons using the Jaro similarity
 pub struct BatchComparator<Elem1> {
     s1: Vec<Elem1>,
     pm: BlockPatternMatchVector,

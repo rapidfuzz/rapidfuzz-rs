@@ -278,7 +278,7 @@ where
 /// bits for a single operation.
 ///
 /// Each Row of 8 integers represent all possible combinations
-/// of edit sequences for a gived maximum edit distance and length
+/// of edit sequences for a given maximum edit distance and length
 /// difference between the two strings, that is below the maximum
 /// edit distance
 ///
@@ -397,7 +397,7 @@ where
 /// Bitparallel implementation of the Levenshtein distance.
 ///
 /// This implementation requires the first string to have a length <= 64.
-/// The algorithm used is described @cite `hyrro_2002` and has a time complexity
+/// The algorithm used stems from `hyrro_2002` and has a time complexity
 /// of O(N). Comments and variable names in the implementation follow the
 /// paper. This implementation is used internally when the strings are short enough
 fn hyrroe2003<
@@ -1553,7 +1553,7 @@ where
     )
 }
 
-/// `One x Many` comparisions using the Levenshtein distance
+/// `One x Many` comparisons using the Levenshtein distance
 ///
 /// # Examples
 ///

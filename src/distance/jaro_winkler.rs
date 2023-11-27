@@ -288,7 +288,7 @@ where
     )
 }
 
-/// `One x Many` comparisions using the Jaro-Winkler similarity
+/// `One x Many` comparisons using the Jaro-Winkler similarity
 pub struct BatchComparator<Elem1> {
     s1: Vec<Elem1>,
     pm: BlockPatternMatchVector,

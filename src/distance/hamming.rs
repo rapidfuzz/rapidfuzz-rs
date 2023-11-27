@@ -4,7 +4,7 @@
 //! Specifically, it counts the minimum number of substitutions required to
 //! transform one string into the other.
 //!
-//! While regularily the Hamming distance only works with texts of equal length,
+//! While regularly the Hamming distance only works with texts of equal length,
 //! this implementation provides an addition argument `pad` to decide whether texts
 //! of unequal length should be padded or return an error.
 //!
@@ -257,7 +257,7 @@ where
     ))
 }
 
-/// `One x Many` comparisions using the Hamming distance
+/// `One x Many` comparisons using the Hamming distance
 ///
 /// # Examples
 ///

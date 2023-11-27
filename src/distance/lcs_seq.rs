@@ -65,7 +65,7 @@ impl Default for DistanceResult<1> {
 /// bits for a single operation.
 ///
 /// Each Row of 8 integers represent all possible combinations
-/// of edit sequences for a gived maximum edit distance and length
+/// of edit sequences for a given maximum edit distance and length
 /// difference between the two strings, that is below the maximum
 /// edit distance
 ///
@@ -702,7 +702,7 @@ where
     )
 }
 
-/// `One x Many` comparisions using the Longest Common Subsequence
+/// `One x Many` comparisons using the Longest Common Subsequence
 ///
 /// # Examples
 ///

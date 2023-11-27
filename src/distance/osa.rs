@@ -44,7 +44,7 @@ use std::mem;
 /// Bitparallel implementation of the OSA distance.
 ///
 /// This implementation requires the first string to have a length <= 64.
-/// The algorithm used is described @cite `hyrro_2002` and has a time complexity
+/// The algorithm used stems from `hyrro_2002` and has a time complexity
 /// of O(N). Comments and variable names in the implementation follow the
 /// paper. This implementation is used internally when the strings are short enough
 fn hyrroe2003<PmVec, Iter1, Iter2, Elem1, Elem2>(

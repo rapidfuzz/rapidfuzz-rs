@@ -1,6 +1,6 @@
 //! Prefix similarity
 //!
-//! The Prefix similarity meausres the length of the common prefix between two
+//! The Prefix similarity measures the length of the common prefix between two
 //! sequences.
 //!
 
@@ -175,7 +175,7 @@ where
     )
 }
 
-/// `One x Many` comparisions using the Prefix similarity
+/// `One x Many` comparisons using the Prefix similarity
 ///
 /// # Examples
 ///

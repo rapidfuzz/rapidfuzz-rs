@@ -39,7 +39,7 @@ for Rust, C++ and Python.
 
 - **Diverse String Metrics**: Offers a variety of string metrics
   to suit different use cases. These range from the Levenshtein
-  distance for edit-based comparisions to the Jaro-Winkler similarity for
+  distance for edit-based comparisons to the Jaro-Winkler similarity for
   more nuanced similarity assessments.
 - **Optimized for Speed**: The library is designed with performance in mind.
   Each implementation is carefully designed to ensure optimal performance,
@@ -68,7 +68,7 @@ assert_eq!(
     levenshtein::distance("kitten".chars(), "sitting".chars(), None, None, None)
 );
 
-// If you are sure the input strings are ascii only it's usually faster to operate on bytes
+// If you are sure the input strings are ASCII only it's usually faster to operate on bytes
 assert_eq!(
     Some(3),
     levenshtein::distance("kitten".bytes(), "sitting".bytes(), None, None, None)

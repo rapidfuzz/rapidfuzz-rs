@@ -29,6 +29,17 @@ where
     indel::normalized_similarity(s1, s2, score_cutoff, score_hint)
 }
 
+/// `One x Many` comparisons using `ratio`
+///
+/// # Examples
+///
+/// ```
+/// use rapidfuzz::fuzz;
+///
+/// let scorer = fuzz::RatioBatchComparator::new("this is a test".chars());
+/// /// score is Some(0.9655)
+/// let score = scorer.similarity("this is a test!".chars(), None, None);
+/// ```
 pub struct RatioBatchComparator<Elem1> {
     scorer: indel::BatchComparator<Elem1>,
 }
