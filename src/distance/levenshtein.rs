@@ -1,3 +1,68 @@
+//! Levenshtein distance
+//!
+//! The Damerau-Levenshtein distance measures the minimum number of operations required to
+//! transform one string into another, considering three types of elementary edits:
+//! `insertions`, `deletions` and `substitutions`.
+//! It does respect triangle inequality, and is thus a metric distance.
+//!
+//! It finds use in various applications such as text processing, DNA sequence analysis,
+//! and data cleaning
+//!
+//! The implementation allows specifying the cost associated with each kind of edit operation:
+//! ```
+//! use rapidfuzz::distance::levenshtein;
+//!
+//! // defaults to uniform weights (1, 1, 1)
+//! assert_eq!(
+//!     Some(3),
+//!     levenshtein::distance("kitten".chars(), "sitting".chars(), None, None, None)
+//! );
+//! let weights = levenshtein::WeightTable{
+//!     insertion_cost: 1,
+//!     deletion_cost: 1,
+//!     substitution_cost: 2,
+//! };
+//! assert_eq!(
+//!     Some(5),
+//!     levenshtein::distance("kitten".chars(), "sitting".chars(), weights, None, None)
+//! );
+//! ```
+//!
+//! # Performance
+//!
+//! The performance of the implementation depends on the provided weights for edit operations.
+//! The three categories are:
+//! - Uniform levenshtein distance: Weights of (1, 1, 1)
+//! - Indel distance: Weights of (1, 1, 2)
+//! - Generic Levenshtein distance: any other weights
+//!
+//! The generic levenshtein distance performs significantly worse than the other two especially
+//! for long texts.
+//!
+//! ## Uniform Levenshtein distance
+//!
+//! The implementation has a runtime complexity of `O([K/64]*M)` (with `K = MAX(N, score_cutoff)`) and a memory usage of `O(N)`.
+//! It's based on the paper `Explaining and Extending the Bit-parallel Approximate String Matching Algorithm of Myers` from Heikki Hyyro
+//!
+//! ![benchmark results](https://raw.githubusercontent.com/maxbachmann/rapidfuzz-rs/main/rapidfuzz-benches/results/levenshtein.svg)
+//!
+//! ## Indel distance
+//!
+//! The implementation has a runtime complexity of `O([K/64]*M)` (with `K = MAX(N, score_cutoff)`) and a memory usage of `O(N)`.
+//! It's based on the paper `Bit-Parallel LCS-length Computation Revisited` from Heikki Hyyro
+//!
+//! ![benchmark results](https://raw.githubusercontent.com/maxbachmann/rapidfuzz-rs/main/rapidfuzz-benches/results/indel.svg)
+//!
+//! ## Generic Levenshtein distance
+//!
+//! The implementation has a runtime complexity of `O(N*M)` and a memory usage of `O(N)`.
+//! It's based on the Wagner-Fischer algorithm.
+//!
+//! ![benchmark results](https://raw.githubusercontent.com/maxbachmann/rapidfuzz-rs/main/rapidfuzz-benches/results/generic_levenshtein.svg)
+//!
+//!
+//! [`Indel`]: ../levenshtein/index.html
+
 use crate::details::common::remove_common_affix;
 use crate::details::distance::MetricUsize;
 use crate::details::growing_hashmap::{GrowingHashmap, HybridGrowingHashmap};

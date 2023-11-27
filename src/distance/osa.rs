@@ -1,3 +1,38 @@
+//! Optimal String Alignment distance
+//!
+//! The Optimal String Alignment distance (OSA) measures the minimum number of operations required to
+//! transform one string into another, considering four types of elementary edits:
+//! `insertions`, `deletions`, `substitutions`, and `transpositions`
+//!
+//! # Differences from Damerau-Levenshtein distance
+//!
+//! While both the [`Damerau-Levenshtein`] and OSA distance include transpositions,
+//! they differ in the treatment of transpositions. OSA treats any transposition as a
+//! single operation, regardless of whether the transposed characters are adjacent or not.
+//! In contrast, the Damerau-Levenshtein distance specifically allows transpositions of adjacent
+//! characters.
+//!
+//! An example where this leads to different results are the strings `CA` and `ÀBC`
+//!
+//! ```
+//! use rapidfuzz::distance::damerau_levenshtein;
+//! use rapidfuzz::distance::osa;
+//!
+//! assert_eq!(Some(2), damerau_levenshtein::distance("CA".chars(), "ABC".chars(), None, None));
+//! assert_eq!(Some(3), osa::distance("CA".chars(), "ABC".chars(), None, None));
+//! ```
+//!
+//! The handling of transpositions in the OSA distance is simpler, which makes it computationally less intensive.
+//!
+//! ## Performance
+//!
+//! The implementation has a runtime complexity of `O([N/64]*M)` and a memory usage of `O(N)`.
+//! It's based on the paper `Bit-parallel approximate string matching algorithms with transposition` from Heikki Hyyro
+//!
+//! ![benchmark results](https://raw.githubusercontent.com/maxbachmann/rapidfuzz-rs/main/rapidfuzz-benches/results/osa.svg)
+//!
+//! [`Damerau-Levenshtein`]: ../damerau_levenshtein/index.html
+
 use crate::details::common::remove_common_affix;
 use crate::details::distance::MetricUsize;
 use crate::details::pattern_match_vector::{

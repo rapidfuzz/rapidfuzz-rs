@@ -1,3 +1,26 @@
+//! Longest Common Subsequence
+//!
+//! The Longest Common Subsequence (LCS) measures the similarity between two sequences
+//! by identifying the longest sequence of elements (characters, numbers, etc.) that
+//! are common to both sequences. Importantly, the elements in the common subsequence do
+//! not need to appear consecutively in the original sequences.
+//!
+//! It's useful in applications where the order of elements is significant, but their exact positions
+//! may vary. Common use cases involve:
+//! - **Bioinformatics:** Commonly used in Bioinformatics for comparing genetic sequences where identifying shared genes
+//!    or regions, even if not contiguous, is important.
+//! - **Version Control Systems:** Tracking changes between different versions of a document or codebase.
+//! - **Plagiarism Detection:** Identifying similarities between texts even when the wording is rearranged or some
+//!     content is added or removed.
+//!
+//! ## Performance
+//!
+//! The implementation has a runtime complexity of `O([K/64]*M)` (with `K = MAX(N, score_cutoff)`) and a memory usage of `O(N)`.
+//! It's based on the paper `Bit-Parallel LCS-length Computation Revisited` from Heikki Hyyro
+//!
+//! ![benchmark results](https://raw.githubusercontent.com/maxbachmann/rapidfuzz-rs/main/rapidfuzz-benches/results/longest_common_subsequence.svg)
+//!
+
 use crate::details::common::remove_common_affix;
 use crate::details::distance::MetricUsize;
 use crate::details::intrinsics::{carrying_add, ceil_div_usize};

@@ -1,3 +1,22 @@
+//! Indel distance
+//!
+//! The Indel distance is a specialized version of the [`Levenshtein`] distance
+//! with only insertions and deletions. It can be calculated from the [`Longest Common Subsequence`].
+//!
+//! Similar to LCS it's commonly used in Bioinformatics applications like DNA sequence analysis, where insertions
+//! and deletions play a crucial role in understanding evolutionary relationships and genetic variations.
+//!
+//! [`Levenshtein`]: ../levenshtein/index.html
+//! [`Longest Common Subsequence`]: ../lcs_seq/index.html
+//!
+//! ## Performance
+//!
+//! The implementation has a runtime complexity of `O([K/64]*M)` (with `K = MAX(N, score_cutoff)`) and a memory usage of `O(N)`.
+//! It's based on the paper `Bit-Parallel LCS-length Computation Revisited` from Heikki Hyyro
+//!
+//! ![benchmark results](https://raw.githubusercontent.com/maxbachmann/rapidfuzz-rs/main/rapidfuzz-benches/results/indel.svg)
+//!
+
 use crate::details::distance::MetricUsize;
 use crate::details::pattern_match_vector::BlockPatternMatchVector;
 use crate::distance::lcs_seq;
