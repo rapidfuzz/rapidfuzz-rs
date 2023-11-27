@@ -565,7 +565,7 @@ impl Metricf64 for IndividualComparator {
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
-        similarity_without_pm(s1, len1, s2, len2, score_cutoff.unwrap_or(1.0))
+        similarity_without_pm(s1, len1, s2, len2, score_cutoff.unwrap_or(0.0))
     }
 }
 
@@ -706,7 +706,7 @@ impl<CharT> Metricf64 for BatchComparator<CharT> {
         Elem1: PartialEq<Elem2> + HashableChar + Copy,
         Elem2: PartialEq<Elem1> + HashableChar + Copy,
     {
-        similarity_with_pm(&self.pm, s1, len1, s2, len2, score_cutoff.unwrap_or(1.0))
+        similarity_with_pm(&self.pm, s1, len1, s2, len2, score_cutoff.unwrap_or(0.0))
     }
 }
 
@@ -976,6 +976,20 @@ mod tests {
 
         assert_delta!(res1, res2, 0.0001);
         res1
+    }
+
+    #[test]
+    fn test_no_cutoff() {
+        assert_delta!(
+            Some(0.455556),
+            _test_similarity_ascii("james", "robert", None, None),
+            0.0001
+        );
+        assert_delta!(
+            Some(1.0 - 0.455556),
+            _test_distance_ascii("james", "robert", None, None),
+            0.0001
+        );
     }
 
     #[test]
