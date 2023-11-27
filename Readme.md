@@ -32,11 +32,70 @@
 ---
 ## Description
 
-RapidFuzz is a general purpose string matching library. It provides blazingly fast implementations of various well known string metrics like the Levenshtein distance, the longest common subsequence or the Jaro-Winkler similarity.
+RapidFuzz is a general purpose string matching library with implementations
+for Rust, C++ and Python.
+
+### Key Features
+
+- **Diverse String Metrics**: Offers a variety of string metrics
+  to suit different use cases. These range from the Levenshtein
+  distance for edit-based comparisions to the Jaro-Winkler similarity for
+  more nuanced similarity assessments.
+- **Optimized for Speed**: The library is designed with performance in mind.
+  Each implementation is carefully designed to ensure optimal performance,
+  making it suitable for the analysis of large datasets.
+- **Easy to use**: The API is designed to be simple to use, while still giving
+  the implementation room for optimization.
 
 ## Installation
 
+The installation is as simple as:
+```console
+$ cargo add rapidfuzz
+```
+
 ## Usage
+
+The following examples show the usage with the Levenshtein distance. Other metrics
+can be found in the [fuzz](https://docs.rs/rapidfuzz/latest/rapidfuzz/fuzz/index.html) and [distance](https://docs.rs/rapidfuzz/latest/rapidfuzz/distance/index.html) modules.
+
+```rust
+use rapidfuzz::distance::levenshtein;
+
+// Perform a simple comparision using he levenshtein distance
+assert_eq!(
+    Some(3),
+    levenshtein::distance("kitten".chars(), "sitting".chars(), None, None, None)
+);
+
+// If you are sure the input strings are ascii only it's usually faster to operate on bytes
+assert_eq!(
+    Some(3),
+    levenshtein::distance("kitten".bytes(), "sitting".bytes(), None, None, None)
+);
+
+// You can provide a score_cutoff value to filter out strings with distance that is worse than
+// the score_cutoff
+assert_eq!(
+    None,
+    levenshtein::distance("kitten".chars(), "sitting".chars(), None, 2, None)
+);
+
+// You can provide a score_hint to tell the implementation about the expected score.
+// This can be used to select a more performant implementation internally, but might cause
+// a slowdown in cases where the distance is actually worse than the score_hint
+assert_eq!(
+    Some(3),
+    levenshtein::distance("kitten".chars(), "sitting".chars(), None, None, Some(3))
+);
+
+// When comparing a single string to multiple strings you can use the provided `BatchComparators`.
+// These can cache part of the calculation which can provide significant speedups
+let scorer = levenshtein::BatchComparator::new("kitten".chars(), None);
+assert_eq!(Some(3), scorer.distance("sitting".chars(), None, None));
+assert_eq!(Some(0), scorer.distance("kitten".chars(), None, None));
+```
+
 
 ## License
 Licensed under either of [Apache License, Version
