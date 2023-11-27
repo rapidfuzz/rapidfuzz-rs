@@ -1419,7 +1419,7 @@ where
     )
 }
 
-/// Levenshtein similarity in the range [max, 0]
+/// Levenshtein similarity in the range [0, max]
 ///
 /// This is calculated as `maximum - `[`distance`]. Where maximum is defined as
 /// ```notrust

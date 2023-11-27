@@ -1,3 +1,14 @@
+//! Hamming distance
+//!
+//! The Hamming distance measures the similarity of two sequences of equal length.
+//! Specifically, it counts the minimum number of substitutions required to
+//! transform one string into the other.
+//!
+//! While regularily the Hamming distance only works with texts of equal length,
+//! this implementation provides an addition argument `pad` to decide whether texts
+//! of unequal length should be padded or return an error.
+//!
+
 use crate::details::distance::MetricUsize;
 use crate::HashableChar;
 
@@ -79,6 +90,17 @@ impl MetricUsize for IndividualComparator {
     }
 }
 
+/// Hamming distance
+///
+/// Calculates the Hamming distance.
+///
+/// # Examples
+///
+/// ```
+/// use rapidfuzz::distance::hamming;
+///
+/// assert_eq!(Ok(Some(1)), hamming::distance("hamming".chars(), "humming".chars(), false, None, None));
+/// ```
 pub fn distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -115,6 +137,10 @@ where
     ))
 }
 
+/// Hamming similarity in the range [0, max]
+///
+/// This is calculated as `max(len1, len2) - `[`distance`].
+///
 pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -151,6 +177,10 @@ where
     ))
 }
 
+/// Normalized Hamming distance in the range [1.0, 0.0]
+///
+/// This is calculated as [`distance`]` / max(len1, len2)`.
+///
 pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -187,9 +217,10 @@ where
     ))
 }
 
-// todo this api is a bit of an outlier, since it is the only one returning an
-// error. Should the return just be Result and store score < score_cutoff as error as well?
-// having to unwrap both seems like a pain
+/// Normalized Hamming similarity in the range [0.0, 1.0]
+///
+/// This is calculated as `1.0 - `[`normalized_distance`].
+///
 pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -226,21 +257,33 @@ where
     ))
 }
 
+/// `One x Many` comparisions using the Hamming distance
+///
+/// # Examples
+///
+/// ```
+/// use rapidfuzz::distance::hamming;
+///
+/// let scorer = hamming::BatchComparator::new("hamming".chars(), false);
+/// assert_eq!(Ok(Some(1)), scorer.distance("humming".chars(), None, None));
+/// ```
 pub struct BatchComparator<Elem1> {
     s1: Vec<Elem1>,
+    pad: bool,
 }
 
 impl<Elem1> BatchComparator<Elem1>
 where
     Elem1: HashableChar + Clone,
 {
-    pub fn new<Iter1>(s1: Iter1) -> Self
+    pub fn new<Iter1>(s1: Iter1, pad: bool) -> Self
     where
         Iter1: IntoIterator<Item = Elem1>,
         Iter1::IntoIter: Clone,
     {
         Self {
             s1: s1.into_iter().collect(),
+            pad,
         }
     }
 
@@ -248,7 +291,6 @@ where
     pub fn distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
-        pad: bool,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
     ) -> Result<Option<usize>, Error>
@@ -260,14 +302,19 @@ where
         ScoreCutoff: Into<Option<usize>>,
         ScoreHint: Into<Option<usize>>,
     {
-        distance(self.s1.iter().copied(), s2, pad, score_cutoff, score_hint)
+        distance(
+            self.s1.iter().copied(),
+            s2,
+            self.pad,
+            score_cutoff,
+            score_hint,
+        )
     }
 
     /// Similarity calculated similar to [`similarity`]
     pub fn similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
-        pad: bool,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
     ) -> Result<Option<usize>, Error>
@@ -279,14 +326,19 @@ where
         ScoreCutoff: Into<Option<usize>>,
         ScoreHint: Into<Option<usize>>,
     {
-        similarity(self.s1.iter().copied(), s2, pad, score_cutoff, score_hint)
+        similarity(
+            self.s1.iter().copied(),
+            s2,
+            self.pad,
+            score_cutoff,
+            score_hint,
+        )
     }
 
     /// Normalized distance calculated similar to [`normalized_distance`]
     pub fn normalized_distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
-        pad: bool,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
     ) -> Result<Option<f64>, Error>
@@ -298,14 +350,19 @@ where
         ScoreCutoff: Into<Option<f64>>,
         ScoreHint: Into<Option<f64>>,
     {
-        normalized_distance(self.s1.iter().copied(), s2, pad, score_cutoff, score_hint)
+        normalized_distance(
+            self.s1.iter().copied(),
+            s2,
+            self.pad,
+            score_cutoff,
+            score_hint,
+        )
     }
 
     /// Normalized similarity calculated similar to [`normalized_similarity`]
     pub fn normalized_similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
-        pad: bool,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
     ) -> Result<Option<f64>, Error>
@@ -317,7 +374,13 @@ where
         ScoreCutoff: Into<Option<f64>>,
         ScoreHint: Into<Option<f64>>,
     {
-        normalized_similarity(self.s1.iter().copied(), s2, pad, score_cutoff, score_hint)
+        normalized_similarity(
+            self.s1.iter().copied(),
+            s2,
+            self.pad,
+            score_cutoff,
+            score_hint,
+        )
     }
 }
 

@@ -560,7 +560,7 @@ impl MetricUsize for IndividualComparator {
     }
 }
 
-/// Longest Common Subsequence distance in the range [0, max].
+/// Longest Common Subsequence distance in the range [max, 0].
 ///
 /// This is calculated as `max(len1, len2) - `[`similarity`].
 ///

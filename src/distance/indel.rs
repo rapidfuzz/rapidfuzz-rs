@@ -120,7 +120,7 @@ where
     )
 }
 
-/// Indel similarity in the range [max, 0]
+/// Indel similarity in the range [0, max]
 ///
 /// This is calculated as `(len1 + len2) - `[`distance`].
 pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(

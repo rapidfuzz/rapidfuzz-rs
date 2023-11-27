@@ -1,3 +1,18 @@
+//! Jaro-Winkler similarity
+//!
+//! The Jaro-Winkler similarity extends the [`Jaro`] similarity to provide additional
+//! sensitivity to matching prefixes. It introduces a scaling mechanism that boosts
+//! the similarity score for strings with common prefixes.
+//!
+//! [`Jaro`]: ../jaro/index.html
+//!
+//! # Performance
+//!
+//! The implementation has a runtime complexity of `O([N/64]*M)` and a memory usage of `O(N)`.
+//!
+//! ![benchmark results](https://raw.githubusercontent.com/maxbachmann/rapidfuzz-rs/main/rapidfuzz-benches/results/jaro_winkler.svg)
+//!
+
 use crate::details::distance::Metricf64;
 use crate::details::pattern_match_vector::BlockPatternMatchVector;
 use crate::HashableChar;
@@ -126,6 +141,10 @@ impl Metricf64 for IndividualComparator {
     }
 }
 
+/// Jaro-Winkler distance in the range [0.0, 1.0].
+///
+/// This is calculated as `1.0 - `[`similarity`].
+///
 pub fn distance<Iter1, Iter2, Elem1, Elem2, PrefixWeight, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -159,6 +178,7 @@ where
     )
 }
 
+/// Jaro-Winkler similarity in the range [1.0, 0.0].
 pub fn similarity<Iter1, Iter2, Elem1, Elem2, PrefixWeight, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -192,6 +212,11 @@ where
     )
 }
 
+/// Normalized Jaro-Winkler distance in the range [0.0, 1.0].
+///
+/// This behaves the same as `distance`, since the Jaro-Winkler similarity is always
+/// normalized
+///
 pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, PrefixWeight, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -225,6 +250,11 @@ where
     )
 }
 
+/// Normalized Jaro-Winkler similarity in the range [1.0, 0.0].
+///
+/// This behaves the same as `similarity`, since the Jaro-Winkler similarity is always
+/// normalized
+///
 pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, PrefixWeight, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -258,6 +288,7 @@ where
     )
 }
 
+/// `One x Many` comparisions using the Jaro-Winkler similarity
 pub struct BatchComparator<Elem1> {
     s1: Vec<Elem1>,
     pm: BlockPatternMatchVector,

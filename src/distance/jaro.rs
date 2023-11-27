@@ -1,3 +1,18 @@
+//! Jaro similarity
+//!
+//! The Jaro similarity is a measure of similarity between two strings, often
+//! used in the field of record linkage and string matching. It's particularly
+//! effective in comparing short strings, such as names.
+//! The algorithm considers both the common characters and their order in the strings,
+//! as well as the number of transpositions needed to make the strings equal.
+//!
+//! # Performance
+//!
+//! The implementation has a runtime complexity of `O([N/64]*M)` and a memory usage of `O(N)`.
+//!
+//! ![benchmark results](https://raw.githubusercontent.com/maxbachmann/rapidfuzz-rs/main/rapidfuzz-benches/results/jaro.svg)
+//!
+
 use crate::details::common::find_common_prefix;
 use crate::details::distance::Metricf64;
 use crate::details::intrinsics::{bit_mask_lsb_u64, blsi_u64, ceil_div_usize};
@@ -569,6 +584,10 @@ impl Metricf64 for IndividualComparator {
     }
 }
 
+/// Jaro distance in the range [0.0, 1.0].
+///
+/// This is calculated as `1.0 - `[`similarity`].
+///
 pub fn distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -597,6 +616,7 @@ where
     )
 }
 
+/// Jaro similarity in the range [1.0, 0.0].
 pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -625,6 +645,11 @@ where
     )
 }
 
+/// Normalized Jaro distance in the range [0.0, 1.0].
+///
+/// This behaves the same as `distance`, since the Jaro similarity is always
+/// normalized
+///
 pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -653,6 +678,11 @@ where
     )
 }
 
+/// Normalized Jaro similarity in the range [1.0, 0.0].
+///
+/// This behaves the same as `similarity`, since the Jaro similarity is always
+/// normalized
+///
 pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -681,6 +711,7 @@ where
     )
 }
 
+/// `One x Many` comparisions using the Jaro similarity
 pub struct BatchComparator<Elem1> {
     s1: Vec<Elem1>,
     pm: BlockPatternMatchVector,

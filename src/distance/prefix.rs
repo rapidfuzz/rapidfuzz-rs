@@ -1,3 +1,9 @@
+//! Prefix similarity
+//!
+//! The Prefix similarity meausres the length of the common prefix between two
+//! sequences.
+//!
+
 use crate::details::common::find_common_prefix;
 use crate::details::distance::MetricUsize;
 use crate::HashableChar;
@@ -34,6 +40,10 @@ impl MetricUsize for IndividualComparator {
     }
 }
 
+/// Prefix distance in the range [max, 0].
+///
+/// This is calculated as `max(len1, len2) - `[`similarity`].
+///
 pub fn distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -62,6 +72,17 @@ where
     )
 }
 
+/// Prefix similarity
+///
+/// Calculates the Prefix similarity.
+///
+/// # Examples
+///
+/// ```
+/// use rapidfuzz::distance::prefix;
+///
+/// assert_eq!(Some(4), prefix::similarity("prefix".chars(), "preference".chars(), None, None));
+/// ```
 pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -90,6 +111,10 @@ where
     )
 }
 
+/// Normalized Prefix distance in the range [1.0, 0.0]
+///
+/// This is calculated as [`distance`]` / max(len1, len2)`.
+///
 pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -118,6 +143,10 @@ where
     )
 }
 
+/// Normalized Prefix similarity in the range [0.0, 1.0]
+///
+/// This is calculated as `1.0 - `[`normalized_distance`].
+///
 pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -146,6 +175,16 @@ where
     )
 }
 
+/// `One x Many` comparisions using the Prefix similarity
+///
+/// # Examples
+///
+/// ```
+/// use rapidfuzz::distance::prefix;
+///
+/// let scorer = prefix::BatchComparator::new("prefix".chars());
+/// assert_eq!(Some(4), scorer.similarity("preference".chars(), None, None));
+/// ```
 pub struct BatchComparator<Elem1> {
     s1: Vec<Elem1>,
 }
