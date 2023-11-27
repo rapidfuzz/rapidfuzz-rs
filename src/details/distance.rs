@@ -70,7 +70,7 @@ pub trait MetricUsize {
                 return None;
             }
         }
-        Some(dist)
+        Some(sim)
     }
 
     fn _normalized_distance<Iter1, Iter2, Elem1, Elem2>(
@@ -220,7 +220,7 @@ pub trait Metricf64 {
                 return None;
             }
         }
-        Some(dist)
+        Some(sim)
     }
 
     fn _normalized_distance<Iter1, Iter2, Elem1, Elem2>(

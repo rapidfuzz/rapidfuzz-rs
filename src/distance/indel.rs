@@ -388,3 +388,370 @@ where
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    macro_rules! assert_delta {
+        ($x:expr, $y:expr, $d:expr) => {
+            match ($x, $y) {
+                (None, None) => {}
+                (Some(val1), Some(val2)) => {
+                    if (val1 - val2).abs() > $d {
+                        panic!("{:?} != {:?}", $x, $y);
+                    }
+                }
+                (_, _) => panic!("{:?} != {:?}", $x, $y),
+            }
+        };
+    }
+
+    fn test_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
+        s1_: Iter1,
+        s2_: Iter2,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> Option<usize>
+    where
+        Iter1: IntoIterator<Item = Elem1>,
+        Iter1::IntoIter: DoubleEndedIterator + Clone,
+        Iter2: IntoIterator<Item = Elem2>,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<usize>> + Clone,
+        ScoreHint: Into<Option<usize>> + Clone,
+    {
+        let s1 = s1_.into_iter();
+        let s2 = s2_.into_iter();
+        let res1 = distance(
+            s1.clone(),
+            s2.clone(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
+        let res2 = distance(
+            s2.clone(),
+            s1.clone(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
+
+        let scorer1 = BatchComparator::new(s1.clone());
+        let res3 = scorer1.distance(s2.clone(), score_cutoff.clone(), score_hint.clone());
+        let scorer2 = BatchComparator::new(s2.clone());
+        let res4 = scorer2.distance(s1.clone(), score_cutoff, score_hint);
+
+        assert_eq!(res1, res2);
+        assert_eq!(res1, res3);
+        assert_eq!(res1, res4);
+        res1
+    }
+
+    fn test_distance_ascii<ScoreCutoff, ScoreHint>(
+        s1: &str,
+        s2: &str,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> Option<usize>
+    where
+        ScoreCutoff: Into<Option<usize>> + Clone,
+        ScoreHint: Into<Option<usize>> + Clone,
+    {
+        let res1 = test_distance(
+            s1.chars(),
+            s2.chars(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
+        let res2 = test_distance(s1.bytes(), s2.bytes(), score_cutoff, score_hint);
+
+        assert_eq!(res1, res2);
+        res1
+    }
+
+    fn test_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
+        s1_: Iter1,
+        s2_: Iter2,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> Option<usize>
+    where
+        Iter1: IntoIterator<Item = Elem1>,
+        Iter1::IntoIter: DoubleEndedIterator + Clone,
+        Iter2: IntoIterator<Item = Elem2>,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<usize>> + Clone,
+        ScoreHint: Into<Option<usize>> + Clone,
+    {
+        let s1 = s1_.into_iter();
+        let s2 = s2_.into_iter();
+        let res1 = similarity(
+            s1.clone(),
+            s2.clone(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
+        let res2 = similarity(
+            s2.clone(),
+            s1.clone(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
+
+        let scorer1 = BatchComparator::new(s1.clone());
+        let res3 = scorer1.similarity(s2.clone(), score_cutoff.clone(), score_hint.clone());
+        let scorer2 = BatchComparator::new(s2.clone());
+        let res4 = scorer2.similarity(s1.clone(), score_cutoff, score_hint);
+
+        assert_eq!(res1, res2);
+        assert_eq!(res1, res3);
+        assert_eq!(res1, res4);
+        res1
+    }
+
+    fn test_similarity_ascii<ScoreCutoff, ScoreHint>(
+        s1: &str,
+        s2: &str,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> Option<usize>
+    where
+        ScoreCutoff: Into<Option<usize>> + Clone,
+        ScoreHint: Into<Option<usize>> + Clone,
+    {
+        let res1 = test_similarity(
+            s1.chars(),
+            s2.chars(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
+        let res2 = test_similarity(s1.bytes(), s2.bytes(), score_cutoff, score_hint);
+
+        assert_eq!(res1, res2);
+        res1
+    }
+
+    fn test_normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
+        s1_: Iter1,
+        s2_: Iter2,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> Option<f64>
+    where
+        Iter1: IntoIterator<Item = Elem1>,
+        Iter1::IntoIter: DoubleEndedIterator + Clone,
+        Iter2: IntoIterator<Item = Elem2>,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<f64>> + Clone,
+        ScoreHint: Into<Option<f64>> + Clone,
+    {
+        let s1 = s1_.into_iter();
+        let s2 = s2_.into_iter();
+        let res1 = normalized_distance(
+            s1.clone(),
+            s2.clone(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
+        let res2 = normalized_distance(
+            s2.clone(),
+            s1.clone(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
+        let scorer1 = BatchComparator::new(s1.clone());
+        let res3 =
+            scorer1.normalized_distance(s2.clone(), score_cutoff.clone(), score_hint.clone());
+        let scorer2 = BatchComparator::new(s2.clone());
+        let res4 = scorer2.normalized_distance(s1.clone(), score_cutoff, score_hint);
+
+        assert_delta!(res1, res2, 0.0001);
+        assert_delta!(res1, res3, 0.0001);
+        assert_delta!(res1, res4, 0.0001);
+        res1
+    }
+
+    fn test_normalized_distance_ascii<ScoreCutoff, ScoreHint>(
+        s1: &str,
+        s2: &str,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> Option<f64>
+    where
+        ScoreCutoff: Into<Option<f64>> + Clone,
+        ScoreHint: Into<Option<f64>> + Clone,
+    {
+        let res1 = test_normalized_distance(
+            s1.chars(),
+            s2.chars(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
+        let res2 = test_normalized_distance(s1.bytes(), s2.bytes(), score_cutoff, score_hint);
+
+        assert_delta!(res1, res2, 0.0001);
+        res1
+    }
+
+    fn test_normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
+        s1_: Iter1,
+        s2_: Iter2,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> Option<f64>
+    where
+        Iter1: IntoIterator<Item = Elem1>,
+        Iter1::IntoIter: DoubleEndedIterator + Clone,
+        Iter2: IntoIterator<Item = Elem2>,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Elem2> + HashableChar + Copy,
+        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        ScoreCutoff: Into<Option<f64>> + Clone,
+        ScoreHint: Into<Option<f64>> + Clone,
+    {
+        let s1 = s1_.into_iter();
+        let s2 = s2_.into_iter();
+        let res1 = normalized_similarity(
+            s1.clone(),
+            s2.clone(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
+        let res2 = normalized_similarity(
+            s2.clone(),
+            s1.clone(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
+        let scorer1 = BatchComparator::new(s1.clone());
+        let res3 =
+            scorer1.normalized_similarity(s2.clone(), score_cutoff.clone(), score_hint.clone());
+        let scorer2 = BatchComparator::new(s2.clone());
+        let res4 = scorer2.normalized_similarity(s1.clone(), score_cutoff, score_hint);
+
+        assert_delta!(res1, res2, 0.0001);
+        assert_delta!(res1, res3, 0.0001);
+        assert_delta!(res1, res4, 0.0001);
+        res1
+    }
+
+    fn test_normalized_similarity_ascii<ScoreCutoff, ScoreHint>(
+        s1: &str,
+        s2: &str,
+        score_cutoff: ScoreCutoff,
+        score_hint: ScoreHint,
+    ) -> Option<f64>
+    where
+        ScoreCutoff: Into<Option<f64>> + Clone,
+        ScoreHint: Into<Option<f64>> + Clone,
+    {
+        let res1 = test_normalized_similarity(
+            s1.chars(),
+            s2.chars(),
+            score_cutoff.clone(),
+            score_hint.clone(),
+        );
+        let res2 = test_normalized_similarity(s1.bytes(), s2.bytes(), score_cutoff, score_hint);
+
+        assert_delta!(res1, res2, 0.0001);
+        res1
+    }
+
+    #[test]
+    fn similar() {
+        assert_eq!(Some(0), test_distance_ascii("aaaa", "aaaa", None, None));
+        assert_eq!(Some(8), test_similarity_ascii("aaaa", "aaaa", None, None));
+        assert_delta!(
+            Some(0.0),
+            test_normalized_distance_ascii("aaaa", "aaaa", None, None),
+            0.0001
+        );
+        assert_delta!(
+            Some(1.0),
+            test_normalized_similarity_ascii("aaaa", "aaaa", None, None),
+            0.0001
+        );
+    }
+
+    #[test]
+    fn completely_different() {
+        assert_eq!(Some(8), test_distance_ascii("aaaa", "bbbb", None, None));
+        assert_eq!(Some(0), test_similarity_ascii("aaaa", "bbbb", None, None));
+        assert_delta!(
+            Some(1.0),
+            test_normalized_distance_ascii("aaaa", "bbbb", None, None),
+            0.0001
+        );
+        assert_delta!(
+            Some(0.0),
+            test_normalized_similarity_ascii("aaaa", "bbbb", None, None),
+            0.0001
+        );
+    }
+
+    #[test]
+    fn test_mbleven() {
+        let mut a = "South Korea";
+        let mut b = "North Korea";
+
+        assert_eq!(Some(4), test_distance_ascii(a, b, None, None));
+        assert_eq!(Some(4), test_distance_ascii(a, b, 5, None));
+        assert_eq!(Some(4), test_distance_ascii(a, b, 4, None));
+        assert_eq!(None, test_distance_ascii(a, b, 3, None));
+        assert_eq!(None, test_distance_ascii(a, b, 2, None));
+        assert_eq!(None, test_distance_ascii(a, b, 1, None));
+        assert_eq!(None, test_distance_ascii(a, b, 0, None));
+
+        a = "aabc";
+        b = "cccd";
+        assert_eq!(Some(6), test_distance_ascii(a, b, None, None));
+        assert_eq!(Some(6), test_distance_ascii(a, b, 6, None));
+        assert_eq!(None, test_distance_ascii(a, b, 5, None));
+        assert_eq!(None, test_distance_ascii(a, b, 4, None));
+        assert_eq!(None, test_distance_ascii(a, b, 3, None));
+        assert_eq!(None, test_distance_ascii(a, b, 2, None));
+        assert_eq!(None, test_distance_ascii(a, b, 1, None));
+        assert_eq!(None, test_distance_ascii(a, b, 0, None));
+    }
+
+    // this was an issue in the cached lcs implementation of rapidfuzz-cpp
+    #[test]
+    fn test_issue_unknown() {
+        let s1 = "001";
+        let s2 = "220";
+        assert_delta!(
+            Some(0.3333333),
+            test_normalized_similarity_ascii(s1, s2, None, None),
+            0.0001
+        );
+    }
+
+    #[test]
+    fn test_banded_implementation() {
+        let mut s1 = "ddccbccc";
+        let mut s2 = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\
+            aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaacca\
+            cccaccaaaaaaaadaaaaaaaaccccaccccccaaaaaaaccccaaacccaccccadddaaaaaaaaaaaaaaaaa\
+            aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaccccccccacccaaaaaacccaaaaaacc\
+            cacccaaaaaacccdccccccaccccccccccccccccccccccccccccccccccccccccccccccccccccccc\
+            ccccccddddddaaaaaaaaaaaaaaaaaaaaaaaaaacacccaaaaaacccddddaaaaaaaaaaaaaaaaaaaaa\
+            aaaaaaaaccccaaaaaaaaaaccccccaadddaaaaaaaaaaaaaaaaaaaaaacaaaaaa";
+        assert_eq!(Some(508), test_distance_ascii(s1, s2, None, None));
+        assert_eq!(Some(508), test_distance_ascii(s1, s2, 508, None));
+        assert_eq!(None, test_distance_ascii(s1, s2, 507, None));
+        assert_eq!(Some(508), test_distance_ascii(s1, s2, usize::MAX, None));
+
+        s1 = "bbbdbbmbbbbbbbbbBbfbbbbbbbbbbbbbbbbbbbrbbbbbrbbbbbdbnbbbjbhbbbbbbbbbhbbb\
+            bbCbobbbxbbbbbkbbbAbxbbwbbbtbcbbbbebbiblbbbbqbbbbbbpbbbbbbubbbkbbDbbbhbkbC\
+            bbgbbrbbbbbbbbbbbkbyvbbsbAbbbbz";
+        s2 = "jaaagaaqyaaaanrCfwaaxaeahtaaaCzaaaspaaBkvaaaaqDaacndaaeolwiaaauaaaaaaamA";
+
+        assert_eq!(Some(231), test_distance_ascii(s1, s2, None, None));
+    }
+}
