@@ -1,7 +1,7 @@
 Changelog
 ---------
 
-[0.3.0] - 2023-
+[0.3.0] - 2023-11-27
 ^^^^^^^^^^^^^^^^^^^^^
 Previous versions only existed for testing purposed years ago. This is a complete
 rewrite porting a subset of the features provided in the C++ implementation of
