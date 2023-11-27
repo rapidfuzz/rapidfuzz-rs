@@ -75,6 +75,23 @@ impl MetricUsize for IndividualComparator {
     }
 }
 
+/// Indel distance
+///
+/// Calculates the minimum number of insertions and deletions required to change
+/// one sequence into the other. This is equivalent to the Levenshtein distance
+/// with a substitution weight of 2.
+///
+/// # Examples
+///
+/// ```
+/// use rapidfuzz::distance::indel;
+///
+/// // Find the Indel distance between two strings
+/// assert_eq!(Some(3), indel::distance("lewenstein".chars(), "levenshtein".chars(), None, None));
+///
+/// // Setting a maximum distance allows the implementation to select a more efficient implementation
+/// assert_eq!(None, indel::distance("lewenstein".chars(), "levenshtein".chars(), 2, None));
+/// ```
 pub fn distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -103,6 +120,9 @@ where
     )
 }
 
+/// Indel similarity in the range [max, 0]
+///
+/// This is calculated as `(len1 + len2) - `[`distance`].
 pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -131,6 +151,9 @@ where
     )
 }
 
+/// Normalized Indel distance in the range [1.0, 0.0]
+///
+/// This is calculated as [`distance`]` / (len1 + len2)`.
 pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -159,6 +182,9 @@ where
     )
 }
 
+/// Normalized Indel similarity in the range [0.0, 1.0]
+///
+/// This is calculated as `1.0 - `[`normalized_distance`].
 pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -217,6 +243,16 @@ where
     }
 }
 
+/// `One x Many` comparisions using the Indel distance
+///
+/// # Examples
+///
+/// ```
+/// use rapidfuzz::distance::indel;
+///
+/// let scorer = indel::BatchComparator::new("lewenstein".chars());
+/// assert_eq!(Some(3), scorer.distance("levenshtein".chars(), None, None));
+/// ```
 pub struct BatchComparator<Elem1> {
     scorer: lcs_seq::BatchComparator<Elem1>,
 }

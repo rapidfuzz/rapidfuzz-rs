@@ -560,6 +560,17 @@ impl MetricUsize for IndividualComparator {
     }
 }
 
+/// Longest Common Subsequence distance in the range [0, max].
+///
+/// This is calculated as `max(len1, len2) - `[`similarity`].
+///
+/// # Examples
+///
+/// ```
+/// use rapidfuzz::distance::lcs_seq;
+///
+/// assert_eq!(Some(2), lcs_seq::distance("lewenstein".chars(), "levenshtein".chars(), None, None));
+/// ```
 pub fn distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -588,6 +599,17 @@ where
     )
 }
 
+/// Longest Common Subsequence similarity
+///
+/// Calculates the length of the longest common subsequence
+///
+/// # Examples
+///
+/// ```
+/// use rapidfuzz::distance::lcs_seq;
+///
+/// assert_eq!(Some(9), lcs_seq::similarity("lewenstein".chars(), "levenshtein".chars(), None, None));
+/// ```
 pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -616,6 +638,10 @@ where
     )
 }
 
+/// Normalized Longest Common Subsequence distance in the range [1.0, 0.0]
+///
+/// This is calculated as [`distance`]` / max(len1, len2)`.
+///
 pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -644,6 +670,10 @@ where
     )
 }
 
+/// Normalized Longest Common Subsequence similarity in the range [0.0, 1.0]
+///
+/// This is calculated as `1.0 - `[`normalized_distance`].
+///
 pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
@@ -672,6 +702,16 @@ where
     )
 }
 
+/// `One x Many` comparisions using the Longest Common Subsequence
+///
+/// # Examples
+///
+/// ```
+/// use rapidfuzz::distance::lcs_seq;
+///
+/// let scorer = lcs_seq::BatchComparator::new("lewenstein".chars());
+/// assert_eq!(Some(9), scorer.similarity("levenshtein".chars(), None, None));
+/// ```
 pub struct BatchComparator<Elem1> {
     pub(crate) s1: Vec<Elem1>,
     pub(crate) pm: BlockPatternMatchVector,

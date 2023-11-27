@@ -231,7 +231,7 @@ where
     )
 }
 
-/// Damerau-Levenshtein similarity in the range [max, 0.0]
+/// Damerau-Levenshtein similarity in the range [max, 0]
 ///
 /// This is calculated as `max(len1, len2) - `[`distance`].
 ///
