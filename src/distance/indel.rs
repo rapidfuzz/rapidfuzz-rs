@@ -29,7 +29,7 @@ impl MetricUsize for IndividualComparator {
         len1 + len2
     }
 
-    fn _distance<Iter1, Iter2, Elem1, Elem2>(
+    fn _distance<Iter1, Iter2>(
         &self,
         s1: Iter1,
         len1: usize,
@@ -39,10 +39,10 @@ impl MetricUsize for IndividualComparator {
         score_hint_: Option<usize>,
     ) -> Option<usize>
     where
-        Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
-        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
-        Elem1: PartialEq<Elem2> + HashableChar + Copy,
-        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        Iter1: DoubleEndedIterator + Clone,
+        Iter2: DoubleEndedIterator + Clone,
+        Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
     {
         let score_cutoff = score_cutoff_.unwrap_or(usize::MAX);
         let score_hint = score_hint_.unwrap_or(usize::MAX);
@@ -92,19 +92,19 @@ impl MetricUsize for IndividualComparator {
 /// // Setting a maximum distance allows the implementation to select a more efficient implementation
 /// assert_eq!(None, indel::distance("lewenstein".chars(), "levenshtein".chars(), 2, None));
 /// ```
-pub fn distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
+pub fn distance<Iter1, Iter2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
 ) -> Option<usize>
 where
-    Iter1: IntoIterator<Item = Elem1>,
+    Iter1: IntoIterator,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
-    Iter2: IntoIterator<Item = Elem2>,
+    Iter2: IntoIterator,
     Iter2::IntoIter: DoubleEndedIterator + Clone,
-    Elem1: PartialEq<Elem2> + HashableChar + Copy,
-    Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+    Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
     ScoreCutoff: Into<Option<usize>>,
     ScoreHint: Into<Option<usize>>,
 {
@@ -123,19 +123,19 @@ where
 /// Indel similarity in the range [0, max]
 ///
 /// This is calculated as `(len1 + len2) - `[`distance`].
-pub fn similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
+pub fn similarity<Iter1, Iter2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
 ) -> Option<usize>
 where
-    Iter1: IntoIterator<Item = Elem1>,
+    Iter1: IntoIterator,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
-    Iter2: IntoIterator<Item = Elem2>,
+    Iter2: IntoIterator,
     Iter2::IntoIter: DoubleEndedIterator + Clone,
-    Elem1: PartialEq<Elem2> + HashableChar + Copy,
-    Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+    Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
     ScoreCutoff: Into<Option<usize>>,
     ScoreHint: Into<Option<usize>>,
 {
@@ -154,19 +154,19 @@ where
 /// Normalized Indel distance in the range [1.0, 0.0]
 ///
 /// This is calculated as [`distance`]` / (len1 + len2)`.
-pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
+pub fn normalized_distance<Iter1, Iter2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
 ) -> Option<f64>
 where
-    Iter1: IntoIterator<Item = Elem1>,
+    Iter1: IntoIterator,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
-    Iter2: IntoIterator<Item = Elem2>,
+    Iter2: IntoIterator,
     Iter2::IntoIter: DoubleEndedIterator + Clone,
-    Elem1: PartialEq<Elem2> + HashableChar + Copy,
-    Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+    Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
     ScoreCutoff: Into<Option<f64>>,
     ScoreHint: Into<Option<f64>>,
 {
@@ -185,19 +185,19 @@ where
 /// Normalized Indel similarity in the range [0.0, 1.0]
 ///
 /// This is calculated as `1.0 - `[`normalized_distance`].
-pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
+pub fn normalized_similarity<Iter1, Iter2, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
     score_cutoff: ScoreCutoff,
     score_hint: ScoreHint,
 ) -> Option<f64>
 where
-    Iter1: IntoIterator<Item = Elem1>,
+    Iter1: IntoIterator,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
-    Iter2: IntoIterator<Item = Elem2>,
+    Iter2: IntoIterator,
     Iter2::IntoIter: DoubleEndedIterator + Clone,
-    Elem1: PartialEq<Elem2> + HashableChar + Copy,
-    Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+    Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
     ScoreCutoff: Into<Option<f64>>,
     ScoreHint: Into<Option<f64>>,
 {
@@ -213,7 +213,7 @@ where
     )
 }
 
-pub(crate) fn distance_with_pm<Iter1, Iter2, Elem1, Elem2>(
+pub(crate) fn distance_with_pm<Iter1, Iter2>(
     pm: &BlockPatternMatchVector,
     s1: Iter1,
     len1: usize,
@@ -222,10 +222,10 @@ pub(crate) fn distance_with_pm<Iter1, Iter2, Elem1, Elem2>(
     score_cutoff: usize,
 ) -> Option<usize>
 where
-    Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
-    Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
-    Elem1: PartialEq<Elem2> + HashableChar + Copy,
-    Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    Iter1: DoubleEndedIterator + Clone,
+    Iter2: DoubleEndedIterator + Clone,
+    Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+    Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
 {
     let maximum = len1 + len2;
     let lcs_cutoff = if maximum / 2 >= score_cutoff {
@@ -265,7 +265,7 @@ where
         len1 + len2
     }
 
-    fn _distance<Iter1, Iter2, Elem1, Elem2>(
+    fn _distance<Iter1, Iter2>(
         &self,
         s1: Iter1,
         len1: usize,
@@ -275,10 +275,10 @@ where
         score_hint_: Option<usize>,
     ) -> Option<usize>
     where
-        Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
-        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
-        Elem1: PartialEq<Elem2> + HashableChar + Copy,
-        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        Iter1: DoubleEndedIterator + Clone,
+        Iter2: DoubleEndedIterator + Clone,
+        Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
     {
         let score_cutoff = score_cutoff_.unwrap_or(usize::MAX);
         let score_hint = score_hint_.unwrap_or(usize::MAX);
@@ -321,17 +321,17 @@ where
     }
 
     /// Normalized distance calculated similar to [`normalized_distance`]
-    pub fn normalized_distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
+    pub fn normalized_distance<Iter2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
     ) -> Option<f64>
     where
-        Iter2: IntoIterator<Item = Elem2>,
+        Iter2: IntoIterator,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
-        Elem1: PartialEq<Elem2> + HashableChar + Copy,
-        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        Elem1: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Elem1> + HashableChar + Copy,
         ScoreCutoff: Into<Option<f64>>,
         ScoreHint: Into<Option<f64>>,
     {
@@ -347,17 +347,17 @@ where
     }
 
     /// Normalized similarity calculated similar to [`normalized_similarity`]
-    pub fn normalized_similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
+    pub fn normalized_similarity<Iter2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
     ) -> Option<f64>
     where
-        Iter2: IntoIterator<Item = Elem2>,
+        Iter2: IntoIterator,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
-        Elem1: PartialEq<Elem2> + HashableChar + Copy,
-        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        Elem1: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Elem1> + HashableChar + Copy,
         ScoreCutoff: Into<Option<f64>>,
         ScoreHint: Into<Option<f64>>,
     {
@@ -373,17 +373,17 @@ where
     }
 
     /// Distance calculated similar to [`distance`]
-    pub fn distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
+    pub fn distance<Iter2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
     ) -> Option<usize>
     where
-        Iter2: IntoIterator<Item = Elem2>,
+        Iter2: IntoIterator,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
-        Elem1: PartialEq<Elem2> + HashableChar + Copy,
-        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        Elem1: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Elem1> + HashableChar + Copy,
         ScoreCutoff: Into<Option<usize>>,
         ScoreHint: Into<Option<usize>>,
     {
@@ -399,17 +399,17 @@ where
     }
 
     /// Similarity calculated similar to [`similarity`]
-    pub fn similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
+    pub fn similarity<Iter2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
     ) -> Option<usize>
     where
-        Iter2: IntoIterator<Item = Elem2>,
+        Iter2: IntoIterator,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
-        Elem1: PartialEq<Elem2> + HashableChar + Copy,
-        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        Elem1: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Elem1> + HashableChar + Copy,
         ScoreCutoff: Into<Option<usize>>,
         ScoreHint: Into<Option<usize>>,
     {
@@ -443,19 +443,19 @@ mod tests {
         };
     }
 
-    fn test_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
+    fn test_distance<Iter1, Iter2, ScoreCutoff, ScoreHint>(
         s1_: Iter1,
         s2_: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
     ) -> Option<usize>
     where
-        Iter1: IntoIterator<Item = Elem1>,
+        Iter1: IntoIterator,
         Iter1::IntoIter: DoubleEndedIterator + Clone,
-        Iter2: IntoIterator<Item = Elem2>,
+        Iter2: IntoIterator,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
-        Elem1: PartialEq<Elem2> + HashableChar + Copy,
-        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
         ScoreCutoff: Into<Option<usize>> + Clone,
         ScoreHint: Into<Option<usize>> + Clone,
     {
@@ -507,19 +507,19 @@ mod tests {
         res1
     }
 
-    fn test_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
+    fn test_similarity<Iter1, Iter2, ScoreCutoff, ScoreHint>(
         s1_: Iter1,
         s2_: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
     ) -> Option<usize>
     where
-        Iter1: IntoIterator<Item = Elem1>,
+        Iter1: IntoIterator,
         Iter1::IntoIter: DoubleEndedIterator + Clone,
-        Iter2: IntoIterator<Item = Elem2>,
+        Iter2: IntoIterator,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
-        Elem1: PartialEq<Elem2> + HashableChar + Copy,
-        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
         ScoreCutoff: Into<Option<usize>> + Clone,
         ScoreHint: Into<Option<usize>> + Clone,
     {
@@ -571,19 +571,19 @@ mod tests {
         res1
     }
 
-    fn test_normalized_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
+    fn test_normalized_distance<Iter1, Iter2, ScoreCutoff, ScoreHint>(
         s1_: Iter1,
         s2_: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
     ) -> Option<f64>
     where
-        Iter1: IntoIterator<Item = Elem1>,
+        Iter1: IntoIterator,
         Iter1::IntoIter: DoubleEndedIterator + Clone,
-        Iter2: IntoIterator<Item = Elem2>,
+        Iter2: IntoIterator,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
-        Elem1: PartialEq<Elem2> + HashableChar + Copy,
-        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
         ScoreCutoff: Into<Option<f64>> + Clone,
         ScoreHint: Into<Option<f64>> + Clone,
     {
@@ -635,19 +635,19 @@ mod tests {
         res1
     }
 
-    fn test_normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
+    fn test_normalized_similarity<Iter1, Iter2, ScoreCutoff, ScoreHint>(
         s1_: Iter1,
         s2_: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
     ) -> Option<f64>
     where
-        Iter1: IntoIterator<Item = Elem1>,
+        Iter1: IntoIterator,
         Iter1::IntoIter: DoubleEndedIterator + Clone,
-        Iter2: IntoIterator<Item = Elem2>,
+        Iter2: IntoIterator,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
-        Elem1: PartialEq<Elem2> + HashableChar + Copy,
-        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
         ScoreCutoff: Into<Option<f64>> + Clone,
         ScoreHint: Into<Option<f64>> + Clone,
     {

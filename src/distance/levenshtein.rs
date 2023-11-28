@@ -160,7 +160,7 @@ impl Default for DistanceResult<0, 1> {
     }
 }
 
-fn generalized_wagner_fischer<Iter1, Iter2, Elem1, Elem2>(
+fn generalized_wagner_fischer<Iter1, Iter2>(
     s1: Iter1,
     len1: usize,
     s2: Iter2,
@@ -169,10 +169,10 @@ fn generalized_wagner_fischer<Iter1, Iter2, Elem1, Elem2>(
     score_cutoff: usize,
 ) -> Option<usize>
 where
-    Iter1: Iterator<Item = Elem1> + Clone,
-    Iter2: Iterator<Item = Elem2> + Clone,
-    Elem1: PartialEq<Elem2>,
-    Elem2: PartialEq<Elem1>,
+    Iter1: Iterator + Clone,
+    Iter2: Iterator + Clone,
+    Iter1::Item: PartialEq<Iter2::Item>,
+    Iter2::Item: PartialEq<Iter1::Item>,
 {
     let cache_size = len1 + 1;
     let mut cache: Vec<usize> = (0..cache_size).map(|x| x * weights.deletion_cost).collect();
@@ -240,7 +240,7 @@ fn _min_distance(len1: usize, len2: usize, weights: &WeightTable) -> usize {
     ) as usize
 }
 
-fn generalized_distance<Iter1, Iter2, Elem1, Elem2>(
+fn generalized_distance<Iter1, Iter2>(
     s1: Iter1,
     len1: usize,
     s2: Iter2,
@@ -249,10 +249,10 @@ fn generalized_distance<Iter1, Iter2, Elem1, Elem2>(
     score_cutoff: usize,
 ) -> Option<usize>
 where
-    Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
-    Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
-    Elem1: PartialEq<Elem2> + HashableChar,
-    Elem2: PartialEq<Elem1> + HashableChar,
+    Iter1: DoubleEndedIterator + Clone,
+    Iter2: DoubleEndedIterator + Clone,
+    Iter1::Item: PartialEq<Iter2::Item> + HashableChar,
+    Iter2::Item: PartialEq<Iter1::Item> + HashableChar,
 {
     let min_edits = _min_distance(len1, len2, weights);
     if min_edits > score_cutoff {
@@ -300,7 +300,7 @@ static LEVENSHTEIN_MBLEVEN2018_MATRIX: [[u8; 7]; 9] = [
     [0x15, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], // len_diff 3
 ];
 
-fn mbleven2018<Iter1, Iter2, Elem1, Elem2>(
+fn mbleven2018<Iter1, Iter2>(
     s1: Iter1,
     len1: usize,
     s2: Iter2,
@@ -308,10 +308,10 @@ fn mbleven2018<Iter1, Iter2, Elem1, Elem2>(
     score_cutoff: usize,
 ) -> Option<usize>
 where
-    Iter1: Iterator<Item = Elem1> + Clone,
-    Iter2: Iterator<Item = Elem2> + Clone,
-    Elem1: PartialEq<Elem2> + HashableChar,
-    Elem2: PartialEq<Elem1> + HashableChar,
+    Iter1: Iterator + Clone,
+    Iter2: Iterator + Clone,
+    Iter1::Item: PartialEq<Iter2::Item> + HashableChar,
+    Iter2::Item: PartialEq<Iter1::Item> + HashableChar,
 {
     debug_assert!(len1 != 0);
     debug_assert!(len2 != 0);
@@ -400,15 +400,7 @@ where
 /// The algorithm used stems from `hyrro_2002` and has a time complexity
 /// of O(N). Comments and variable names in the implementation follow the
 /// paper. This implementation is used internally when the strings are short enough
-fn hyrroe2003<
-    const RECORD_MATRIX: usize,
-    const RECORD_BIT_ROW: usize,
-    PmVec,
-    Iter1,
-    Iter2,
-    Elem1,
-    Elem2,
->(
+fn hyrroe2003<const RECORD_MATRIX: usize, const RECORD_BIT_ROW: usize, PmVec, Iter1, Iter2>(
     pm: &PmVec,
     _s1: Iter1,
     len1: usize,
@@ -417,10 +409,10 @@ fn hyrroe2003<
     score_cutoff: usize,
 ) -> DistanceResult<RECORD_MATRIX, RECORD_BIT_ROW>
 where
-    Iter1: Iterator<Item = Elem1>,
-    Iter2: Iterator<Item = Elem2>,
-    Elem1: PartialEq<Elem2> + HashableChar + Copy,
-    Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    Iter1: Iterator,
+    Iter2: Iterator,
+    Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+    Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
     PmVec: BitVectorInterface,
     DistanceResult<RECORD_MATRIX, RECORD_BIT_ROW>: Default,
 {
@@ -482,7 +474,7 @@ where
     res
 }
 
-fn hyrroe2003_small_band_with_pm<PmVec, Iter1, Iter2, Elem1, Elem2>(
+fn hyrroe2003_small_band_with_pm<PmVec, Iter1, Iter2>(
     pm: &PmVec,
     _s1: Iter1,
     len1: usize,
@@ -491,10 +483,10 @@ fn hyrroe2003_small_band_with_pm<PmVec, Iter1, Iter2, Elem1, Elem2>(
     score_cutoff: usize,
 ) -> Option<usize>
 where
-    Iter1: Iterator<Item = Elem1>,
-    Iter2: Iterator<Item = Elem2>,
-    Elem1: PartialEq<Elem2> + HashableChar + Copy,
-    Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    Iter1: Iterator,
+    Iter2: Iterator,
+    Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+    Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
     PmVec: BitVectorInterface,
 {
     // VP is set to 1^m. Shifting by bitwidth would be undefined behavior
@@ -596,7 +588,7 @@ where
     }
 }
 
-fn hyrroe2003_small_band_without_pm<const RECORD_MATRIX: usize, Iter1, Iter2, Elem1, Elem2>(
+fn hyrroe2003_small_band_without_pm<const RECORD_MATRIX: usize, Iter1, Iter2>(
     mut s1: Iter1,
     len1: usize,
     mut s2: Iter2,
@@ -604,10 +596,10 @@ fn hyrroe2003_small_band_without_pm<const RECORD_MATRIX: usize, Iter1, Iter2, El
     score_cutoff: usize,
 ) -> DistanceResult<RECORD_MATRIX, 0>
 where
-    Iter1: Iterator<Item = Elem1> + Clone,
-    Iter2: Iterator<Item = Elem2> + Clone,
-    Elem1: PartialEq<Elem2> + HashableChar,
-    Elem2: PartialEq<Elem1> + HashableChar,
+    Iter1: Iterator + Clone,
+    Iter2: Iterator + Clone,
+    Iter1::Item: PartialEq<Iter2::Item> + HashableChar,
+    Iter2::Item: PartialEq<Iter1::Item> + HashableChar,
     DistanceResult<RECORD_MATRIX, 0>: Default,
 {
     debug_assert!(score_cutoff <= len1);
@@ -746,14 +738,7 @@ where
     res
 }
 
-fn hyrroe2003_block<
-    const RECORD_MATRIX: usize,
-    const RECORD_BIT_ROW: usize,
-    Iter1,
-    Iter2,
-    Elem1,
-    Elem2,
->(
+fn hyrroe2003_block<const RECORD_MATRIX: usize, const RECORD_BIT_ROW: usize, Iter1, Iter2>(
     pm: &BlockPatternMatchVector,
     _s1: Iter1,
     len1: usize,
@@ -763,10 +748,10 @@ fn hyrroe2003_block<
     stop_row: isize,
 ) -> DistanceResult<RECORD_MATRIX, RECORD_BIT_ROW>
 where
-    Iter1: Iterator<Item = Elem1> + Clone,
-    Iter2: Iterator<Item = Elem2> + Clone,
-    Elem1: PartialEq<Elem2> + HashableChar + Copy,
-    Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    Iter1: Iterator + Clone,
+    Iter2: Iterator + Clone,
+    Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+    Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
     DistanceResult<RECORD_MATRIX, RECORD_BIT_ROW>: Default,
 {
     let mut res: DistanceResult<RECORD_MATRIX, RECORD_BIT_ROW> = DistanceResult::default();
@@ -1005,7 +990,7 @@ where
     res
 }
 
-fn uniform_distance_with_pm<Iter1, Iter2, Elem1, Elem2>(
+fn uniform_distance_with_pm<Iter1, Iter2>(
     pm: &BlockPatternMatchVector,
     s1: Iter1,
     len1: usize,
@@ -1015,10 +1000,10 @@ fn uniform_distance_with_pm<Iter1, Iter2, Elem1, Elem2>(
     mut score_hint: usize,
 ) -> Option<usize>
 where
-    Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
-    Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
-    Elem1: PartialEq<Elem2> + HashableChar + Copy,
-    Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    Iter1: DoubleEndedIterator + Clone,
+    Iter2: DoubleEndedIterator + Clone,
+    Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+    Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
 {
     // upper bound
     score_cutoff = min(score_cutoff, max(len1, len2));
@@ -1088,7 +1073,7 @@ where
     mbleven2018(affix.s1, affix.len1, affix.s2, affix.len2, score_cutoff)
 }
 
-fn uniform_distance_without_pm<Iter1, Iter2, Elem1, Elem2>(
+fn uniform_distance_without_pm<Iter1, Iter2>(
     s1: Iter1,
     len1: usize,
     s2: Iter2,
@@ -1097,10 +1082,10 @@ fn uniform_distance_without_pm<Iter1, Iter2, Elem1, Elem2>(
     mut score_hint: usize,
 ) -> Option<usize>
 where
-    Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
-    Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
-    Elem1: PartialEq<Elem2> + HashableChar + Copy,
-    Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    Iter1: DoubleEndedIterator + Clone,
+    Iter2: DoubleEndedIterator + Clone,
+    Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+    Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
 {
     if len1 < len2 {
         return uniform_distance_without_pm(s2, len2, s1, len1, score_cutoff, score_hint);
@@ -1208,7 +1193,7 @@ where
     }
 }
 
-fn _distance_without_pm<Iter1, Iter2, Elem1, Elem2>(
+fn _distance_without_pm<Iter1, Iter2>(
     s1: Iter1,
     len1: usize,
     s2: Iter2,
@@ -1218,10 +1203,10 @@ fn _distance_without_pm<Iter1, Iter2, Elem1, Elem2>(
     score_hint: usize,
 ) -> Option<usize>
 where
-    Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
-    Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
-    Elem1: PartialEq<Elem2> + HashableChar + Copy,
-    Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    Iter1: DoubleEndedIterator + Clone,
+    Iter2: DoubleEndedIterator + Clone,
+    Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+    Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
 {
     // for very short sequences the bitparallel algorithm is not worth it
     if len1 * len2 < 90 {
@@ -1275,7 +1260,7 @@ where
 }
 
 #[allow(clippy::too_many_arguments)]
-fn _distance_with_pm<Iter1, Iter2, Elem1, Elem2>(
+fn _distance_with_pm<Iter1, Iter2>(
     pm: &BlockPatternMatchVector,
     s1: Iter1,
     len1: usize,
@@ -1286,10 +1271,10 @@ fn _distance_with_pm<Iter1, Iter2, Elem1, Elem2>(
     score_hint: usize,
 ) -> Option<usize>
 where
-    Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
-    Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
-    Elem1: PartialEq<Elem2> + HashableChar + Copy,
-    Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    Iter1: DoubleEndedIterator + Clone,
+    Iter2: DoubleEndedIterator + Clone,
+    Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+    Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
 {
     if weights.insertion_cost == weights.deletion_cost {
         /* when insertions + deletions operations are free there can not be any edit distance */
@@ -1343,7 +1328,7 @@ impl MetricUsize for IndividualComparator {
         _maximum(len1, len2, &weights)
     }
 
-    fn _distance<Iter1, Iter2, Elem1, Elem2>(
+    fn _distance<Iter1, Iter2>(
         &self,
         s1: Iter1,
         len1: usize,
@@ -1353,10 +1338,10 @@ impl MetricUsize for IndividualComparator {
         score_hint: Option<usize>,
     ) -> Option<usize>
     where
-        Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
-        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
-        Elem1: PartialEq<Elem2> + HashableChar + Copy,
-        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        Iter1: DoubleEndedIterator + Clone,
+        Iter2: DoubleEndedIterator + Clone,
+        Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
     {
         let weights = self.weights.unwrap_or(WeightTable {
             insertion_cost: 1,
@@ -1386,7 +1371,7 @@ impl MetricUsize for IndividualComparator {
 ///
 /// assert_eq!(Some(3), levenshtein::distance("CA".chars(), "ABC".chars(), None, None, None));
 /// ```
-pub fn distance<Iter1, Iter2, Elem1, Elem2, Weights, ScoreCutoff, ScoreHint>(
+pub fn distance<Iter1, Iter2, Weights, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
     weights: Weights,
@@ -1394,12 +1379,12 @@ pub fn distance<Iter1, Iter2, Elem1, Elem2, Weights, ScoreCutoff, ScoreHint>(
     score_hint: ScoreHint,
 ) -> Option<usize>
 where
-    Iter1: IntoIterator<Item = Elem1>,
+    Iter1: IntoIterator,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
-    Iter2: IntoIterator<Item = Elem2>,
+    Iter2: IntoIterator,
     Iter2::IntoIter: DoubleEndedIterator + Clone,
-    Elem1: PartialEq<Elem2> + HashableChar + Copy,
-    Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+    Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
     Weights: Into<Option<WeightTable>>,
     ScoreCutoff: Into<Option<usize>>,
     ScoreHint: Into<Option<usize>>,
@@ -1435,7 +1420,7 @@ where
 ///     )
 /// ```
 ///
-pub fn similarity<Iter1, Iter2, Elem1, Elem2, Weights, ScoreCutoff, ScoreHint>(
+pub fn similarity<Iter1, Iter2, Weights, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
     weights: Weights,
@@ -1443,12 +1428,12 @@ pub fn similarity<Iter1, Iter2, Elem1, Elem2, Weights, ScoreCutoff, ScoreHint>(
     score_hint: ScoreHint,
 ) -> Option<usize>
 where
-    Iter1: IntoIterator<Item = Elem1>,
+    Iter1: IntoIterator,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
-    Iter2: IntoIterator<Item = Elem2>,
+    Iter2: IntoIterator,
     Iter2::IntoIter: DoubleEndedIterator + Clone,
-    Elem1: PartialEq<Elem2> + HashableChar + Copy,
-    Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+    Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
     Weights: Into<Option<WeightTable>>,
     ScoreCutoff: Into<Option<usize>>,
     ScoreHint: Into<Option<usize>>,
@@ -1483,7 +1468,7 @@ where
 ///         len1 * substitution_cost + (len2 - len1) * insertion_cost,
 ///     )
 /// ```
-pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, Weights, ScoreCutoff, ScoreHint>(
+pub fn normalized_distance<Iter1, Iter2, Weights, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
     weights: Weights,
@@ -1491,12 +1476,12 @@ pub fn normalized_distance<Iter1, Iter2, Elem1, Elem2, Weights, ScoreCutoff, Sco
     score_hint: ScoreHint,
 ) -> Option<f64>
 where
-    Iter1: IntoIterator<Item = Elem1>,
+    Iter1: IntoIterator,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
-    Iter2: IntoIterator<Item = Elem2>,
+    Iter2: IntoIterator,
     Iter2::IntoIter: DoubleEndedIterator + Clone,
-    Elem1: PartialEq<Elem2> + HashableChar + Copy,
-    Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+    Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
     Weights: Into<Option<WeightTable>>,
     ScoreCutoff: Into<Option<f64>>,
     ScoreHint: Into<Option<f64>>,
@@ -1520,7 +1505,7 @@ where
 ///
 /// This is calculated as `1.0 - `[`normalized_distance`].
 ///
-pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, Weights, ScoreCutoff, ScoreHint>(
+pub fn normalized_similarity<Iter1, Iter2, Weights, ScoreCutoff, ScoreHint>(
     s1: Iter1,
     s2: Iter2,
     weights: Weights,
@@ -1528,12 +1513,12 @@ pub fn normalized_similarity<Iter1, Iter2, Elem1, Elem2, Weights, ScoreCutoff, S
     score_hint: ScoreHint,
 ) -> Option<f64>
 where
-    Iter1: IntoIterator<Item = Elem1>,
+    Iter1: IntoIterator,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
-    Iter2: IntoIterator<Item = Elem2>,
+    Iter2: IntoIterator,
     Iter2::IntoIter: DoubleEndedIterator + Clone,
-    Elem1: PartialEq<Elem2> + HashableChar + Copy,
-    Elem2: PartialEq<Elem1> + HashableChar + Copy,
+    Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+    Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
     Weights: Into<Option<WeightTable>>,
     ScoreCutoff: Into<Option<f64>>,
     ScoreHint: Into<Option<f64>>,
@@ -1574,7 +1559,7 @@ impl<CharT> MetricUsize for BatchComparator<CharT> {
         _maximum(len1, len2, &self.weights)
     }
 
-    fn _distance<Iter1, Iter2, Elem1, Elem2>(
+    fn _distance<Iter1, Iter2>(
         &self,
         s1: Iter1,
         len1: usize,
@@ -1584,10 +1569,10 @@ impl<CharT> MetricUsize for BatchComparator<CharT> {
         score_hint: Option<usize>,
     ) -> Option<usize>
     where
-        Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
-        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
-        Elem1: PartialEq<Elem2> + HashableChar + Copy,
-        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        Iter1: DoubleEndedIterator + Clone,
+        Iter2: DoubleEndedIterator + Clone,
+        Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
     {
         _distance_with_pm(
             &self.pm,
@@ -1628,17 +1613,17 @@ where
     }
 
     /// Normalized distance calculated similar to [`normalized_distance`]
-    pub fn normalized_distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
+    pub fn normalized_distance<Iter2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
     ) -> Option<f64>
     where
-        Iter2: IntoIterator<Item = Elem2>,
+        Iter2: IntoIterator,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
-        Elem1: PartialEq<Elem2> + HashableChar + Copy,
-        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        Elem1: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Elem1> + HashableChar + Copy,
         ScoreCutoff: Into<Option<f64>>,
         ScoreHint: Into<Option<f64>>,
     {
@@ -1654,17 +1639,17 @@ where
     }
 
     /// Normalized similarity calculated similar to [`normalized_similarity`]
-    pub fn normalized_similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
+    pub fn normalized_similarity<Iter2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
     ) -> Option<f64>
     where
-        Iter2: IntoIterator<Item = Elem2>,
+        Iter2: IntoIterator,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
-        Elem1: PartialEq<Elem2> + HashableChar + Copy,
-        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        Elem1: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Elem1> + HashableChar + Copy,
         ScoreCutoff: Into<Option<f64>>,
         ScoreHint: Into<Option<f64>>,
     {
@@ -1680,17 +1665,17 @@ where
     }
 
     /// Distance calculated similar to [`distance`]
-    pub fn distance<Iter2, Elem2, ScoreCutoff, ScoreHint>(
+    pub fn distance<Iter2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
     ) -> Option<usize>
     where
-        Iter2: IntoIterator<Item = Elem2>,
+        Iter2: IntoIterator,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
-        Elem1: PartialEq<Elem2> + HashableChar + Copy,
-        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        Elem1: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Elem1> + HashableChar + Copy,
         ScoreCutoff: Into<Option<usize>>,
         ScoreHint: Into<Option<usize>>,
     {
@@ -1706,17 +1691,17 @@ where
     }
 
     /// Similarity calculated similar to [`similarity`]
-    pub fn similarity<Iter2, Elem2, ScoreCutoff, ScoreHint>(
+    pub fn similarity<Iter2, ScoreCutoff, ScoreHint>(
         &self,
         s2: Iter2,
         score_cutoff: ScoreCutoff,
         score_hint: ScoreHint,
     ) -> Option<usize>
     where
-        Iter2: IntoIterator<Item = Elem2>,
+        Iter2: IntoIterator,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
-        Elem1: PartialEq<Elem2> + HashableChar + Copy,
-        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        Elem1: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Elem1> + HashableChar + Copy,
         ScoreCutoff: Into<Option<usize>>,
         ScoreHint: Into<Option<usize>>,
     {
@@ -1759,7 +1744,7 @@ mod tests {
         };
     }
 
-    fn _test_distance<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
+    fn _test_distance<Iter1, Iter2, ScoreCutoff, ScoreHint>(
         s1_: Iter1,
         s2_: Iter2,
         weights: Option<WeightTable>,
@@ -1767,12 +1752,12 @@ mod tests {
         score_hint: ScoreHint,
     ) -> Option<usize>
     where
-        Iter1: IntoIterator<Item = Elem1>,
+        Iter1: IntoIterator,
         Iter1::IntoIter: DoubleEndedIterator + Clone,
-        Iter2: IntoIterator<Item = Elem2>,
+        Iter2: IntoIterator,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
-        Elem1: PartialEq<Elem2> + HashableChar + Copy,
-        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
         ScoreCutoff: Into<Option<usize>> + Clone,
         ScoreHint: Into<Option<usize>> + Clone,
     {
@@ -1828,7 +1813,7 @@ mod tests {
         res1
     }
 
-    fn _test_normalized_similarity<Iter1, Iter2, Elem1, Elem2, ScoreCutoff, ScoreHint>(
+    fn _test_normalized_similarity<Iter1, Iter2, ScoreCutoff, ScoreHint>(
         s1_: Iter1,
         s2_: Iter2,
         weights: Option<WeightTable>,
@@ -1836,12 +1821,12 @@ mod tests {
         score_hint: ScoreHint,
     ) -> Option<f64>
     where
-        Iter1: IntoIterator<Item = Elem1>,
+        Iter1: IntoIterator,
         Iter1::IntoIter: DoubleEndedIterator + Clone,
-        Iter2: IntoIterator<Item = Elem2>,
+        Iter2: IntoIterator,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
-        Elem1: PartialEq<Elem2> + HashableChar + Copy,
-        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
         ScoreCutoff: Into<Option<f64>> + Clone,
         ScoreHint: Into<Option<f64>> + Clone,
     {

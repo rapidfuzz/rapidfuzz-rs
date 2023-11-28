@@ -4,7 +4,7 @@ use crate::HashableChar;
 pub trait MetricUsize {
     fn maximum(&self, len1: usize, len2: usize) -> usize;
 
-    fn _distance<Iter1, Iter2, Elem1, Elem2>(
+    fn _distance<Iter1, Iter2>(
         &self,
         s1: Iter1,
         len1: usize,
@@ -14,10 +14,10 @@ pub trait MetricUsize {
         score_hint: Option<usize>,
     ) -> Option<usize>
     where
-        Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
-        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
-        Elem1: PartialEq<Elem2> + HashableChar + Copy,
-        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        Iter1: DoubleEndedIterator + Clone,
+        Iter2: DoubleEndedIterator + Clone,
+        Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
     {
         let maximum = self.maximum(len1, len2);
 
@@ -35,7 +35,7 @@ pub trait MetricUsize {
         Some(dist)
     }
 
-    fn _similarity<Iter1, Iter2, Elem1, Elem2>(
+    fn _similarity<Iter1, Iter2>(
         &self,
         s1: Iter1,
         len1: usize,
@@ -45,10 +45,10 @@ pub trait MetricUsize {
         mut score_hint: Option<usize>,
     ) -> Option<usize>
     where
-        Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
-        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
-        Elem1: PartialEq<Elem2> + HashableChar + Copy,
-        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        Iter1: DoubleEndedIterator + Clone,
+        Iter2: DoubleEndedIterator + Clone,
+        Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
     {
         let maximum = self.maximum(len1, len2);
         if let Some(cutoff) = score_cutoff {
@@ -73,7 +73,7 @@ pub trait MetricUsize {
         Some(sim)
     }
 
-    fn _normalized_distance<Iter1, Iter2, Elem1, Elem2>(
+    fn _normalized_distance<Iter1, Iter2>(
         &self,
         s1: Iter1,
         len1: usize,
@@ -83,10 +83,10 @@ pub trait MetricUsize {
         score_hint: Option<f64>,
     ) -> Option<f64>
     where
-        Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
-        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
-        Elem1: PartialEq<Elem2> + HashableChar + Copy,
-        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        Iter1: DoubleEndedIterator + Clone,
+        Iter2: DoubleEndedIterator + Clone,
+        Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
     {
         let maximum = self.maximum(len1, len2);
 
@@ -121,7 +121,7 @@ pub trait MetricUsize {
         Some(norm_dist)
     }
 
-    fn _normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
+    fn _normalized_similarity<Iter1, Iter2>(
         &self,
         s1: Iter1,
         len1: usize,
@@ -131,10 +131,10 @@ pub trait MetricUsize {
         score_hint: Option<f64>,
     ) -> Option<f64>
     where
-        Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
-        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
-        Elem1: PartialEq<Elem2> + HashableChar + Copy,
-        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        Iter1: DoubleEndedIterator + Clone,
+        Iter2: DoubleEndedIterator + Clone,
+        Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
     {
         let cutoff_score = score_cutoff.map(norm_sim_to_norm_dist);
         let hint_score = score_hint.map(norm_sim_to_norm_dist);
@@ -154,7 +154,7 @@ pub trait MetricUsize {
 pub trait Metricf64 {
     fn maximum(&self, len1: usize, len2: usize) -> f64;
 
-    fn _distance<Iter1, Iter2, Elem1, Elem2>(
+    fn _distance<Iter1, Iter2>(
         &self,
         s1: Iter1,
         len1: usize,
@@ -164,10 +164,10 @@ pub trait Metricf64 {
         score_hint: Option<f64>,
     ) -> Option<f64>
     where
-        Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
-        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
-        Elem1: PartialEq<Elem2> + HashableChar + Copy,
-        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        Iter1: DoubleEndedIterator + Clone,
+        Iter2: DoubleEndedIterator + Clone,
+        Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
     {
         let maximum = self.maximum(len1, len2);
 
@@ -185,7 +185,7 @@ pub trait Metricf64 {
         Some(dist)
     }
 
-    fn _similarity<Iter1, Iter2, Elem1, Elem2>(
+    fn _similarity<Iter1, Iter2>(
         &self,
         s1: Iter1,
         len1: usize,
@@ -195,10 +195,10 @@ pub trait Metricf64 {
         mut score_hint: Option<f64>,
     ) -> Option<f64>
     where
-        Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
-        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
-        Elem1: PartialEq<Elem2> + HashableChar + Copy,
-        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        Iter1: DoubleEndedIterator + Clone,
+        Iter2: DoubleEndedIterator + Clone,
+        Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
     {
         let maximum = self.maximum(len1, len2);
         if let Some(cutoff) = score_cutoff {
@@ -223,7 +223,7 @@ pub trait Metricf64 {
         Some(sim)
     }
 
-    fn _normalized_distance<Iter1, Iter2, Elem1, Elem2>(
+    fn _normalized_distance<Iter1, Iter2>(
         &self,
         s1: Iter1,
         len1: usize,
@@ -233,10 +233,10 @@ pub trait Metricf64 {
         score_hint: Option<f64>,
     ) -> Option<f64>
     where
-        Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
-        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
-        Elem1: PartialEq<Elem2> + HashableChar + Copy,
-        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        Iter1: DoubleEndedIterator + Clone,
+        Iter2: DoubleEndedIterator + Clone,
+        Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
     {
         let maximum = self.maximum(len1, len2);
 
@@ -253,7 +253,7 @@ pub trait Metricf64 {
         Some(norm_dist)
     }
 
-    fn _normalized_similarity<Iter1, Iter2, Elem1, Elem2>(
+    fn _normalized_similarity<Iter1, Iter2>(
         &self,
         s1: Iter1,
         len1: usize,
@@ -263,10 +263,10 @@ pub trait Metricf64 {
         score_hint: Option<f64>,
     ) -> Option<f64>
     where
-        Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
-        Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
-        Elem1: PartialEq<Elem2> + HashableChar + Copy,
-        Elem2: PartialEq<Elem1> + HashableChar + Copy,
+        Iter1: DoubleEndedIterator + Clone,
+        Iter2: DoubleEndedIterator + Clone,
+        Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
     {
         let cutoff_score = score_cutoff.map(norm_sim_to_norm_dist);
         let hint_score = score_hint.map(norm_sim_to_norm_dist);

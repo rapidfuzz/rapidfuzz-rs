@@ -36,24 +36,24 @@ impl_hashable_char!(u16, UNSIGNED, u64);
 impl_hashable_char!(u32, UNSIGNED, u64);
 impl_hashable_char!(u64, UNSIGNED, u64);
 
-pub fn find_common_prefix<Iter1, Iter2, Elem1, Elem2>(s1: Iter1, s2: Iter2) -> usize
+pub fn find_common_prefix<Iter1, Iter2>(s1: Iter1, s2: Iter2) -> usize
 where
-    Iter1: Iterator<Item = Elem1> + Clone,
-    Iter2: Iterator<Item = Elem2> + Clone,
-    Elem1: PartialEq<Elem2>,
-    Elem2: PartialEq<Elem1>,
+    Iter1: Iterator + Clone,
+    Iter2: Iterator + Clone,
+    Iter1::Item: PartialEq<Iter2::Item>,
+    Iter2::Item: PartialEq<Iter1::Item>,
 {
     s1.zip(s2)
         .take_while(|(a_char, b_char)| a_char == b_char)
         .count()
 }
 
-pub fn find_common_suffix<Iter1, Iter2, Elem1, Elem2>(s1: Iter1, s2: Iter2) -> usize
+pub fn find_common_suffix<Iter1, Iter2>(s1: Iter1, s2: Iter2) -> usize
 where
-    Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
-    Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
-    Elem1: PartialEq<Elem2>,
-    Elem2: PartialEq<Elem1>,
+    Iter1: DoubleEndedIterator + Clone,
+    Iter2: DoubleEndedIterator + Clone,
+    Iter1::Item: PartialEq<Iter2::Item>,
+    Iter2::Item: PartialEq<Iter1::Item>,
 {
     s1.rev()
         .zip(s2.rev())
@@ -61,12 +61,12 @@ where
         .count()
 }
 
-pub struct RemovedAffix<Iter1, Iter2, Elem1, Elem2>
+pub struct RemovedAffix<Iter1, Iter2>
 where
-    Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
-    Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
-    Elem1: PartialEq<Elem2>,
-    Elem2: PartialEq<Elem1>,
+    Iter1: DoubleEndedIterator + Clone,
+    Iter2: DoubleEndedIterator + Clone,
+    Iter1::Item: PartialEq<Iter2::Item>,
+    Iter2::Item: PartialEq<Iter1::Item>,
 {
     pub s1: Skip<Take<Iter1>>,
     pub len1: usize,
@@ -76,17 +76,17 @@ where
     pub suffix_len: usize,
 }
 
-pub fn remove_common_affix<Iter1, Iter2, Elem1, Elem2>(
+pub fn remove_common_affix<Iter1, Iter2>(
     s1: Iter1,
     mut len1: usize,
     s2: Iter2,
     mut len2: usize,
-) -> RemovedAffix<Iter1, Iter2, Elem1, Elem2>
+) -> RemovedAffix<Iter1, Iter2>
 where
-    Iter1: Iterator<Item = Elem1> + DoubleEndedIterator + Clone,
-    Iter2: Iterator<Item = Elem2> + DoubleEndedIterator + Clone,
-    Elem1: PartialEq<Elem2> + HashableChar,
-    Elem2: PartialEq<Elem1> + HashableChar,
+    Iter1: DoubleEndedIterator + Clone,
+    Iter2: DoubleEndedIterator + Clone,
+    Iter1::Item: PartialEq<Iter2::Item> + HashableChar,
+    Iter2::Item: PartialEq<Iter1::Item> + HashableChar,
 {
     let suffix_len = find_common_suffix(s1.clone(), s2.clone());
     let s1_iter_no_suffix = s1.take(len1 - suffix_len);
