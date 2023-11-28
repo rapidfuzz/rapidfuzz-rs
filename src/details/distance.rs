@@ -4,6 +4,34 @@ use crate::HashableChar;
 pub trait MetricUsize {
     fn maximum(&self, len1: usize, len2: usize) -> usize;
 
+    // todo rename if we convert everything to use the builder pattern
+    fn distance_<Iter1, Iter2>(
+        &self,
+        s1: Iter1,
+        s2: Iter2,
+        score_cutoff: Option<usize>,
+        score_hint: Option<usize>,
+    ) -> Option<usize>
+    where
+        Iter1: IntoIterator,
+        Iter1::IntoIter: DoubleEndedIterator + Clone,
+        Iter2: IntoIterator,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
+    {
+        let s1_iter = s1.into_iter();
+        let s2_iter = s2.into_iter();
+        self._distance(
+            s1_iter.clone(),
+            s1_iter.count(),
+            s2_iter.clone(),
+            s2_iter.count(),
+            score_cutoff,
+            score_hint,
+        )
+    }
+
     fn _distance<Iter1, Iter2>(
         &self,
         s1: Iter1,
@@ -33,6 +61,34 @@ pub trait MetricUsize {
             }
         }
         Some(dist)
+    }
+
+    // todo rename if we convert everything to use the builder pattern
+    fn similarity_<Iter1, Iter2>(
+        &self,
+        s1: Iter1,
+        s2: Iter2,
+        score_cutoff: Option<usize>,
+        score_hint: Option<usize>,
+    ) -> Option<usize>
+    where
+        Iter1: IntoIterator,
+        Iter1::IntoIter: DoubleEndedIterator + Clone,
+        Iter2: IntoIterator,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
+    {
+        let s1_iter = s1.into_iter();
+        let s2_iter = s2.into_iter();
+        self._similarity(
+            s1_iter.clone(),
+            s1_iter.count(),
+            s2_iter.clone(),
+            s2_iter.count(),
+            score_cutoff,
+            score_hint,
+        )
     }
 
     fn _similarity<Iter1, Iter2>(
@@ -71,6 +127,34 @@ pub trait MetricUsize {
             }
         }
         Some(sim)
+    }
+
+    // todo rename if we convert everything to use the builder pattern
+    fn normalized_distance_<Iter1, Iter2>(
+        &self,
+        s1: Iter1,
+        s2: Iter2,
+        score_cutoff: Option<f64>,
+        score_hint: Option<f64>,
+    ) -> Option<f64>
+    where
+        Iter1: IntoIterator,
+        Iter1::IntoIter: DoubleEndedIterator + Clone,
+        Iter2: IntoIterator,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
+    {
+        let s1_iter = s1.into_iter();
+        let s2_iter = s2.into_iter();
+        self._normalized_distance(
+            s1_iter.clone(),
+            s1_iter.count(),
+            s2_iter.clone(),
+            s2_iter.count(),
+            score_cutoff,
+            score_hint,
+        )
     }
 
     fn _normalized_distance<Iter1, Iter2>(
@@ -119,6 +203,34 @@ pub trait MetricUsize {
             }
         }
         Some(norm_dist)
+    }
+
+    // todo rename if we convert everything to use the builder pattern
+    fn normalized_similarity_<Iter1, Iter2>(
+        &self,
+        s1: Iter1,
+        s2: Iter2,
+        score_cutoff: Option<f64>,
+        score_hint: Option<f64>,
+    ) -> Option<f64>
+    where
+        Iter1: IntoIterator,
+        Iter1::IntoIter: DoubleEndedIterator + Clone,
+        Iter2: IntoIterator,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
+    {
+        let s1_iter = s1.into_iter();
+        let s2_iter = s2.into_iter();
+        self._normalized_similarity(
+            s1_iter.clone(),
+            s1_iter.count(),
+            s2_iter.clone(),
+            s2_iter.count(),
+            score_cutoff,
+            score_hint,
+        )
     }
 
     fn _normalized_similarity<Iter1, Iter2>(

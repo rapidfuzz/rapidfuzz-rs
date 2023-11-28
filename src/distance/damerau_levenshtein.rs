@@ -32,7 +32,7 @@
 //! use rapidfuzz::distance::osa;
 //!
 //! assert_eq!(Some(2), damerau_levenshtein::distance("CA".chars(), "ABC".chars(), None, None));
-//! assert_eq!(Some(3), osa::distance("CA".chars(), "ABC".chars(), None, None));
+//! assert_eq!(3, osa::distance().compare("CA".chars(), "ABC".chars()));
 //! ```
 //!
 //! The handling of transpositions in the OSA distance is simpler, which makes it computationally less intensive.
