@@ -100,7 +100,7 @@ where
     /// strategy to `CPython` and `Ruby`
     fn lookup(&self, key: u64) -> usize {
         let hash = key;
-        let mut i = (hash & self.mask as u64) as usize;
+        let mut i = hash as usize & self.mask as usize;
 
         let map = self
             .map
@@ -113,7 +113,7 @@ where
 
         let mut perturb = key;
         loop {
-            i = (i * 5 + perturb as usize + 1) % 128;
+            i = (i * 5 + perturb as usize + 1) & self.mask as usize;
 
             if map[i].value == Default::default() || map[i].key == key {
                 return i;

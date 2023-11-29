@@ -2115,4 +2115,12 @@ mod tests {
             distance(OCR_EXAMPLE1.iter(), OCR_EXAMPLE2.iter(), None, None, 0)
         );
     }
+
+    #[test]
+    fn unicode() {
+        assert_eq!(
+            Some(5),
+            _test_distance("Иванко".chars(), "Петрунко".chars(), None, None, None)
+        );
+    }
 }

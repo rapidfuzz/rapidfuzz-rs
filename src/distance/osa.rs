@@ -606,4 +606,12 @@ mod tests {
         let s2 = "b".to_string() + &filler + "AC" + &filler + "b";
         assert_eq!(Some(3), _test_distance_ascii(&s1, &s2, None, None));
     }
+
+    #[test]
+    fn unicode() {
+        assert_eq!(
+            Some(5),
+            _test_distance("Иванко".chars(), "Петрунко".chars(), None, None)
+        );
+    }
 }

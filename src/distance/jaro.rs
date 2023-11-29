@@ -1111,4 +1111,13 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn unicode() {
+        assert_delta!(
+            Some(0.375),
+            _test_distance("Иванко".chars(), "Петрунко".chars(), None, None),
+            0.0001
+        );
+    }
 }

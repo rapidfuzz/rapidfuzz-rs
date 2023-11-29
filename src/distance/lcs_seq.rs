@@ -1208,4 +1208,12 @@ mod tests {
         let b = "220";
         assert_eq!(Some(1), test_similarity_ascii(a, b, None, None));
     }
+
+    #[test]
+    fn unicode() {
+        assert_eq!(
+            Some(5),
+            test_distance("Иванко".chars(), "Петрунко".chars(), None, None)
+        );
+    }
 }

@@ -790,4 +790,12 @@ mod tests {
 
         assert_eq!(Some(231), test_distance_ascii(s1, s2, None, None));
     }
+
+    #[test]
+    fn unicode() {
+        assert_eq!(
+            Some(8),
+            test_distance("Иванко".chars(), "Петрунко".chars(), None, None)
+        );
+    }
 }

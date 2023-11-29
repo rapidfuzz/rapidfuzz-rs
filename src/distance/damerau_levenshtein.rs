@@ -628,4 +628,12 @@ mod tests {
             0.0001
         );
     }
+
+    #[test]
+    fn unicode() {
+        assert_eq!(
+            Some(5),
+            _test_distance("Иванко".chars(), "Петрунко".chars(), None, None)
+        );
+    }
 }
