@@ -216,13 +216,15 @@ pub struct NoScoreCutoff;
 #[derive(Default, Clone)]
 pub struct WithScoreCutoff<T>(T);
 
-pub struct IndividualComparator<T, ResultType, CutoffType> {
+pub struct IndividualComparator<MetricType, ResultType, CutoffType> {
     score_cutoff: CutoffType,
     score_hint: Option<ResultType>,
-    metric_type: PhantomData<T>,
+    metric_type: PhantomData<MetricType>,
 }
 
-impl<T, ResultType> Default for IndividualComparator<T, ResultType, NoScoreCutoff> {
+impl<MetricType, ResultType> Default
+    for IndividualComparator<MetricType, ResultType, NoScoreCutoff>
+{
     fn default() -> Self {
         Self {
             score_cutoff: Default::default(),
@@ -232,7 +234,9 @@ impl<T, ResultType> Default for IndividualComparator<T, ResultType, NoScoreCutof
     }
 }
 
-impl<T, ResultType, CutoffType> MetricUsize for IndividualComparator<T, ResultType, CutoffType> {
+impl<MetricType, ResultType, CutoffType> MetricUsize
+    for IndividualComparator<MetricType, ResultType, CutoffType>
+{
     fn maximum(&self, len1: usize, len2: usize) -> usize {
         len1.max(len2)
     }
@@ -292,7 +296,7 @@ impl<T, ResultType, CutoffType> MetricUsize for IndividualComparator<T, ResultTy
     }
 }
 
-impl<T, ResultType, CutoffType> IndividualComparator<T, ResultType, CutoffType> {
+impl<MetricType, ResultType, CutoffType> IndividualComparator<MetricType, ResultType, CutoffType> {
     pub fn with_score_hint(mut self, score_hint: impl Into<ResultType>) -> Self {
         self.score_hint = Some(score_hint.into());
         self
@@ -301,7 +305,7 @@ impl<T, ResultType, CutoffType> IndividualComparator<T, ResultType, CutoffType> 
     pub fn with_score_cutoff(
         self,
         score_cutoff: impl Into<ResultType>,
-    ) -> IndividualComparator<T, ResultType, WithScoreCutoff<ResultType>> {
+    ) -> IndividualComparator<MetricType, ResultType, WithScoreCutoff<ResultType>> {
         IndividualComparator {
             score_hint: self.score_hint,
             score_cutoff: WithScoreCutoff(score_cutoff.into()),
@@ -427,19 +431,19 @@ impl IndividualComparator<NormSim, f64, WithScoreCutoff<f64>> {
 }
 
 pub fn distance() -> IndividualComparator<Dist, usize, NoScoreCutoff> {
-    IndividualComparator::<Dist, usize, NoScoreCutoff>::default()
+    IndividualComparator::default()
 }
 
 pub fn similarity() -> IndividualComparator<Sim, usize, NoScoreCutoff> {
-    IndividualComparator::<Sim, usize, NoScoreCutoff>::default()
+    IndividualComparator::default()
 }
 
 pub fn normalized_distance() -> IndividualComparator<NormDist, f64, NoScoreCutoff> {
-    IndividualComparator::<NormDist, f64, NoScoreCutoff>::default()
+    IndividualComparator::default()
 }
 
 pub fn normalized_similarity() -> IndividualComparator<NormSim, f64, NoScoreCutoff> {
-    IndividualComparator::<NormSim, f64, NoScoreCutoff>::default()
+    IndividualComparator::default()
 }
 
 pub struct BatchComparator<Elem1> {
@@ -447,15 +451,15 @@ pub struct BatchComparator<Elem1> {
     pm: BlockPatternMatchVector,
 }
 
-pub struct BatchComparatorBuilder<'a, Elem1, T, ResultType, CutoffType> {
+pub struct BatchComparatorBuilder<'a, Elem1, MetricType, ResultType, CutoffType> {
     cache: &'a BatchComparator<Elem1>,
     score_cutoff: CutoffType,
     score_hint: Option<ResultType>,
-    metric_type: PhantomData<T>,
+    metric_type: PhantomData<MetricType>,
 }
 
-impl<Elem1, T, ResultType, CutoffType> MetricUsize
-    for BatchComparatorBuilder<'_, Elem1, T, ResultType, CutoffType>
+impl<Elem1, MetricType, ResultType, CutoffType> MetricUsize
+    for BatchComparatorBuilder<'_, Elem1, MetricType, ResultType, CutoffType>
 {
     fn maximum(&self, len1: usize, len2: usize) -> usize {
         len1.max(len2)
@@ -496,7 +500,9 @@ impl<Elem1, T, ResultType, CutoffType> MetricUsize
     }
 }
 
-impl<'a, Elem1, T, ResultType> BatchComparatorBuilder<'a, Elem1, T, ResultType, NoScoreCutoff> {
+impl<'a, Elem1, MetricType, ResultType>
+    BatchComparatorBuilder<'a, Elem1, MetricType, ResultType, NoScoreCutoff>
+{
     fn new(cache: &'a BatchComparator<Elem1>) -> Self {
         Self {
             cache,
@@ -507,8 +513,8 @@ impl<'a, Elem1, T, ResultType> BatchComparatorBuilder<'a, Elem1, T, ResultType, 
     }
 }
 
-impl<'a, Elem1, T, ResultType, CutoffType>
-    BatchComparatorBuilder<'a, Elem1, T, ResultType, CutoffType>
+impl<'a, Elem1, MetricType, ResultType, CutoffType>
+    BatchComparatorBuilder<'a, Elem1, MetricType, ResultType, CutoffType>
 {
     pub fn with_score_hint(mut self, score_hint: impl Into<ResultType>) -> Self {
         self.score_hint = Some(score_hint.into());
@@ -518,7 +524,8 @@ impl<'a, Elem1, T, ResultType, CutoffType>
     pub fn with_score_cutoff(
         self,
         score_cutoff: impl Into<ResultType>,
-    ) -> BatchComparatorBuilder<'a, Elem1, T, ResultType, WithScoreCutoff<ResultType>> {
+    ) -> BatchComparatorBuilder<'a, Elem1, MetricType, ResultType, WithScoreCutoff<ResultType>>
+    {
         BatchComparatorBuilder {
             cache: self.cache,
             score_hint: self.score_hint,
@@ -672,26 +679,26 @@ where
     pub fn normalized_distance<'a>(
         &'a self,
     ) -> BatchComparatorBuilder<'a, Elem1, NormDist, f64, NoScoreCutoff> {
-        BatchComparatorBuilder::<'a, Elem1, NormDist, f64, NoScoreCutoff>::new(self)
+        BatchComparatorBuilder::new(self)
     }
 
     /// Normalized similarity calculated similar to [`normalized_similarity`]
     pub fn normalized_similarity<'a>(
         &'a self,
     ) -> BatchComparatorBuilder<'a, Elem1, NormSim, f64, NoScoreCutoff> {
-        BatchComparatorBuilder::<'a, Elem1, NormSim, f64, NoScoreCutoff>::new(self)
+        BatchComparatorBuilder::new(self)
     }
 
     /// Distance calculated similar to [`distance`]
     pub fn distance<'a>(&'a self) -> BatchComparatorBuilder<'a, Elem1, Dist, usize, NoScoreCutoff> {
-        BatchComparatorBuilder::<'a, Elem1, Dist, usize, NoScoreCutoff>::new(self)
+        BatchComparatorBuilder::new(self)
     }
 
     /// Similarity calculated similar to [`similarity`]
     pub fn similarity<'a>(
         &'a self,
     ) -> BatchComparatorBuilder<'a, Elem1, Sim, usize, NoScoreCutoff> {
-        BatchComparatorBuilder::<'a, Elem1, Sim, usize, NoScoreCutoff>::new(self)
+        BatchComparatorBuilder::new(self)
     }
 }
 
