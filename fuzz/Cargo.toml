@@ -1,0 +1,54 @@
+[package]
+name = "rapidfuzz_fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4.6"
+arbitrary = { version = "1.3.0", features = ["derive"] }
+
+rapidfuzz = { path = "../" }
+cargo-fuzz = "0.11.2"
+
+[profile.release]
+debug = 1
+
+[[bin]]
+name = "damerau-levenshtein"
+path = "fuzz_targets/damerau_levenshtein.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "levenshtein"
+path = "fuzz_targets/levenshtein.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "indel"
+path = "fuzz_targets/indel.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "lcs_seq"
+path = "fuzz_targets/lcs_seq.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "jaro"
+path = "fuzz_targets/jaro.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "jaro-winkler"
+path = "fuzz_targets/jaro_winkler.rs"
+test = false
+doc = false
