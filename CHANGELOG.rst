@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+[0.3.2] - 2023-11-29
+^^^^^^^^^^^^^^^^^^^^
+Fixed
+~~~~~
+* fixed crash inside hashmap grow function leading to a crash in the
+  Damerau-Levenshtein implementation
+
 [0.3.1] - 2023-11-29
 ^^^^^^^^^^^^^^^^^^^^
 Fixed

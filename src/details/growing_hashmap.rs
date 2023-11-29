@@ -129,19 +129,20 @@ where
             new_size <<= 1;
         }
 
-        let mut new_map = vec![GrowingHashmapMapElem::<ValueType>::default(); new_size as usize];
-
         self.fill = self.used;
         self.mask = new_size - 1;
 
-        for elem in self
-            .map
-            .as_ref()
-            .expect("callers have to ensure map is allocated")
-        {
+        let old_map = std::mem::replace(
+            self.map
+                .as_mut()
+                .expect("callers have to ensure map is allocated"),
+            vec![GrowingHashmapMapElem::<ValueType>::default(); new_size as usize],
+        );
+
+        for elem in old_map {
             if elem.value != Default::default() {
                 let j = self.lookup(elem.key);
-                let new_elem = &mut new_map[j];
+                let new_elem = &mut self.map.as_mut().expect("map created above")[j];
                 new_elem.key = elem.key;
                 new_elem.value = elem.value;
                 self.used -= 1;
@@ -152,7 +153,6 @@ where
         }
 
         self.used = self.fill;
-        self.map = Some(new_map);
     }
 }
 

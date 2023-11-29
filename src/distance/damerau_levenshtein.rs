@@ -635,5 +635,10 @@ mod tests {
             Some(5),
             _test_distance("Иванко".chars(), "Петрунко".chars(), None, None)
         );
+
+        assert_eq!(
+            Some(10),
+            _test_distance("ИвaнкoIvan".chars(), "Петрунко".chars(), None, None)
+        );
     }
 }
