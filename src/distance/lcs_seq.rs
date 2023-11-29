@@ -452,13 +452,12 @@ where
     let affix = remove_common_affix(s1, len1, s2, len2);
     let mut lcs_sim = affix.prefix_len + affix.suffix_len;
     if affix.len1 != 0 && affix.len2 != 0 {
-        lcs_sim += mbleven2018(
-            affix.s1,
-            affix.len1,
-            affix.s2,
-            affix.len2,
-            score_cutoff - lcs_sim,
-        )?;
+        let adjusted_cutoff = if score_cutoff >= lcs_sim {
+            score_cutoff - lcs_sim
+        } else {
+            0
+        };
+        lcs_sim += mbleven2018(affix.s1, affix.len1, affix.s2, affix.len2, adjusted_cutoff)?;
     }
 
     if lcs_sim >= score_cutoff {
@@ -1214,6 +1213,14 @@ mod tests {
         assert_eq!(
             Some(5),
             test_distance("Иванко".chars(), "Петрунко".chars(), None, None)
+        );
+    }
+
+    #[test]
+    fn fuzzing_regressions() {
+        assert_eq!(
+            Some(1),
+            test_distance("ab".chars(), "ac".chars(), None, None)
         );
     }
 }

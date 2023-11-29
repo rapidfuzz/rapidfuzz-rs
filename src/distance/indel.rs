@@ -798,4 +798,12 @@ mod tests {
             test_distance("Иванко".chars(), "Петрунко".chars(), None, None)
         );
     }
+
+    #[test]
+    fn fuzzing_regressions() {
+        assert_eq!(
+            Some(2),
+            test_distance("ab".chars(), "ac".chars(), None, None)
+        );
+    }
 }

@@ -29,7 +29,9 @@ struct FlaggedCharsWord {
 }
 
 impl FlaggedCharsWord {
-    const fn count_common_chars(&self) -> usize {
+    fn count_common_chars(&self) -> usize {
+        debug_assert_eq!(self.p_flag.count_ones(), self.t_flag.count_ones());
+
         self.p_flag.count_ones() as usize
     }
 }
@@ -41,6 +43,17 @@ struct FlaggedCharsMultiword {
 
 impl FlaggedCharsMultiword {
     fn count_common_chars(&self) -> usize {
+        debug_assert_eq!(
+            self.p_flag
+                .iter()
+                .map(|x| x.count_ones() as usize)
+                .sum::<usize>(),
+            self.t_flag
+                .iter()
+                .map(|x| x.count_ones() as usize)
+                .sum::<usize>()
+        );
+
         if self.p_flag.len() < self.t_flag.len() {
             self.p_flag.iter().map(|x| x.count_ones() as usize).sum()
         } else {
@@ -198,22 +211,22 @@ fn flag_similar_characters_step<CharT>(
                 return;
             }
             if pm_j[1] != 0 {
-                flagged.p_flag[word] |= blsi_u64(pm_j[1]);
+                flagged.p_flag[word + 1] |= blsi_u64(pm_j[1]);
                 flagged.t_flag[j_word] |= 1_u64 << j_pos;
                 return;
             }
             if pm_j[2] != 0 {
-                flagged.p_flag[word] |= blsi_u64(pm_j[2]);
+                flagged.p_flag[word + 2] |= blsi_u64(pm_j[2]);
                 flagged.t_flag[j_word] |= 1_u64 << j_pos;
                 return;
             }
             if pm_j[3] != 0 {
-                flagged.p_flag[word] |= blsi_u64(pm_j[3]);
+                flagged.p_flag[word + 3] |= blsi_u64(pm_j[3]);
                 flagged.t_flag[j_word] |= 1_u64 << j_pos;
                 return;
             }
 
-            word += 3;
+            word += 4;
         }
     }
 
@@ -266,6 +279,7 @@ where
 
     for (j, ch2) in s2.enumerate() {
         flag_similar_characters_step(pm, ch2, &mut flagged, j, &bound_mask);
+        flagged.count_common_chars();
 
         if j + bound + 1 < len1 {
             bound_mask.last_mask = (bound_mask.last_mask << 1) | 1;
@@ -337,6 +351,7 @@ where
 
     let mut transpositions = 0;
     let mut s2_pos = 0_usize;
+
     while flagged_chars != 0 {
         while t_flag == 0 {
             text_word += 1;
@@ -1119,5 +1134,23 @@ mod tests {
             _test_distance("Иванко".chars(), "Петрунко".chars(), None, None),
             0.0001
         );
+    }
+
+    #[test]
+    fn fuzzing_regressions() {
+        {
+            let s1 = "afddddddddddddddddddddddddddddddddddddddddadacccccccdddddddddd%,ccaa{1}ccccdccccccccccccccccccccc\
+                      cccccccccccccccccccccccccccccccccccccccccccccccczcecccccccccccccccccccccccccccccccccccccccccccccc\
+                      cccccccccdddddddd디ccc디Gcddddccccccccccccccccccccccccccccccccccccccccccccccccccccccaccccccccccccc\
+                      ccccccccccccccccccccccccccccccccccccccccccccea,ccccccccccccccccccccccccccccccccccccccc";
+            let s2 = "ccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccddddd\
+                      dddddddddddddddddddddddddddddf,ccczюec*ceч;e,";
+
+            assert_delta!(
+                Some(0.1),
+                _test_distance(s1.chars(), s2.chars(), None, None),
+                0.32144
+            );
+        }
     }
 }

@@ -7,6 +7,8 @@ Fixed
 ~~~~~
 * fixed crash inside hashmap grow function leading to a crash in the
   Damerau-Levenshtein implementation
+* fixed incorrect flagging of similar characters in Jaro similarity
+* fixed wraparound in Longest Common Subsequence
 
 [0.3.1] - 2023-11-29
 ^^^^^^^^^^^^^^^^^^^^
