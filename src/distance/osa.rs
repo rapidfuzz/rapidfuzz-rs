@@ -216,19 +216,18 @@ pub struct NoScoreCutoff;
 #[derive(Default, Clone)]
 pub struct WithScoreCutoff<T>(T);
 
+#[must_use]
 pub struct IndividualComparator<MetricType, ResultType, CutoffType> {
     score_cutoff: CutoffType,
     score_hint: Option<ResultType>,
     metric_type: PhantomData<MetricType>,
 }
 
-impl<MetricType, ResultType> Default
-    for IndividualComparator<MetricType, ResultType, NoScoreCutoff>
-{
-    fn default() -> Self {
+impl<MetricType, ResultType> IndividualComparator<MetricType, ResultType, NoScoreCutoff> {
+    fn new() -> Self {
         Self {
-            score_cutoff: Default::default(),
-            score_hint: Default::default(),
+            score_cutoff: NoScoreCutoff,
+            score_hint: None,
             metric_type: PhantomData,
         }
     }
@@ -431,19 +430,19 @@ impl IndividualComparator<NormSim, f64, WithScoreCutoff<f64>> {
 }
 
 pub fn distance() -> IndividualComparator<Dist, usize, NoScoreCutoff> {
-    IndividualComparator::default()
+    IndividualComparator::new()
 }
 
 pub fn similarity() -> IndividualComparator<Sim, usize, NoScoreCutoff> {
-    IndividualComparator::default()
+    IndividualComparator::new()
 }
 
 pub fn normalized_distance() -> IndividualComparator<NormDist, f64, NoScoreCutoff> {
-    IndividualComparator::default()
+    IndividualComparator::new()
 }
 
 pub fn normalized_similarity() -> IndividualComparator<NormSim, f64, NoScoreCutoff> {
-    IndividualComparator::default()
+    IndividualComparator::new()
 }
 
 pub struct BatchComparator<Elem1> {
@@ -451,6 +450,7 @@ pub struct BatchComparator<Elem1> {
     pm: BlockPatternMatchVector,
 }
 
+#[must_use]
 pub struct BatchComparatorBuilder<'a, Elem1, MetricType, ResultType, CutoffType> {
     cache: &'a BatchComparator<Elem1>,
     score_cutoff: CutoffType,
@@ -506,8 +506,8 @@ impl<'a, Elem1, MetricType, ResultType>
     fn new(cache: &'a BatchComparator<Elem1>) -> Self {
         Self {
             cache,
-            score_cutoff: Default::default(),
-            score_hint: Default::default(),
+            score_cutoff: NoScoreCutoff,
+            score_hint: None,
             metric_type: PhantomData,
         }
     }
@@ -676,28 +676,26 @@ where
     }
 
     /// Normalized distance calculated similar to [`normalized_distance`]
-    pub fn normalized_distance<'a>(
-        &'a self,
-    ) -> BatchComparatorBuilder<'a, Elem1, NormDist, f64, NoScoreCutoff> {
+    pub fn normalized_distance(
+        &self,
+    ) -> BatchComparatorBuilder<'_, Elem1, NormDist, f64, NoScoreCutoff> {
         BatchComparatorBuilder::new(self)
     }
 
     /// Normalized similarity calculated similar to [`normalized_similarity`]
-    pub fn normalized_similarity<'a>(
-        &'a self,
-    ) -> BatchComparatorBuilder<'a, Elem1, NormSim, f64, NoScoreCutoff> {
+    pub fn normalized_similarity(
+        &self,
+    ) -> BatchComparatorBuilder<'_, Elem1, NormSim, f64, NoScoreCutoff> {
         BatchComparatorBuilder::new(self)
     }
 
     /// Distance calculated similar to [`distance`]
-    pub fn distance<'a>(&'a self) -> BatchComparatorBuilder<'a, Elem1, Dist, usize, NoScoreCutoff> {
+    pub fn distance(&self) -> BatchComparatorBuilder<'_, Elem1, Dist, usize, NoScoreCutoff> {
         BatchComparatorBuilder::new(self)
     }
 
     /// Similarity calculated similar to [`similarity`]
-    pub fn similarity<'a>(
-        &'a self,
-    ) -> BatchComparatorBuilder<'a, Elem1, Sim, usize, NoScoreCutoff> {
+    pub fn similarity(&self) -> BatchComparatorBuilder<'_, Elem1, Sim, usize, NoScoreCutoff> {
         BatchComparatorBuilder::new(self)
     }
 }
