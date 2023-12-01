@@ -33,12 +33,7 @@ fn benchmark(c: &mut Criterion) {
 
         group.bench_with_input(BenchmarkId::new("rapidfuzz", i), &(&s1, &s2), |b, val| {
             b.iter(|| {
-                black_box(distance::jaro::similarity(
-                    val.0.bytes(),
-                    val.1.bytes(),
-                    None,
-                    None,
-                ));
+                black_box(distance::jaro::similarity(val.0.bytes(), val.1.bytes()));
             })
         });
 
@@ -48,7 +43,7 @@ fn benchmark(c: &mut Criterion) {
             &(&cached, &s2),
             |b, val| {
                 b.iter(|| {
-                    black_box(cached.similarity(val.1.bytes(), None, None));
+                    black_box(cached.similarity(val.1.bytes()));
                 })
             },
         );

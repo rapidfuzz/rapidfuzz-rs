@@ -31,19 +31,19 @@ fn benchmark(c: &mut Criterion) {
     for i in lens {
         let s1 = generate(i);
         let s2 = generate(i);
+        let args =
+            distance::levenshtein::Args::default().weights(&distance::levenshtein::WeightTable {
+                insertion_cost: 1,
+                deletion_cost: 2,
+                substitution_cost: 3,
+            });
 
         group.bench_with_input(BenchmarkId::new("rapidfuzz", i), &(&s1, &s2), |b, val| {
             b.iter(|| {
-                black_box(distance::levenshtein::distance(
+                black_box(distance::levenshtein::distance_with_args(
                     val.0.bytes(),
                     val.1.bytes(),
-                    Some(distance::levenshtein::WeightTable {
-                        insertion_cost: 1,
-                        deletion_cost: 2,
-                        substitution_cost: 3,
-                    }),
-                    None,
-                    None,
+                    &args,
                 ));
             })
         });

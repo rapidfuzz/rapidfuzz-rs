@@ -11,12 +11,9 @@ pub struct Texts {
 }
 
 fn fuzz(texts: Texts) {
-    levenshtein::distance(texts.s1.chars(), texts.s2.chars(), None, None, None)
-        .expect("does not return None");
+    levenshtein::distance(texts.s1.chars(), texts.s2.chars());
 
-    levenshtein::BatchComparator::new(texts.s1.chars(), None)
-        .distance(texts.s2.chars(), None, None)
-        .expect("does not return None");
+    levenshtein::BatchComparator::new(texts.s1.chars()).distance(texts.s2.chars());
 }
 
 fuzz_target!(|texts: Texts| {

@@ -27,15 +27,6 @@ impl<'a, 'b> IntoIterator for &'a StringWrapper<'b> {
 fn benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("Levenshtein");
 
-    assert_eq!(
-        5,
-        levenshtein::distance(
-            "kitten".chars(),
-            "sitting".chars(),
-            &levenshtein::Args::default().weights(weights)
-        )
-    );
-
     for i in (2..128).step_by(2) {
         let s1 = generate(i);
         let s2 = generate(i);
@@ -45,9 +36,6 @@ fn benchmark(c: &mut Criterion) {
                 black_box(distance::levenshtein::distance(
                     val.0.bytes(),
                     val.1.bytes(),
-                    None,
-                    None,
-                    None,
                 ));
             })
         });
@@ -60,13 +48,13 @@ fn benchmark(c: &mut Criterion) {
             })
         });
 
-        let cached = distance::levenshtein::BatchComparator::new(s1.bytes(), None);
+        let cached = distance::levenshtein::BatchComparator::new(s1.bytes());
         group.bench_with_input(
             BenchmarkId::new("rapidfuzz (BatchComparator)", i),
             &(&cached, &s2),
             |b, val| {
                 b.iter(|| {
-                    black_box(cached.distance(val.1.bytes(), None, None));
+                    black_box(cached.distance(val.1.bytes()));
                 })
             },
         );

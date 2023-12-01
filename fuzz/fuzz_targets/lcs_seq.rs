@@ -11,12 +11,9 @@ pub struct Texts {
 }
 
 fn fuzz(texts: Texts) {
-    lcs_seq::distance(texts.s1.chars(), texts.s2.chars(), None, None)
-        .expect("does not return None");
+    lcs_seq::distance(texts.s1.chars(), texts.s2.chars());
 
-    lcs_seq::BatchComparator::new(texts.s1.chars())
-        .distance(texts.s2.chars(), None, None)
-        .expect("does not return None");
+    lcs_seq::BatchComparator::new(texts.s1.chars()).distance(texts.s2.chars());
 }
 
 fuzz_target!(|texts: Texts| {

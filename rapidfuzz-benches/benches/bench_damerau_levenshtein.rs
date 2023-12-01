@@ -36,8 +36,6 @@ fn benchmark(c: &mut Criterion) {
                 black_box(distance::damerau_levenshtein::distance(
                     val.0.bytes(),
                     val.1.bytes(),
-                    None,
-                    None,
                 ));
             })
         });

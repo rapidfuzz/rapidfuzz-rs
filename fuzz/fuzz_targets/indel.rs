@@ -11,11 +11,9 @@ pub struct Texts {
 }
 
 fn fuzz(texts: Texts) {
-    indel::distance(texts.s1.chars(), texts.s2.chars(), None, None).expect("does not return None");
+    indel::distance(texts.s1.chars(), texts.s2.chars());
 
-    indel::BatchComparator::new(texts.s1.chars())
-        .distance(texts.s2.chars(), None, None)
-        .expect("does not return None");
+    indel::BatchComparator::new(texts.s1.chars()).distance(texts.s2.chars());
 }
 
 fuzz_target!(|texts: Texts| {

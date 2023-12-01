@@ -33,12 +33,7 @@ fn benchmark(c: &mut Criterion) {
 
         group.bench_with_input(BenchmarkId::new("rapidfuzz", i), &(&s1, &s2), |b, val| {
             b.iter(|| {
-                black_box(distance::osa::distance(
-                    val.0.chars(),
-                    val.1.chars(),
-                    None,
-                    None,
-                ));
+                black_box(distance::osa::distance(val.0.chars(), val.1.chars()));
             })
         });
 
@@ -48,7 +43,7 @@ fn benchmark(c: &mut Criterion) {
             &(&cached, &s2),
             |b, val| {
                 b.iter(|| {
-                    black_box(cached.distance(val.1.chars(), None, None));
+                    black_box(cached.distance(val.1.chars()));
                 })
             },
         );

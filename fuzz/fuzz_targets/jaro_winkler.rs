@@ -11,12 +11,9 @@ pub struct Texts {
 }
 
 fn fuzz(texts: Texts) {
-    jaro_winkler::distance(texts.s1.chars(), texts.s2.chars(), None, None, None)
-        .expect("does not return None");
+    jaro_winkler::distance(texts.s1.chars(), texts.s2.chars());
 
-    jaro_winkler::BatchComparator::new(texts.s1.chars(), None)
-        .distance(texts.s2.chars(), None, None)
-        .expect("does not return None");
+    jaro_winkler::BatchComparator::new(texts.s1.chars()).distance(texts.s2.chars());
 }
 
 fuzz_target!(|texts: Texts| {

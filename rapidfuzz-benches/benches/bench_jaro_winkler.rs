@@ -36,20 +36,17 @@ fn benchmark(c: &mut Criterion) {
                 black_box(distance::jaro_winkler::similarity(
                     val.0.bytes(),
                     val.1.bytes(),
-                    None,
-                    None,
-                    None,
                 ));
             })
         });
 
-        let cached = distance::jaro_winkler::BatchComparator::new(s1.bytes(), None);
+        let cached = distance::jaro_winkler::BatchComparator::new(s1.bytes());
         group.bench_with_input(
             BenchmarkId::new("rapidfuzz (BatchComparator)", i),
             &(&cached, &s2),
             |b, val| {
                 b.iter(|| {
-                    black_box(cached.similarity(val.1.bytes(), None, None));
+                    black_box(cached.similarity(val.1.bytes()));
                 })
             },
         );

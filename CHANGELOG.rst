@@ -1,6 +1,20 @@
 Changelog
 ---------
 
+[0.4.0] - 2023-12-01
+^^^^^^^^^^^^^^^^^^^^
+Changed
+~~~~~~~
+* rewrite of function signatures to reduce boilerplate
+  * return type now automatically deduced, so no more unwrapping needed
+    when ``score_cutoff`` is not used
+  * optional arguments now in Arg structs uisng the builder pattern to reduce amount
+    of extra arguments
+  * extra overload ``*_with_args`` for a variant with args, while the default version accepts
+    only two sequences
+
+  The signatures is expected to largely stay this way for the foreseeable future.
+
 [0.3.2] - 2023-11-29
 ^^^^^^^^^^^^^^^^^^^^
 Fixed
