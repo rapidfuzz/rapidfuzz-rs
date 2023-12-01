@@ -1,6 +1,13 @@
 Changelog
 ---------
 
+[0.5.0] - 2023-12-01
+^^^^^^^^^^^^^^^^^^^^
+Changed
+~~~~~~~
+* improve Args builder for hamming
+
+
 [0.4.0] - 2023-12-01
 ^^^^^^^^^^^^^^^^^^^^
 Changed

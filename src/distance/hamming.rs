@@ -17,7 +17,7 @@ use std::error;
 use std::fmt::{self, Debug, Display, Formatter};
 
 #[derive(Default, Copy, Clone)]
-pub struct Padding;
+pub struct Padding(bool);
 #[derive(Default, Copy, Clone)]
 pub struct NoPadding;
 
@@ -76,7 +76,7 @@ where
     type Output = T;
 
     fn pad(&self) -> bool {
-        true
+        self.0
     }
 
     // will not occur
@@ -109,11 +109,11 @@ where
         }
     }
 
-    pub fn pad(self) -> Args<ResultType, CutoffType, Padding> {
+    pub fn pad(self, pad: bool) -> Args<ResultType, CutoffType, Padding> {
         Args {
             score_hint: self.score_hint,
             score_cutoff: self.score_cutoff,
-            pad: Padding,
+            pad: Padding(pad),
         }
     }
 }
@@ -566,14 +566,18 @@ mod tests {
 
         assert_eq!(
             3,
-            distance_with_args("hammers".chars(), "hamming".chars(), &Args::default().pad())
+            distance_with_args(
+                "hammers".chars(),
+                "hamming".chars(),
+                &Args::default().pad(true)
+            )
         );
         assert_eq!(
             Some(3),
             distance_with_args(
                 "hammers".chars(),
                 "hamming".chars(),
-                &Args::default().pad().score_cutoff(3)
+                &Args::default().pad(true).score_cutoff(3)
             )
         );
         assert_eq!(
@@ -581,7 +585,7 @@ mod tests {
             distance_with_args(
                 "hammers".chars(),
                 "hamming".chars(),
-                &Args::default().pad().score_cutoff(2)
+                &Args::default().pad(true).score_cutoff(2)
             )
         );
         assert_eq!(
@@ -616,7 +620,7 @@ mod tests {
 
         assert_eq!(
             4,
-            distance_with_args("ham".chars(), "hamming".chars(), &Args::default().pad())
+            distance_with_args("ham".chars(), "hamming".chars(), &Args::default().pad(true))
         );
 
         assert_eq!(
@@ -624,7 +628,7 @@ mod tests {
             distance_with_args(
                 "ham".chars(),
                 "hamming".chars(),
-                &Args::default().pad().score_cutoff(3)
+                &Args::default().pad(true).score_cutoff(3)
             )
         );
     }
