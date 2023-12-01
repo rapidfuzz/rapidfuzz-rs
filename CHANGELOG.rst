@@ -6,6 +6,7 @@ Changelog
 Changed
 ~~~~~~~
 * rewrite of function signatures to reduce boilerplate
+
   * return type now automatically deduced, so no more unwrapping needed
     when ``score_cutoff`` is not used
   * optional arguments now in Arg structs uisng the builder pattern to reduce amount
