@@ -27,6 +27,15 @@ impl<'a, 'b> IntoIterator for &'a StringWrapper<'b> {
 fn benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("Levenshtein");
 
+    assert_eq!(
+        5,
+        levenshtein::distance(
+            "kitten".chars(),
+            "sitting".chars(),
+            &levenshtein::Args::default().weights(weights)
+        )
+    );
+
     for i in (2..128).step_by(2) {
         let s1 = generate(i);
         let s2 = generate(i);

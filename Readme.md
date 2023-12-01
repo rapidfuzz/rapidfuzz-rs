@@ -64,36 +64,45 @@ use rapidfuzz::distance::levenshtein;
 
 // Perform a simple comparision using he levenshtein distance
 assert_eq!(
-    Some(3),
-    levenshtein::distance("kitten".chars(), "sitting".chars(), None, None, None)
+    3,
+    levenshtein::distance("kitten".chars(), "sitting".chars())
 );
 
 // If you are sure the input strings are ASCII only it's usually faster to operate on bytes
 assert_eq!(
-    Some(3),
-    levenshtein::distance("kitten".bytes(), "sitting".bytes(), None, None, None)
+    3,
+    levenshtein::distance("kitten".bytes(), "sitting".bytes())
 );
 
 // You can provide a score_cutoff value to filter out strings with distance that is worse than
 // the score_cutoff
 assert_eq!(
     None,
-    levenshtein::distance("kitten".chars(), "sitting".chars(), None, 2, None)
+    levenshtein::distance_with_args(
+        "kitten".chars(),
+        "sitting".chars(),
+        &levenshtein::Args::default().score_cutoff(2)
+    )
 );
 
 // You can provide a score_hint to tell the implementation about the expected score.
 // This can be used to select a more performant implementation internally, but might cause
 // a slowdown in cases where the distance is actually worse than the score_hint
 assert_eq!(
-    Some(3),
-    levenshtein::distance("kitten".chars(), "sitting".chars(), None, None, Some(3))
+    3,
+    levenshtein::distance_with_args(
+        "kitten".chars(),
+        "sitting".chars(),
+        &levenshtein::Args::default().score_hint(2)
+    )
 );
 
-// When comparing a single string to multiple strings you can use the provided `BatchComparators`.
-// These can cache part of the calculation which can provide significant speedups
-let scorer = levenshtein::BatchComparator::new("kitten".chars(), None);
-assert_eq!(Some(3), scorer.distance("sitting".chars(), None, None));
-assert_eq!(Some(0), scorer.distance("kitten".chars(), None, None));
+// When comparing a single string to multiple strings you can use the
+// provided `BatchComparators`. These can cache part of the calculation
+// which can provide significant speedups
+let scorer = levenshtein::BatchComparator::new("kitten".chars());
+assert_eq!(3, scorer.distance("sitting".chars()));
+assert_eq!(0, scorer.distance("kitten".chars()));
 ```
 
 

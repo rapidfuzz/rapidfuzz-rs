@@ -31,8 +31,8 @@
 //! use rapidfuzz::distance::damerau_levenshtein;
 //! use rapidfuzz::distance::osa;
 //!
-//! assert_eq!(Some(2), damerau_levenshtein::distance("CA".chars(), "ABC".chars(), None, None));
-//! assert_eq!(Some(3), osa::distance("CA".chars(), "ABC".chars(), None, None));
+//! assert_eq!(2, damerau_levenshtein::distance("CA".chars(), "ABC".chars()));
+//! assert_eq!(3, osa::distance("CA".chars(), "ABC".chars()));
 //! ```
 //!
 //! The handling of transpositions in the OSA distance is simpler, which makes it computationally less intensive.
@@ -50,12 +50,46 @@
 //! ![benchmark results](https://raw.githubusercontent.com/maxbachmann/rapidfuzz-rs/main/rapidfuzz-benches/results/damerau_levenshtein.svg)
 //!
 
+use crate::common::{DistanceCutoff, NoScoreCutoff, SimilarityCutoff, WithScoreCutoff};
 use crate::details::common::remove_common_affix;
 use crate::details::distance::MetricUsize;
 use crate::details::growing_hashmap::{GrowingHashmap, HybridGrowingHashmap};
 use crate::HashableChar;
 use std::cmp::{max, min};
 use std::mem;
+
+#[must_use]
+#[derive(Copy, Clone, Debug)]
+pub struct Args<ResultType, CutoffType> {
+    pub(crate) score_cutoff: CutoffType,
+    pub(crate) score_hint: Option<ResultType>,
+}
+
+impl<ResultType> Default for Args<ResultType, NoScoreCutoff> {
+    fn default() -> Args<ResultType, NoScoreCutoff> {
+        Args {
+            score_cutoff: NoScoreCutoff,
+            score_hint: None,
+        }
+    }
+}
+
+impl<ResultType, CutoffType> Args<ResultType, CutoffType> {
+    pub fn score_hint(mut self, score_hint: ResultType) -> Self {
+        self.score_hint = Some(score_hint);
+        self
+    }
+
+    pub fn score_cutoff(
+        self,
+        score_cutoff: ResultType,
+    ) -> Args<ResultType, WithScoreCutoff<ResultType>> {
+        Args {
+            score_hint: self.score_hint,
+            score_cutoff: WithScoreCutoff(score_cutoff),
+        }
+    }
+}
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 struct RowId {
@@ -74,13 +108,7 @@ impl Default for RowId {
 ///
 /// todo in c++ this is templated on an integer type which reduced
 /// memory usage depending on string lengths
-fn distance_zhao<Iter1, Iter2>(
-    s1: Iter1,
-    len1: usize,
-    s2: Iter2,
-    len2: usize,
-    score_cutoff: usize,
-) -> Option<usize>
+fn distance_zhao<Iter1, Iter2>(s1: Iter1, len1: usize, s2: Iter2, len2: usize) -> usize
 where
     Iter1: Iterator,
     Iter2: Iterator + Clone,
@@ -136,13 +164,7 @@ where
         last_row_id.get_mut(ch1).val = i as isize;
     }
 
-    let dist = r[len2 + 1] as usize;
-
-    if dist <= score_cutoff {
-        Some(dist)
-    } else {
-        None
-    }
+    r[len2 + 1] as usize
 }
 
 fn distance_impl<Iter1, Iter2>(
@@ -151,7 +173,7 @@ fn distance_impl<Iter1, Iter2>(
     s2: Iter2,
     len2: usize,
     score_cutoff: usize,
-) -> Option<usize>
+) -> usize
 where
     Iter1: DoubleEndedIterator + Clone,
     Iter2: DoubleEndedIterator + Clone,
@@ -159,11 +181,11 @@ where
     Iter2::Item: PartialEq<Iter1::Item> + HashableChar,
 {
     if score_cutoff < len1.abs_diff(len2) {
-        return None;
+        return usize::MAX;
     }
 
     let affix = remove_common_affix(s1, len1, s2, len2);
-    distance_zhao(affix.s1, affix.len1, affix.s2, affix.len2, score_cutoff)
+    distance_zhao(affix.s1, affix.len1, affix.s2, affix.len2)
 }
 
 struct IndividualComparator;
@@ -181,7 +203,7 @@ impl MetricUsize for IndividualComparator {
         len2: usize,
         score_cutoff: Option<usize>,
         _score_hint: Option<usize>,
-    ) -> Option<usize>
+    ) -> usize
     where
         Iter1: DoubleEndedIterator + Clone,
         Iter2: DoubleEndedIterator + Clone,
@@ -201,14 +223,9 @@ impl MetricUsize for IndividualComparator {
 /// ```
 /// use rapidfuzz::distance::damerau_levenshtein;
 ///
-/// assert_eq!(Some(2), damerau_levenshtein::distance("CA".chars(), "ABC".chars(), None, None));
+/// assert_eq!(2, damerau_levenshtein::distance("CA".chars(), "ABC".chars()));
 /// ```
-pub fn distance<Iter1, Iter2, ScoreCutoff, ScoreHint>(
-    s1: Iter1,
-    s2: Iter2,
-    score_cutoff: ScoreCutoff,
-    score_hint: ScoreHint,
-) -> Option<usize>
+pub fn distance<Iter1, Iter2>(s1: Iter1, s2: Iter2) -> usize
 where
     Iter1: IntoIterator,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -216,31 +233,41 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
     Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
-    ScoreCutoff: Into<Option<usize>>,
-    ScoreHint: Into<Option<usize>>,
+{
+    distance_with_args(s1, s2, &Args::default())
+}
+
+pub fn distance_with_args<Iter1, Iter2, CutoffType>(
+    s1: Iter1,
+    s2: Iter2,
+    args: &Args<usize, CutoffType>,
+) -> CutoffType::Output
+where
+    Iter1: IntoIterator,
+    Iter1::IntoIter: DoubleEndedIterator + Clone,
+    Iter2: IntoIterator,
+    Iter2::IntoIter: DoubleEndedIterator + Clone,
+    Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+    Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
+    CutoffType: DistanceCutoff<usize>,
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    IndividualComparator {}._distance(
+    args.score_cutoff.score(IndividualComparator {}._distance(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into(),
-        score_hint.into(),
-    )
+        args.score_cutoff.cutoff(),
+        args.score_hint,
+    ))
 }
 
 /// Damerau-Levenshtein similarity in the range [0, max]
 ///
 /// This is calculated as `max(len1, len2) - `[`distance`].
 ///
-pub fn similarity<Iter1, Iter2, ScoreCutoff, ScoreHint>(
-    s1: Iter1,
-    s2: Iter2,
-    score_cutoff: ScoreCutoff,
-    score_hint: ScoreHint,
-) -> Option<usize>
+pub fn similarity<Iter1, Iter2>(s1: Iter1, s2: Iter2) -> usize
 where
     Iter1: IntoIterator,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -248,31 +275,41 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
     Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
-    ScoreCutoff: Into<Option<usize>>,
-    ScoreHint: Into<Option<usize>>,
+{
+    similarity_with_args(s1, s2, &Args::default())
+}
+
+pub fn similarity_with_args<Iter1, Iter2, CutoffType>(
+    s1: Iter1,
+    s2: Iter2,
+    args: &Args<usize, CutoffType>,
+) -> CutoffType::Output
+where
+    Iter1: IntoIterator,
+    Iter1::IntoIter: DoubleEndedIterator + Clone,
+    Iter2: IntoIterator,
+    Iter2::IntoIter: DoubleEndedIterator + Clone,
+    Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+    Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
+    CutoffType: SimilarityCutoff<usize>,
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    IndividualComparator {}._similarity(
+    args.score_cutoff.score(IndividualComparator {}._similarity(
         s1_iter.clone(),
         s1_iter.count(),
         s2_iter.clone(),
         s2_iter.count(),
-        score_cutoff.into(),
-        score_hint.into(),
-    )
+        args.score_cutoff.cutoff(),
+        args.score_hint,
+    ))
 }
 
 /// Normalized Damerau-Levenshtein distance in the range [1.0, 0.0]
 ///
 /// This is calculated as [`distance`]` / max(len1, len2)`.
 ///
-pub fn normalized_distance<Iter1, Iter2, ScoreCutoff, ScoreHint>(
-    s1: Iter1,
-    s2: Iter2,
-    score_cutoff: ScoreCutoff,
-    score_hint: ScoreHint,
-) -> Option<f64>
+pub fn normalized_distance<Iter1, Iter2>(s1: Iter1, s2: Iter2) -> f64
 where
     Iter1: IntoIterator,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -280,31 +317,42 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
     Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
-    ScoreCutoff: Into<Option<f64>>,
-    ScoreHint: Into<Option<f64>>,
+{
+    normalized_distance_with_args(s1, s2, &Args::default())
+}
+
+pub fn normalized_distance_with_args<Iter1, Iter2, CutoffType>(
+    s1: Iter1,
+    s2: Iter2,
+    args: &Args<f64, CutoffType>,
+) -> CutoffType::Output
+where
+    Iter1: IntoIterator,
+    Iter1::IntoIter: DoubleEndedIterator + Clone,
+    Iter2: IntoIterator,
+    Iter2::IntoIter: DoubleEndedIterator + Clone,
+    Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+    Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
+    CutoffType: DistanceCutoff<f64>,
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    IndividualComparator {}._normalized_distance(
-        s1_iter.clone(),
-        s1_iter.count(),
-        s2_iter.clone(),
-        s2_iter.count(),
-        score_cutoff.into(),
-        score_hint.into(),
-    )
+    args.score_cutoff
+        .score(IndividualComparator {}._normalized_distance(
+            s1_iter.clone(),
+            s1_iter.count(),
+            s2_iter.clone(),
+            s2_iter.count(),
+            args.score_cutoff.cutoff(),
+            args.score_hint,
+        ))
 }
 
 /// Normalized Damerau-Levenshtein similarity in the range [0.0, 1.0]
 ///
 /// This is calculated as `1.0 - `[`normalized_distance`].
 ///
-pub fn normalized_similarity<Iter1, Iter2, ScoreCutoff, ScoreHint>(
-    s1: Iter1,
-    s2: Iter2,
-    score_cutoff: ScoreCutoff,
-    score_hint: ScoreHint,
-) -> Option<f64>
+pub fn normalized_similarity<Iter1, Iter2>(s1: Iter1, s2: Iter2) -> f64
 where
     Iter1: IntoIterator,
     Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -312,19 +360,35 @@ where
     Iter2::IntoIter: DoubleEndedIterator + Clone,
     Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
     Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
-    ScoreCutoff: Into<Option<f64>>,
-    ScoreHint: Into<Option<f64>>,
+{
+    normalized_similarity_with_args(s1, s2, &Args::default())
+}
+
+pub fn normalized_similarity_with_args<Iter1, Iter2, CutoffType>(
+    s1: Iter1,
+    s2: Iter2,
+    args: &Args<f64, CutoffType>,
+) -> CutoffType::Output
+where
+    Iter1: IntoIterator,
+    Iter1::IntoIter: DoubleEndedIterator + Clone,
+    Iter2: IntoIterator,
+    Iter2::IntoIter: DoubleEndedIterator + Clone,
+    Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
+    Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
+    CutoffType: SimilarityCutoff<f64>,
 {
     let s1_iter = s1.into_iter();
     let s2_iter = s2.into_iter();
-    IndividualComparator {}._normalized_similarity(
-        s1_iter.clone(),
-        s1_iter.count(),
-        s2_iter.clone(),
-        s2_iter.count(),
-        score_cutoff.into(),
-        score_hint.into(),
-    )
+    args.score_cutoff
+        .score(IndividualComparator {}._normalized_similarity(
+            s1_iter.clone(),
+            s1_iter.count(),
+            s2_iter.clone(),
+            s2_iter.count(),
+            args.score_cutoff.cutoff(),
+            args.score_hint,
+        ))
 }
 
 /// `One x Many` comparisons using the Damerau-Levenshtein distance
@@ -335,7 +399,7 @@ where
 /// use rapidfuzz::distance::damerau_levenshtein;
 ///
 /// let scorer = damerau_levenshtein::BatchComparator::new("CA".chars());
-/// assert_eq!(Some(2), scorer.distance("ABC".chars(), None, None));
+/// assert_eq!(2, scorer.distance("ABC".chars()));
 /// ```
 pub struct BatchComparator<Elem1> {
     s1: Vec<Elem1>,
@@ -355,75 +419,107 @@ where
     }
 
     /// Normalized distance calculated similar to [`normalized_distance`]
-    pub fn normalized_distance<Iter2, ScoreCutoff, ScoreHint>(
-        &self,
-        s2: Iter2,
-        score_cutoff: ScoreCutoff,
-        score_hint: ScoreHint,
-    ) -> Option<f64>
+    pub fn normalized_distance<Iter2>(&self, s2: Iter2) -> f64
     where
         Iter2: IntoIterator,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
         Elem1: PartialEq<Iter2::Item> + HashableChar + Copy,
         Iter2::Item: PartialEq<Elem1> + HashableChar + Copy,
-        ScoreCutoff: Into<Option<f64>>,
-        ScoreHint: Into<Option<f64>>,
     {
-        normalized_distance(self.s1.iter().copied(), s2, score_cutoff, score_hint)
+        self.normalized_distance_with_args(s2, &Args::default())
+    }
+
+    pub fn normalized_distance_with_args<Iter2, CutoffType>(
+        &self,
+        s2: Iter2,
+        args: &Args<f64, CutoffType>,
+    ) -> CutoffType::Output
+    where
+        Iter2: IntoIterator,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Elem1> + HashableChar + Copy,
+        CutoffType: DistanceCutoff<f64>,
+    {
+        normalized_distance_with_args(self.s1.iter().copied(), s2, args)
     }
 
     /// Normalized similarity calculated similar to [`normalized_similarity`]
-    pub fn normalized_similarity<Iter2, ScoreCutoff, ScoreHint>(
-        &self,
-        s2: Iter2,
-        score_cutoff: ScoreCutoff,
-        score_hint: ScoreHint,
-    ) -> Option<f64>
+    pub fn normalized_similarity<Iter2>(&self, s2: Iter2) -> f64
     where
         Iter2: IntoIterator,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
         Elem1: PartialEq<Iter2::Item> + HashableChar + Copy,
         Iter2::Item: PartialEq<Elem1> + HashableChar + Copy,
-        ScoreCutoff: Into<Option<f64>>,
-        ScoreHint: Into<Option<f64>>,
     {
-        normalized_similarity(self.s1.iter().copied(), s2, score_cutoff, score_hint)
+        self.normalized_similarity_with_args(s2, &Args::default())
+    }
+
+    pub fn normalized_similarity_with_args<Iter2, CutoffType>(
+        &self,
+        s2: Iter2,
+        args: &Args<f64, CutoffType>,
+    ) -> CutoffType::Output
+    where
+        Iter2: IntoIterator,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Elem1> + HashableChar + Copy,
+        CutoffType: SimilarityCutoff<f64>,
+    {
+        normalized_similarity_with_args(self.s1.iter().copied(), s2, args)
     }
 
     /// Distance calculated similar to [`distance`]
-    pub fn distance<Iter2, ScoreCutoff, ScoreHint>(
-        &self,
-        s2: Iter2,
-        score_cutoff: ScoreCutoff,
-        score_hint: ScoreHint,
-    ) -> Option<usize>
+    pub fn distance<Iter2>(&self, s2: Iter2) -> usize
     where
         Iter2: IntoIterator,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
         Elem1: PartialEq<Iter2::Item> + HashableChar + Copy,
         Iter2::Item: PartialEq<Elem1> + HashableChar + Copy,
-        ScoreCutoff: Into<Option<usize>>,
-        ScoreHint: Into<Option<usize>>,
     {
-        distance(self.s1.iter().copied(), s2, score_cutoff, score_hint)
+        self.distance_with_args(s2, &Args::default())
+    }
+
+    pub fn distance_with_args<Iter2, CutoffType>(
+        &self,
+        s2: Iter2,
+        args: &Args<usize, CutoffType>,
+    ) -> CutoffType::Output
+    where
+        Iter2: IntoIterator,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Elem1> + HashableChar + Copy,
+        CutoffType: DistanceCutoff<usize>,
+    {
+        distance_with_args(self.s1.iter().copied(), s2, args)
     }
 
     /// Similarity calculated similar to [`similarity`]
-    pub fn similarity<Iter2, ScoreCutoff, ScoreHint>(
-        &self,
-        s2: Iter2,
-        score_cutoff: ScoreCutoff,
-        score_hint: ScoreHint,
-    ) -> Option<usize>
+    pub fn similarity<Iter2>(&self, s2: Iter2) -> usize
     where
         Iter2: IntoIterator,
         Iter2::IntoIter: DoubleEndedIterator + Clone,
         Elem1: PartialEq<Iter2::Item> + HashableChar + Copy,
         Iter2::Item: PartialEq<Elem1> + HashableChar + Copy,
-        ScoreCutoff: Into<Option<usize>>,
-        ScoreHint: Into<Option<usize>>,
     {
-        similarity(self.s1.iter().copied(), s2, score_cutoff, score_hint)
+        self.similarity_with_args(s2, &Args::default())
+    }
+
+    pub fn similarity_with_args<Iter2, CutoffType>(
+        &self,
+        s2: Iter2,
+        args: &Args<usize, CutoffType>,
+    ) -> CutoffType::Output
+    where
+        Iter2: IntoIterator,
+        Iter2::IntoIter: DoubleEndedIterator + Clone,
+        Elem1: PartialEq<Iter2::Item> + HashableChar + Copy,
+        Iter2::Item: PartialEq<Elem1> + HashableChar + Copy,
+        CutoffType: SimilarityCutoff<usize>,
+    {
+        similarity_with_args(self.s1.iter().copied(), s2, args)
     }
 }
 
@@ -453,12 +549,11 @@ mod tests {
         };
     }
 
-    fn _test_distance<Iter1, Iter2, ScoreCutoff, ScoreHint>(
+    fn _test_distance<Iter1, Iter2, CutoffType>(
         s1_: Iter1,
         s2_: Iter2,
-        score_cutoff: ScoreCutoff,
-        score_hint: ScoreHint,
-    ) -> Option<usize>
+        args: &Args<usize, CutoffType>,
+    ) -> CutoffType::Output
     where
         Iter1: IntoIterator,
         Iter1::IntoIter: DoubleEndedIterator + Clone,
@@ -466,28 +561,17 @@ mod tests {
         Iter2::IntoIter: DoubleEndedIterator + Clone,
         Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
         Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
-        ScoreCutoff: Into<Option<usize>> + Clone,
-        ScoreHint: Into<Option<usize>> + Clone,
+        CutoffType: DistanceCutoff<usize>,
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();
-        let res1 = distance(
-            s1.clone(),
-            s2.clone(),
-            score_cutoff.clone(),
-            score_hint.clone(),
-        );
-        let res2 = distance(
-            s2.clone(),
-            s1.clone(),
-            score_cutoff.clone(),
-            score_hint.clone(),
-        );
+        let res1 = distance_with_args(s1.clone(), s2.clone(), args);
+        let res2 = distance_with_args(s2.clone(), s1.clone(), args);
 
         let scorer1 = BatchComparator::new(s1.clone());
-        let res3 = scorer1.distance(s2.clone(), score_cutoff.clone(), score_hint.clone());
+        let res3 = scorer1.distance_with_args(s2.clone(), args);
         let scorer2 = BatchComparator::new(s2.clone());
-        let res4 = scorer2.distance(s1.clone(), score_cutoff, score_hint);
+        let res4 = scorer2.distance_with_args(s1.clone(), args);
 
         assert_eq!(res1, res2);
         assert_eq!(res1, res3);
@@ -495,33 +579,25 @@ mod tests {
         res1
     }
 
-    fn _test_distance_ascii<ScoreCutoff, ScoreHint>(
+    fn _test_distance_ascii<CutoffType>(
         s1: &str,
         s2: &str,
-        score_cutoff: ScoreCutoff,
-        score_hint: ScoreHint,
-    ) -> Option<usize>
+        args: &Args<usize, CutoffType>,
+    ) -> CutoffType::Output
     where
-        ScoreCutoff: Into<Option<usize>> + Clone,
-        ScoreHint: Into<Option<usize>> + Clone,
+        CutoffType: DistanceCutoff<usize>,
     {
-        let res1 = _test_distance(
-            s1.chars(),
-            s2.chars(),
-            score_cutoff.clone(),
-            score_hint.clone(),
-        );
-        let res2 = _test_distance(s1.bytes(), s2.bytes(), score_cutoff, score_hint);
+        let res1 = _test_distance(s1.chars(), s2.chars(), args);
+        let res2 = _test_distance(s1.bytes(), s2.bytes(), args);
 
         assert_eq!(res1, res2);
         res1
     }
 
-    fn _test_normalized_similarity<Iter1, Iter2, ScoreCutoff, ScoreHint>(
+    fn _test_normalized_similarity<Iter1, Iter2>(
         s1_: Iter1,
         s2_: Iter2,
-        score_cutoff: ScoreCutoff,
-        score_hint: ScoreHint,
+        args: &Args<f64, WithScoreCutoff<f64>>,
     ) -> Option<f64>
     where
         Iter1: IntoIterator,
@@ -530,28 +606,15 @@ mod tests {
         Iter2::IntoIter: DoubleEndedIterator + Clone,
         Iter1::Item: PartialEq<Iter2::Item> + HashableChar + Copy,
         Iter2::Item: PartialEq<Iter1::Item> + HashableChar + Copy,
-        ScoreCutoff: Into<Option<f64>> + Clone,
-        ScoreHint: Into<Option<f64>> + Clone,
     {
         let s1 = s1_.into_iter();
         let s2 = s2_.into_iter();
-        let res1 = normalized_similarity(
-            s1.clone(),
-            s2.clone(),
-            score_cutoff.clone(),
-            score_hint.clone(),
-        );
-        let res2 = normalized_similarity(
-            s2.clone(),
-            s1.clone(),
-            score_cutoff.clone(),
-            score_hint.clone(),
-        );
+        let res1 = normalized_similarity_with_args(s1.clone(), s2.clone(), args);
+        let res2 = normalized_similarity_with_args(s2.clone(), s1.clone(), args);
         let scorer1 = BatchComparator::new(s1.clone());
-        let res3 =
-            scorer1.normalized_similarity(s2.clone(), score_cutoff.clone(), score_hint.clone());
+        let res3 = scorer1.normalized_similarity_with_args(s2.clone(), args);
         let scorer2 = BatchComparator::new(s2.clone());
-        let res4 = scorer2.normalized_similarity(s1.clone(), score_cutoff, score_hint);
+        let res4 = scorer2.normalized_similarity_with_args(s1.clone(), args);
 
         assert_delta!(res1, res2, 0.0001);
         assert_delta!(res1, res3, 0.0001);
@@ -559,23 +622,13 @@ mod tests {
         res1
     }
 
-    fn _test_normalized_similarity_ascii<ScoreCutoff, ScoreHint>(
+    fn _test_normalized_similarity_ascii(
         s1: &str,
         s2: &str,
-        score_cutoff: ScoreCutoff,
-        score_hint: ScoreHint,
-    ) -> Option<f64>
-    where
-        ScoreCutoff: Into<Option<f64>> + Clone,
-        ScoreHint: Into<Option<f64>> + Clone,
-    {
-        let res1 = _test_normalized_similarity(
-            s1.chars(),
-            s2.chars(),
-            score_cutoff.clone(),
-            score_hint.clone(),
-        );
-        let res2 = _test_normalized_similarity(s1.bytes(), s2.bytes(), score_cutoff, score_hint);
+        args: &Args<f64, WithScoreCutoff<f64>>,
+    ) -> Option<f64> {
+        let res1 = _test_normalized_similarity(s1.chars(), s2.chars(), args);
+        let res2 = _test_normalized_similarity(s1.bytes(), s2.bytes(), args);
 
         assert_delta!(res1, res2, 0.0001);
         res1
@@ -584,47 +637,54 @@ mod tests {
     /// levenshtein calculates empty sequence
     #[test]
     fn damerau_levenshtein_empty() {
-        assert_eq!(Some(0), _test_distance_ascii(EMPTY, EMPTY, None, None));
-        assert_eq!(Some(4), _test_distance_ascii(TEST, EMPTY, None, None));
-        assert_eq!(Some(4), _test_distance_ascii(EMPTY, TEST, None, None));
+        assert_eq!(0, _test_distance_ascii(EMPTY, EMPTY, &Args::default()));
+        assert_eq!(4, _test_distance_ascii(TEST, EMPTY, &Args::default()));
     }
 
     /// levenshtein calculates correct distances
     #[test]
     fn damerau_levenshtein_simple() {
-        assert_eq!(Some(0), _test_distance_ascii(TEST, TEST, None, None));
-        assert_eq!(Some(1), _test_distance_ascii(TEST, NO_SUFFIX, None, None));
-        assert_eq!(Some(1), _test_distance_ascii(TEST, NO_SUFFIX2, None, None));
+        assert_eq!(0, _test_distance_ascii(TEST, TEST, &Args::default()));
+        assert_eq!(1, _test_distance_ascii(TEST, NO_SUFFIX, &Args::default()));
+        assert_eq!(1, _test_distance_ascii(TEST, NO_SUFFIX2, &Args::default()));
         assert_eq!(
-            Some(1),
-            _test_distance_ascii(SWAPPED1, SWAPPED2, None, None)
+            1,
+            _test_distance_ascii(SWAPPED1, SWAPPED2, &Args::default())
         );
-        assert_eq!(Some(4), _test_distance_ascii(TEST, REPLACE_ALL, None, None));
-        assert_eq!(Some(2), _test_distance_ascii("CA", "ABC", None, None));
+        assert_eq!(4, _test_distance_ascii(TEST, REPLACE_ALL, &Args::default()));
+        assert_eq!(2, _test_distance_ascii("CA", "ABC", &Args::default()));
 
         assert_delta!(
             Some(1.0),
-            _test_normalized_similarity_ascii(TEST, TEST, None, None),
+            _test_normalized_similarity_ascii(TEST, TEST, &Args::default().score_cutoff(0.0)),
             0.0001
         );
         assert_delta!(
             Some(0.75),
-            _test_normalized_similarity_ascii(TEST, NO_SUFFIX, None, None),
+            _test_normalized_similarity_ascii(TEST, NO_SUFFIX, &Args::default().score_cutoff(0.0)),
             0.0001
         );
         assert_delta!(
             Some(0.75),
-            _test_normalized_similarity_ascii(TEST, NO_SUFFIX2, None, None),
+            _test_normalized_similarity_ascii(TEST, NO_SUFFIX2, &Args::default().score_cutoff(0.0)),
             0.0001
         );
         assert_delta!(
             Some(0.75),
-            _test_normalized_similarity_ascii(SWAPPED1, SWAPPED2, None, None),
+            _test_normalized_similarity_ascii(
+                SWAPPED1,
+                SWAPPED2,
+                &Args::default().score_cutoff(0.0)
+            ),
             0.0001
         );
         assert_delta!(
             Some(0.0),
-            _test_normalized_similarity_ascii(TEST, REPLACE_ALL, None, None),
+            _test_normalized_similarity_ascii(
+                TEST,
+                REPLACE_ALL,
+                &Args::default().score_cutoff(0.0)
+            ),
             0.0001
         );
     }
@@ -632,13 +692,13 @@ mod tests {
     #[test]
     fn unicode() {
         assert_eq!(
-            Some(5),
-            _test_distance("Иванко".chars(), "Петрунко".chars(), None, None)
+            5,
+            _test_distance("Иванко".chars(), "Петрунко".chars(), &Args::default())
         );
 
         assert_eq!(
-            Some(10),
-            _test_distance("ИвaнкoIvan".chars(), "Петрунко".chars(), None, None)
+            10,
+            _test_distance("ИвaнкoIvan".chars(), "Петрунко".chars(), &Args::default())
         );
     }
 }
