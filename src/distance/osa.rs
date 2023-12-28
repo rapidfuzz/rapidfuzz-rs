@@ -29,7 +29,7 @@
 //! The implementation has a runtime complexity of `O([N/64]*M)` and a memory usage of `O(N)`.
 //! It's based on the paper `Bit-parallel approximate string matching algorithms with transposition` from Heikki Hyyro
 //!
-//! ![benchmark results](https://raw.githubusercontent.com/maxbachmann/rapidfuzz-rs/main/rapidfuzz-benches/results/osa.svg)
+//! ![benchmark results](https://raw.githubusercontent.com/rapidfuzz/rapidfuzz-rs/main/rapidfuzz-benches/results/osa.svg)
 //!
 //! [`Damerau-Levenshtein`]: ../damerau_levenshtein/index.html
 

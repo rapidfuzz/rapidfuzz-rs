@@ -47,7 +47,7 @@
 //! `Linear space string correction algorithm using the Damerau-Levenshtein distance`
 //! from Chunchun Zhao and Sartaj Sahni
 //!
-//! ![benchmark results](https://raw.githubusercontent.com/maxbachmann/rapidfuzz-rs/main/rapidfuzz-benches/results/damerau_levenshtein.svg)
+//! ![benchmark results](https://raw.githubusercontent.com/rapidfuzz/rapidfuzz-rs/main/rapidfuzz-benches/results/damerau_levenshtein.svg)
 //!
 
 use crate::common::{DistanceCutoff, NoScoreCutoff, SimilarityCutoff, WithScoreCutoff};

@@ -48,21 +48,21 @@
 //! The implementation has a runtime complexity of `O([K/64]*M)` (with `K = MAX(N, score_cutoff)`) and a memory usage of `O(N)`.
 //! It's based on the paper `Explaining and Extending the Bit-parallel Approximate String Matching Algorithm of Myers` from Heikki Hyyro
 //!
-//! ![benchmark results](https://raw.githubusercontent.com/maxbachmann/rapidfuzz-rs/main/rapidfuzz-benches/results/levenshtein.svg)
+//! ![benchmark results](https://raw.githubusercontent.com/rapidfuzz/rapidfuzz-rs/main/rapidfuzz-benches/results/levenshtein.svg)
 //!
 //! ## Indel distance
 //!
 //! The implementation has a runtime complexity of `O([K/64]*M)` (with `K = MAX(N, score_cutoff)`) and a memory usage of `O(N)`.
 //! It's based on the paper `Bit-Parallel LCS-length Computation Revisited` from Heikki Hyyro
 //!
-//! ![benchmark results](https://raw.githubusercontent.com/maxbachmann/rapidfuzz-rs/main/rapidfuzz-benches/results/indel.svg)
+//! ![benchmark results](https://raw.githubusercontent.com/rapidfuzz/rapidfuzz-rs/main/rapidfuzz-benches/results/indel.svg)
 //!
 //! ## Generic Levenshtein distance
 //!
 //! The implementation has a runtime complexity of `O(N*M)` and a memory usage of `O(N)`.
 //! It's based on the Wagner-Fischer algorithm.
 //!
-//! ![benchmark results](https://raw.githubusercontent.com/maxbachmann/rapidfuzz-rs/main/rapidfuzz-benches/results/generic_levenshtein.svg)
+//! ![benchmark results](https://raw.githubusercontent.com/rapidfuzz/rapidfuzz-rs/main/rapidfuzz-benches/results/generic_levenshtein.svg)
 //!
 //!
 //! [`Indel`]: ../levenshtein/index.html

@@ -1,18 +1,18 @@
 <h1 align="center">
-<img src="https://raw.githubusercontent.com/maxbachmann/rapidfuzz/master/docs/img/RapidFuzz.svg?sanitize=true" alt="RapidFuzz" width="400">
+<img src="https://raw.githubusercontent.com/rapidfuzz/rapidfuzz/master/docs/img/RapidFuzz.svg?sanitize=true" alt="RapidFuzz" width="400">
 </h1>
 <h4 align="center">Rapid fuzzy string matching in Rust using the Levenshtein Distance</h4>
 
 <p align="center">
-  <a href="https://github.com/maxbachmann/rapidfuzz-rs/actions">
-    <img src="https://github.com/maxbachmann/rapidfuzz-rs/workflows/Rust/badge.svg"
+  <a href="https://github.com/rapidfuzz/rapidfuzz-rs/actions">
+    <img src="https://github.com/rapidfuzz/rapidfuzz-rs/workflows/Rust/badge.svg"
          alt="Continous Integration">
   </a>
   <a href="https://gitter.im/rapidfuzz/community">
     <img src="https://badges.gitter.im/rapidfuzz/community.svg"
          alt="Gitter chat">
   </a>
-  <a href="https://maxbachmann.github.io/rapidfuzz">
+  <a href="https://rapidfuzz.github.io/rapidfuzz">
     <img src="https://img.shields.io/badge/-documentation-blue"
          alt="Documentation">
   </a>
@@ -108,7 +108,7 @@ assert_eq!(0, scorer.distance("kitten".chars()));
 
 ## License
 Licensed under either of [Apache License, Version
-2.0](https://github.com/maxbachmann/rapidfuzz-rs/blob/main/LICENSE-APACHE) or [MIT License](https://github.com/maxbachmann/rapidfuzz-rs/blob/main/LICENSE-MIT) at your option.
+2.0](https://github.com/rapidfuzz/rapidfuzz-rs/blob/main/LICENSE-APACHE) or [MIT License](https://github.com/rapidfuzz/rapidfuzz-rs/blob/main/LICENSE-MIT) at your option.
 
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in RapidFuzz by you, as defined in the Apache-2.0 license, shall be

@@ -10,7 +10,7 @@
 //!
 //! The implementation has a runtime complexity of `O([N/64]*M)` and a memory usage of `O(N)`.
 //!
-//! ![benchmark results](https://raw.githubusercontent.com/maxbachmann/rapidfuzz-rs/main/rapidfuzz-benches/results/jaro.svg)
+//! ![benchmark results](https://raw.githubusercontent.com/rapidfuzz/rapidfuzz-rs/main/rapidfuzz-benches/results/jaro.svg)
 //!
 
 use crate::common::{DistanceCutoff, NoScoreCutoff, SimilarityCutoff, WithScoreCutoff};

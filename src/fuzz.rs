@@ -244,7 +244,7 @@ mod tests {
         );
     }
 
-    // https://github.com/maxbachmann/RapidFuzz/issues/206
+    // https://github.com/rapidfuzz/RapidFuzz/issues/206
     #[test]
     fn issue206() {
         let str1 = "South Korea";
@@ -272,7 +272,7 @@ mod tests {
         }
     }
 
-    // https://github.com/maxbachmann/RapidFuzz/issues/210
+    // https://github.com/rapidfuzz/RapidFuzz/issues/210
     #[test]
     fn issue210() {
         let str1 = "bc";
