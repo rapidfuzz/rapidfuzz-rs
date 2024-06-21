@@ -401,6 +401,7 @@ where
     )
 }
 
+#[derive(Clone)]
 /// `One x Many` comparisons using the Hamming distance
 ///
 /// # Examples

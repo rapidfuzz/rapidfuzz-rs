@@ -753,6 +753,7 @@ where
         ))
 }
 
+#[derive(Clone)]
 /// `One x Many` comparisons using the Longest Common Subsequence
 ///
 /// # Examples

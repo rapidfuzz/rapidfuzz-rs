@@ -309,6 +309,7 @@ where
     maximum - 2 * lcs_sim
 }
 
+#[derive(Clone)]
 /// `One x Many` comparisons using the Indel distance
 ///
 /// # Examples

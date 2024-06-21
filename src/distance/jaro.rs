@@ -792,6 +792,7 @@ where
         ))
 }
 
+#[derive(Clone)]
 /// `One x Many` comparisons using the Jaro similarity
 pub struct BatchComparator<Elem1> {
     s1: Vec<Elem1>,

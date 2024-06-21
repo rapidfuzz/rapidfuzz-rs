@@ -422,6 +422,7 @@ where
         ))
 }
 
+#[derive(Clone)]
 pub struct BatchComparator<Elem1> {
     s1: Vec<Elem1>,
     pm: BlockPatternMatchVector,

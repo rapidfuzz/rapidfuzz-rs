@@ -399,6 +399,7 @@ impl<CharT> Metricf64 for BatchComparatorImpl<'_, CharT> {
     }
 }
 
+#[derive(Clone)]
 /// `One x Many` comparisons using the Jaro-Winkler similarity
 pub struct BatchComparator<Elem1> {
     s1: Vec<Elem1>,

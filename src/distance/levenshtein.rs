@@ -1622,6 +1622,7 @@ impl<CharT> MetricUsize for BatchComparatorImpl<'_, CharT> {
     }
 }
 
+#[derive(Clone)]
 /// `One x Many` comparisons using the Levenshtein distance
 ///
 /// # Examples

@@ -391,6 +391,7 @@ where
         ))
 }
 
+#[derive(Clone)]
 /// `One x Many` comparisons using the Damerau-Levenshtein distance
 ///
 /// # Examples

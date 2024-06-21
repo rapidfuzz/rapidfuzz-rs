@@ -245,6 +245,7 @@ where
         ))
 }
 
+#[derive(Clone)]
 /// `One x Many` comparisons using the Prefix similarity
 ///
 /// # Examples
