@@ -401,7 +401,6 @@ where
     )
 }
 
-#[derive(Clone)]
 /// `One x Many` comparisons using the Hamming distance
 ///
 /// # Examples
@@ -412,6 +411,7 @@ where
 /// let scorer = hamming::BatchComparator::new("hamming".chars());
 /// assert_eq!(Ok(1), scorer.distance("humming".chars()));
 /// ```
+#[derive(Clone)]
 pub struct BatchComparator<Elem1> {
     s1: Vec<Elem1>,
 }

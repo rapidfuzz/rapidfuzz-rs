@@ -309,7 +309,6 @@ where
     maximum - 2 * lcs_sim
 }
 
-#[derive(Clone)]
 /// `One x Many` comparisons using the Indel distance
 ///
 /// # Examples
@@ -320,6 +319,7 @@ where
 /// let scorer = indel::BatchComparator::new("lewenstein".chars());
 /// assert_eq!(3, scorer.distance("levenshtein".chars()));
 /// ```
+#[derive(Clone)]
 pub struct BatchComparator<Elem1> {
     pub(crate) scorer: lcs_seq::BatchComparator<Elem1>,
 }

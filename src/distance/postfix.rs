@@ -245,7 +245,6 @@ where
         ))
 }
 
-#[derive(Clone)]
 /// `One x Many` comparisons using the Postfix similarity
 ///
 /// # Examples
@@ -256,6 +255,7 @@ where
 /// let scorer = postfix::BatchComparator::new("postfix".chars());
 /// assert_eq!(3, scorer.similarity("prefix".chars()));
 /// ```
+#[derive(Clone)]
 pub struct BatchComparator<Elem1> {
     s1: Vec<Elem1>,
 }
