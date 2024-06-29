@@ -255,6 +255,7 @@ where
 /// let scorer = prefix::BatchComparator::new("prefix".chars());
 /// assert_eq!(4, scorer.similarity("preference".chars()));
 /// ```
+#[derive(Clone)]
 pub struct BatchComparator<Elem1> {
     s1: Vec<Elem1>,
 }

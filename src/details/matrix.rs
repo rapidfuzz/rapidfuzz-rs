@@ -1,5 +1,6 @@
 use std::ops::{BitAnd, Shl};
 
+#[derive(Clone)]
 pub struct BitMatrix<T> {
     rows: usize,
     cols: usize,

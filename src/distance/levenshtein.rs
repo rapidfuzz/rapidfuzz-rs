@@ -1632,6 +1632,7 @@ impl<CharT> MetricUsize for BatchComparatorImpl<'_, CharT> {
 /// let scorer = levenshtein::BatchComparator::new("CA".chars());
 /// assert_eq!(3, scorer.distance("ABC".chars()));
 /// ```
+#[derive(Clone)]
 pub struct BatchComparator<Elem1> {
     s1: Vec<Elem1>,
     pm: BlockPatternMatchVector,

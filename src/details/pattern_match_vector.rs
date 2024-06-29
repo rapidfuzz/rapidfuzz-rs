@@ -191,6 +191,7 @@ impl BitVectorInterface for PatternMatchVector {
     }
 }
 
+#[derive(Clone)]
 pub struct BlockPatternMatchVector {
     pub block_count: usize,
     pub map_unsigned: Option<Vec<BitvectorHashmap>>,

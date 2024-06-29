@@ -763,6 +763,7 @@ where
 /// let scorer = lcs_seq::BatchComparator::new("lewenstein".chars());
 /// assert_eq!(9, scorer.similarity("levenshtein".chars()));
 /// ```
+#[derive(Clone)]
 pub struct BatchComparator<Elem1> {
     pub(crate) s1: Vec<Elem1>,
     pub(crate) pm: BlockPatternMatchVector,

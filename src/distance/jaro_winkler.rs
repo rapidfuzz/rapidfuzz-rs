@@ -400,6 +400,7 @@ impl<CharT> Metricf64 for BatchComparatorImpl<'_, CharT> {
 }
 
 /// `One x Many` comparisons using the Jaro-Winkler similarity
+#[derive(Clone)]
 pub struct BatchComparator<Elem1> {
     s1: Vec<Elem1>,
     pm: BlockPatternMatchVector,

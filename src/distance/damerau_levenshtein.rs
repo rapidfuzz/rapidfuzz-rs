@@ -401,6 +401,7 @@ where
 /// let scorer = damerau_levenshtein::BatchComparator::new("CA".chars());
 /// assert_eq!(2, scorer.distance("ABC".chars()));
 /// ```
+#[derive(Clone)]
 pub struct BatchComparator<Elem1> {
     s1: Vec<Elem1>,
 }
