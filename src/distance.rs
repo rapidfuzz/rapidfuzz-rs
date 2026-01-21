@@ -1,3 +1,4 @@
+pub mod common;
 pub mod damerau_levenshtein;
 pub mod hamming;
 pub mod indel;

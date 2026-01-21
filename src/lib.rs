@@ -100,7 +100,7 @@ pub mod distance;
 pub mod fuzz;
 
 /// Hash value in the range `i64::MIN` - `u64::MAX`
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Hash {
     UNSIGNED(u64),
     SIGNED(i64),
