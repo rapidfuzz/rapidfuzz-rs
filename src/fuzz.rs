@@ -137,15 +137,14 @@ where
         CutoffType: SimilarityCutoff<f64>,
     {
         let s2_iter = s2.into_iter();
-        args.score_cutoff
-            .score(self.scorer.scorer._normalized_similarity(
-                self.scorer.scorer.s1.iter().copied(),
-                self.scorer.scorer.s1.len(),
-                s2_iter.clone(),
-                s2_iter.count(),
-                args.score_cutoff.cutoff(),
-                args.score_hint,
-            ))
+        args.score_cutoff.score(self.scorer._normalized_similarity(
+            self.scorer.scorer.s1.iter().copied(),
+            self.scorer.scorer.s1.len(),
+            s2_iter.clone(),
+            s2_iter.count(),
+            args.score_cutoff.cutoff(),
+            args.score_hint,
+        ))
     }
 }
 
@@ -210,6 +209,36 @@ mod tests {
             Some(ratio_with_args(S1.chars(), S3.chars(), &Args::default()))
         );
         //assert_delta!(Some(1.0), partial_ratio(S1.chars(), S3.chars(), None, None));
+    }
+
+    #[test]
+    fn batch_comparator_matches_ratio() {
+        let pairs = [
+            ("this is a test", "this is a test!"),
+            ("file:prune_bse.proto", "file:prune_base.proto"),
+            (S1, S3),
+            (S3, S1),
+            ("test", "test"),
+            ("test", ""),
+            ("", "test"),
+        ];
+        for (s1, s2) in pairs {
+            let scorer = RatioBatchComparator::new(s1.chars());
+            assert_delta!(
+                Some(ratio(s1.chars(), s2.chars())),
+                Some(scorer.similarity(s2.chars()))
+            );
+            assert_eq!(
+                ratio_with_args(s1.chars(), s2.chars(), &Args::default().score_cutoff(0.9)),
+                scorer.similarity_with_args(s2.chars(), &Args::default().score_cutoff(0.9))
+            );
+        }
+        // The example in the struct's documentation.
+        let scorer = RatioBatchComparator::new("this is a test".chars());
+        assert_delta!(
+            Some(0.9655),
+            Some(scorer.similarity("this is a test!".chars()))
+        );
     }
 
     #[test]
